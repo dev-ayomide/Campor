@@ -1,0 +1,35 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import MainLayout from './layouts/MainLayout';
+import AuthLayout from './layouts/AuthLayout';
+
+import LandingPage from './pages/LandingPage';
+import MarketplacePage from './pages/MarketplacePage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CartPage from './pages/CartPage';
+import ProfilePage from './pages/ProfilePage';
+import AuthLandingPage from './pages/AuthLandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+// import VerifyAccountPage from './pages/VerifyAccountPage';
+import NotFound from './pages/NotFound';
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainLayout><LandingPage /></MainLayout>} />
+        <Route path="/marketplace" element={<MainLayout><MarketplacePage /></MainLayout>} />
+        <Route path="/product/:id" element={<MainLayout><ProductDetailPage /></MainLayout>} />
+        <Route path="/cart" element={<MainLayout><CartPage /></MainLayout>} />
+        <Route path="/profile" element={<MainLayout><ProfilePage /></MainLayout>} />
+
+        <Route path="/auth" element={<AuthLayout><AuthLandingPage /></AuthLayout>} />
+        <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
+        <Route path="/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
+        {/* <Route path="/verify" element={<AuthLayout><VerifyAccountPage /></AuthLayout>} /> */}
+
+        <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
+      </Routes>
+    </Router>
+  );
+}
