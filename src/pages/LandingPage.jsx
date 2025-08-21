@@ -342,7 +342,7 @@ export default function LandingPage() {
                   <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Seller Dashboard & Stats</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">My Dashboard & Stats</h3>
               <p className="text-gray-600">
                 Comprehensive seller tools to track your sales, manage inventory, view analytics, and grow your campus business.
               </p>

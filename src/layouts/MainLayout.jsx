@@ -3,9 +3,9 @@ import Footer from '../components/Footer';
 
 export default function MainLayout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F7F5F0' }}>
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         {children}
       </main>
       <Footer />

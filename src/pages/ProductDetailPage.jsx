@@ -99,7 +99,7 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen">
       {/* Breadcrumb */}
-      <div className="bg-white border-b">
+      <div className="border-b" style={{ backgroundColor: '#F7F5F0' }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Link to="/" className="hover:text-gray-900 transition-colors">Home</Link>
