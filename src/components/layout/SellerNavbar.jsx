@@ -8,7 +8,7 @@ export default function SellerNavbar() {
         <div className="flex items-center">
           <Link to="/marketplace" className="flex items-center">
             <img 
-              src="/src/assets/images/logo.png" 
+              src="/logo.png" 
               alt="Campor Logo" 
               className="w-8 h-8 mr-3 object-contain"
             />
