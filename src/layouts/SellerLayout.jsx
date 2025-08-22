@@ -7,8 +7,12 @@ export default function SellerLayout({ children }) {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F7F5F0' }}>
-      {/* Existing Navbar */}
-      <Navbar />
+      {/* Navbar with seller menu toggle */}
+      <Navbar 
+        onSellerMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+        isSellerMenuOpen={isMobileMenuOpen}
+        setIsSellerMenuOpen={setIsMobileMenuOpen}
+      />
       
       <div className="flex">
         {/* Sidebar - Hidden on mobile, fixed on desktop */}
@@ -16,18 +20,7 @@ export default function SellerLayout({ children }) {
           <SellerSidebar />
         </div>
         
-        {/* Mobile Sidebar Overlay */}
-        {isMobileMenuOpen && (
-          <>
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden transition-opacity duration-300"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <div className="fixed left-0 top-20 w-64 h-[calc(100vh-5rem)] z-40 lg:hidden transform transition-transform duration-300 ease-in-out">
-              <SellerSidebar onMobileClose={() => setIsMobileMenuOpen(false)} />
-            </div>
-          </>
-        )}
+        {/* Mobile Sidebar Overlay - REMOVED, now handled in Navbar */}
         
         {/* Main Content */}
         <div className="flex-1 lg:ml-64">

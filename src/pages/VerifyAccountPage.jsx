@@ -1,15 +1,42 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function VerifyAccountPage() {
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(['', '', '', '', '', '']);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const inputRefs = useRef([]);
+
+  const handleCodeChange = (index, value) => {
+    if (value.length > 1) return; // Only allow single digit
+    
+    const newCode = [...code];
+    newCode[index] = value;
+    setCode(newCode);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    // Handle backspace to go to previous input
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const verificationCode = code.join('');
+    
+    if (verificationCode.length !== 6) {
+      setMsg('Please enter all 6 digits of the verification code.');
+      return;
+    }
+
     setMsg('');
     setLoading(true);
     
@@ -18,83 +45,77 @@ export default function VerifyAccountPage() {
       setMsg('Verified! Redirecting to login...');
       setTimeout(() => navigate('/login'), 900);
     } catch (err) {
-      setMsg('Verification failed. Check code and email.');
+      setMsg('Verification failed. Please check your code and try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResendCode = () => {
+    setMsg('Verification code has been resent to your email.');
+    setCode(['', '', '', '', '', '']);
+    inputRefs.current[0]?.focus();
+  };
+
   return (
-    <div className="w-full">
-      <div className="mb-6">
-        <Link 
-          to="/auth" 
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back
-        </Link>
+    <div className="w-full max-w-md mx-auto">
+      <div className="text-center mb-12">
+        <h1 className="text-3xl font-bold text-blue-600 mb-4">Verify Your Account</h1>
+        <p className="text-gray-600">
+          We sent a code to your email : <span className="font-medium">user.email@run.edu.ng</span>
+        </p>
       </div>
 
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Account</h2>
-        <p className="text-gray-600">Enter the verification code sent to your RUN email</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your.name@run.edu.ng"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Enter verification code"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* 6-digit code input */}
+        <div className="flex justify-center space-x-4">
+          {code.map((digit, index) => (
+            <input
+              key={index}
+              ref={(el) => inputRefs.current[index] = el}
+              type="text"
+              value={digit}
+              onChange={(e) => handleCodeChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              className="w-12 h-12 text-center text-xl font-semibold border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+              maxLength="1"
+              inputMode="numeric"
+              pattern="[0-9]*"
+            />
+          ))}
         </div>
 
         {msg && (
-          <div className={`p-3 border rounded-lg ${msg.includes('failed') ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-            <p className={`text-sm ${msg.includes('failed') ? 'text-red-600' : 'text-green-600'}`}>{msg}</p>
+          <div className={`p-3 border rounded-lg ${msg.includes('failed') || msg.includes('check') ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+            <p className={`text-sm text-center ${msg.includes('failed') || msg.includes('check') ? 'text-red-600' : 'text-green-600'}`}>{msg}</p>
           </div>
         )}
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? 'Verifying...' : 'Verify Account'}
+          {loading ? (
+            'Verifying...'
+          ) : (
+            <>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Verify
+            </>
+          )}
         </button>
       </form>
 
       <div className="mt-8 text-center">
-        <p className="text-gray-600 text-sm">
-          Didn't receive the code?{' '}
-          <button className="text-blue-600 hover:text-blue-700 font-medium">
-            Resend verification email
-          </button>
-        </p>
+        <button 
+          onClick={handleResendCode}
+          className="text-gray-600 hover:text-gray-800 font-medium transition-colors"
+        >
+          Resend Code
+        </button>
       </div>
     </div>
   );

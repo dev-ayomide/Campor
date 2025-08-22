@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import productImage from '../assets/images/product.png';
 import profileImage from '../assets/images/profile.png';
 
 export default function CartPage() {
+  const { user } = useAuth();
+  const isSignedIn = !!user;
+  
   const [cartItems, setCartItems] = useState([
     // Fatima's Finds items
     {
@@ -112,7 +116,7 @@ export default function CartPage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Link to="/" className="hover:text-gray-900 transition-colors">Home</Link>
+              <Link to={isSignedIn ? "/marketplace" : "/"} className="hover:text-gray-900 transition-colors">Home</Link>
               <span>›</span>
               <span className="text-gray-900">Shopping Cart</span>
             </div>
@@ -207,16 +211,6 @@ export default function CartPage() {
                       </div>
                     </div>
                   ))}
-                </div>
-
-                {/* Seller Checkout */}
-                <div className="p-6 border-t border-gray-100 bg-gray-50">
-                  <button 
-                    onClick={() => handleCheckoutSeller(group.seller.id)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
-                  >
-                    Checkout ({formatPrice(getSellerTotal(group.items))})
-                  </button>
                 </div>
               </div>
             ))}

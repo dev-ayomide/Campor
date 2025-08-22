@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -49,6 +50,19 @@ export default function Footer() {
               </button>
             </form>
           </div>
+        </div>
+
+        {/* Want to sell section */}
+        <div className="text-center mb-12">
+          <p className="text-gray-300 text-lg mb-4">
+            Want to sell?{' '}
+            <Link 
+              to="/seller-onboarding" 
+              className="text-blue-400 hover:text-blue-300 font-medium transition-colors underline"
+            >
+              Become a seller today
+            </Link>
+          </p>
         </div>
 
         {/* Bottom section - Company branding centered */}

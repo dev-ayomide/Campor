@@ -1,13 +1,15 @@
 
 import authImage from '../assets/images/authimage.png';
 
-export default function AuthLayout({ children }) {
+export default function AuthLayout({ children, heroImage }) {
+  const imageToUse = heroImage || authImage;
+  
   return (
     <div className="w-screen h-screen flex overflow-hidden">
       {/* Left: Fixed image with overlay and glassmorphism */}
       <div className="hidden lg:flex w-1/2 h-full relative">
         <img
-          src={authImage}
+          src={imageToUse}
           alt="Student using laptop for campus marketplace"
           className="w-full h-full object-cover object-center"
         />
