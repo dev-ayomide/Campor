@@ -1,4 +1,7 @@
-export { default as SellerOnboardingPage } from './SellerOnboardingPage';
-export { default as SellerDashboardPage } from './SellerDashboardPage';
-export { default as SellerProductsPage } from './SellerProductsPage';
-export { default as AddProductPage } from './AddProductPage';
+export { default as Onboarding } from './Onboarding';
+export { default as Dashboard } from './Dashboard';
+export { default as Products } from './Products';
+export { default as Orders } from './Orders';
+export { default as Customers } from './Customers';
+export { default as Analytics } from './Analytics';
+export { default as AddProduct } from './AddProduct';

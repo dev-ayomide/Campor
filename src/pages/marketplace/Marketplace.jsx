@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import marketplaceImage from '../assets/images/marketplace.png';
-import productImage from '../assets/images/product.png';
+import marketplaceImage from '../../assets/images/marketplace.png';
+import productImage from '../../assets/images/product.png';
 
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');

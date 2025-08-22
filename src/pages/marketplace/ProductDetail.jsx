@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import productImage from '../assets/images/product.png';
-import profileImage from '../assets/images/profile.png';
+import productImage from '../../assets/images/product.png';
+import profileImage from '../../assets/images/profile.png';
 
 export default function ProductDetailPage() {
   const { id } = useParams();

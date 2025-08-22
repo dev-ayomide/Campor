@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { isValidEmail, isValidPassword } from '../utils/validators';
+import { useAuth } from '../../context/AuthContext';
+import { isValidEmail, isValidPassword } from '../../utils/validators';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');

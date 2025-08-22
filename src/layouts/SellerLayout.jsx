@@ -1,6 +1,5 @@
 import { useState, cloneElement } from 'react';
-import SellerSidebar from '../components/SellerSidebar';
-import Navbar from '../components/Navbar';
+import { SellerSidebar, Navbar } from '../components/layout';
 
 export default function SellerLayout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

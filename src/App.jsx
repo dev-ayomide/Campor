@@ -6,22 +6,20 @@ import { AuthenticatedRedirect, RequireAuth } from './components/ProtectedRoute'
 // Import the verify image
 import verifyImage from './assets/images/verifyscreen.png';
 
-import LandingPage from './pages/LandingPage';
-import MarketplacePage from './pages/MarketplacePage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import CartPage from './pages/CartPage';
-import ProfilePage from './pages/ProfilePage';
-import SellerOnboardingPage from './pages/seller/SellerOnboardingPage';
-import SellerDashboardPage from './pages/seller/SellerDashboardPage';
-import SellerProductsPage from './pages/seller/SellerProductsPage';
-import SellerOrdersPage from './pages/seller/SellerOrdersPage';
-import SellerCustomersPage from './pages/seller/SellerCustomersPage';
-import SellerAnalyticsPage from './pages/seller/SellerAnalyticsPage';
-import AddProductPage from './pages/seller/AddProductPage';
-import AuthLandingPage from './pages/AuthLandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import VerifyAccountPage from './pages/VerifyAccountPage';
+// Import pages from new organized structure
+import { Landing, Marketplace, ProductDetail } from './pages/marketplace';
+import { Cart } from './pages/cart';
+import Profile from './pages/Profile';
+import { 
+  Onboarding, 
+  Dashboard, 
+  Products, 
+  Orders, 
+  Customers, 
+  Analytics, 
+  AddProduct 
+} from './pages/seller';
+import { AuthLanding, Login, Register, Verify } from './pages/auth';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -30,59 +28,59 @@ export default function App() {
       <Routes>
         <Route path="/" element={
           <AuthenticatedRedirect>
-            <MainLayout><LandingPage /></MainLayout>
+            <MainLayout><Landing /></MainLayout>
           </AuthenticatedRedirect>
         } />
-        <Route path="/marketplace" element={<MainLayout><MarketplacePage /></MainLayout>} />
-        <Route path="/product/:id" element={<MainLayout><ProductDetailPage /></MainLayout>} />
+        <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
+        <Route path="/product/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
         <Route path="/cart" element={
           <RequireAuth>
-            <MainLayout><CartPage /></MainLayout>
+            <MainLayout><Cart /></MainLayout>
           </RequireAuth>
         } />
         <Route path="/profile" element={
           <RequireAuth>
-            <MainLayout><ProfilePage /></MainLayout>
+            <MainLayout><Profile /></MainLayout>
           </RequireAuth>
         } />
         
         {/* Seller Routes */}
-        <Route path="/seller-onboarding" element={<MainLayout><SellerOnboardingPage /></MainLayout>} />
+        <Route path="/seller-onboarding" element={<MainLayout><Onboarding /></MainLayout>} />
         <Route path="/seller/dashboard" element={
           <RequireAuth>
-            <SellerDashboardPage />
+            <Dashboard />
           </RequireAuth>
         } />
         <Route path="/seller/products" element={
           <RequireAuth>
-            <SellerProductsPage />
+            <Products />
           </RequireAuth>
         } />
         <Route path="/seller/orders" element={
           <RequireAuth>
-            <SellerOrdersPage />
+            <Orders />
           </RequireAuth>
         } />
         <Route path="/seller/customers" element={
           <RequireAuth>
-            <SellerCustomersPage />
+            <Customers />
           </RequireAuth>
         } />
         <Route path="/seller/analytics" element={
           <RequireAuth>
-            <SellerAnalyticsPage />
+            <Analytics />
           </RequireAuth>
         } />
         <Route path="/seller/products/add" element={
           <RequireAuth>
-            <AddProductPage />
+            <AddProduct />
           </RequireAuth>
         } />
 
-        <Route path="/auth" element={<AuthLayout><AuthLandingPage /></AuthLayout>} />
-        <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
-        <Route path="/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
-        <Route path="/verify" element={<AuthLayout heroImage={verifyImage}><VerifyAccountPage /></AuthLayout>} />
+        <Route path="/auth" element={<AuthLayout><AuthLanding /></AuthLayout>} />
+        <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+        <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
+        <Route path="/verify" element={<AuthLayout heroImage={verifyImage}><Verify /></AuthLayout>} />
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
       </Routes>

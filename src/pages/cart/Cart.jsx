@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import productImage from '../assets/images/product.png';
-import profileImage from '../assets/images/profile.png';
+import { useAuth } from '../../context/AuthContext';
+import productImage from '../../assets/images/product.png';
+import profileImage from '../../assets/images/profile.png';
 
 export default function CartPage() {
   const { user } = useAuth();
