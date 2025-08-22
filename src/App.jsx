@@ -45,7 +45,7 @@ export default function App() {
         } />
         
         {/* Seller Routes */}
-        <Route path="/seller-onboarding" element={<MainLayout><Onboarding /></MainLayout>} />
+        <Route path="/seller/onboarding" element={<MainLayout><Onboarding /></MainLayout>} />
         <Route path="/seller/dashboard" element={
           <RequireAuth>
             <Dashboard />

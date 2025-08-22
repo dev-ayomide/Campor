@@ -10,13 +10,33 @@ const api = axios.create({
 export async function login(email, password) {
   // Mock when using default placeholder backend URL
   if (API_BASE_URL.includes('your-backend')) {
+    // For testing: seller users (emails containing 'seller') will have seller status
+    const isSeller = email.toLowerCase().includes('seller');
+    
     return new Promise((resolve) =>
       setTimeout(
-        () =>
+        () => {
+          const user = { 
+            id: 'u1', 
+            name: 'Sofia Havertz', 
+            email,
+            isSeller,
+            ...(isSeller && {
+              sellerProfile: {
+                storeName: 'Mock Store',
+                storeDescription: 'A mock seller store for testing'
+              }
+            })
+          };
+          
+          console.log('🔍 Mock Login - User Role:', isSeller ? 'Seller' : 'Buyer');
+          console.log('💡 Testing tip: Use email containing "seller" to test seller features');
+          
           resolve({
-            user: { id: 'u1', name: 'Sofia Havertz', email },
+            user,
             token: 'mock-token-123',
-          }),
+          });
+        },
         600
       )
     );

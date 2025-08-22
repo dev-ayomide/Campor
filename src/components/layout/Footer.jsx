@@ -57,7 +57,7 @@ export default function Footer() {
           <p className="text-gray-300 text-lg mb-4">
             Want to sell?{' '}
             <Link 
-              to="/seller-onboarding" 
+              to="/seller/onboarding" 
               className="text-blue-400 hover:text-blue-300 font-medium transition-colors underline"
             >
               Become a seller today

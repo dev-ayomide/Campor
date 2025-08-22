@@ -12,6 +12,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Check if user is a seller (has completed onboarding)
+  const isSeller = user?.isSeller || false;
+
   useEffect(() => {
     if (user) localStorage.setItem('campor_user', JSON.stringify(user));
     else localStorage.removeItem('campor_user');
@@ -59,8 +62,23 @@ export function AuthProvider({ children }) {
     setToken(null);
   };
 
+  const completeSellersOnboarding = (sellerData) => {
+    const updatedUser = { ...user, isSeller: true, sellerProfile: sellerData };
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, error, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      error, 
+      login, 
+      register, 
+      logout, 
+      isSeller,
+      completeSellersOnboarding 
+    }}>
       {children}
     </AuthContext.Provider>
   );

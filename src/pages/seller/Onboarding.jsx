@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SellerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const navigate = useNavigate();
+  const { completeSellersOnboarding } = useAuth();
 
   // Form states for each step
   const [storeInfo, setStoreInfo] = useState({
@@ -56,11 +58,17 @@ export default function SellerOnboardingPage() {
   };
 
   const handleSubmit = () => {
-    console.log('Seller onboarding completed:', {
+    const sellerData = {
       storeInfo,
       bankDetails,
       contactInfo
-    });
+    };
+    
+    console.log('Seller onboarding completed:', sellerData);
+    
+    // Update user's seller status in context
+    completeSellersOnboarding(sellerData);
+    
     // Navigate to seller dashboard once created
     navigate('/seller/dashboard');
   };

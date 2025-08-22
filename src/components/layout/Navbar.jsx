@@ -4,15 +4,15 @@ import { useState } from 'react';
 import MobileSellerMenu from './MobileSellerMenu';
 
 export default function Navbar({ variant = 'default', onSellerMenuToggle, isSellerMenuOpen, setIsSellerMenuOpen }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isSeller } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   
   // Determine if user is signed in for navbar state
   const isSignedIn = !!user;
   
-  // Check if we're on a seller page
-  const isSellerPage = location.pathname.startsWith('/seller/');
+  // Check if we're on a seller page (excluding onboarding which should show buyer navbar)
+  const isSellerPage = location.pathname.startsWith('/seller/') && location.pathname !== '/seller/onboarding';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 px-6 py-4" style={{ backgroundColor: '#F7F5F0' }}>
@@ -59,9 +59,8 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               </Link>
             </>
           ) : (
-            // Navigation for signed-in users
+            // Navigation for signed-in users - Keep this empty for clean design
             <>
-              
             </>
           )}
         </div>
@@ -95,8 +94,34 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                Chat
+                {isSellerPage ? "Buyers" : "Chat"}
               </Link>
+
+              {/* Dynamic Sell/Seller Dashboard button for desktop */}
+              {!isSellerPage && (
+                <Link 
+                  to={isSeller ? "/seller/dashboard" : "/seller/onboarding"} 
+                  className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4a2 2 0 112 0v2h2a2 2 0 110 4h-2v2a2 2 0 11-4 0V10H8a2 2 0 110-4h2z" />
+                  </svg>
+                  {isSeller ? "Dashboard" : "Sell"}
+                </Link>
+              )}
+
+              {/* Back to Marketplace button for desktop (seller pages only) */}
+              {isSellerPage && (
+                <Link 
+                  to="/marketplace" 
+                  className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Marketplace
+                </Link>
+              )}
 
               {/* Me Button */}
               <Link 
@@ -273,8 +298,30 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Messages
+                  {isSellerPage ? "Messages (Buyers)" : "Messages"}
                 </Link>
+                
+                {/* Dynamic Sell/Seller Dashboard button */}
+                {!isSellerPage && (
+                  <Link 
+                    to={isSeller ? "/seller/dashboard" : "/seller/onboarding"} 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {isSeller ? "Seller Dashboard" : "Sell"}
+                  </Link>
+                )}
+                
+                {/* Back to Marketplace link (only show on seller pages) */}
+                {isSellerPage && (
+                  <Link 
+                    to="/marketplace" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Back to Marketplace
+                  </Link>
+                )}
                 
                 <Link 
                   to="/profile" 
@@ -284,13 +331,16 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   Profile
                 </Link>
                 
-                <Link 
-                  to="/cart" 
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Cart
-                </Link>
+                {/* Cart - only show on buyer pages */}
+                {!isSellerPage && (
+                  <Link 
+                    to="/cart" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Cart
+                  </Link>
+                )}
                 
                 <div className="border-t border-gray-100">
                   <button
