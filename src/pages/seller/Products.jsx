@@ -53,37 +53,27 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
   return (
     <SellerLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full overflow-hidden">
         {/* Breadcrumb */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-center mb-4 px-2">
+          <div className="flex items-center text-sm text-gray-500 min-w-0 flex-shrink">
             <Link to="/" className="hover:text-gray-700">Home</Link>
             <span className="mx-2">›</span>
             <Link to="/seller" className="hover:text-gray-700">Sell</Link>
             <span className="mx-2">›</span>
             <span className="text-gray-900">Products</span>
           </div>
-          
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={toggleMobileMenu}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
         </div>
 
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 px-2">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">My Products</h1>
           <p className="text-gray-600">Manage your product listings</p>
         </div>
 
         {/* Search and Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 px-2 max-w-full">
+          <div className="flex-1 relative min-w-0">
             <input
               type="text"
               placeholder="Search..."
@@ -94,15 +84,15 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
             </svg>
           </div>
           
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <div className="flex gap-3 flex-shrink-0">
+            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
               </svg>
               Filter
             </button>
             
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -111,7 +101,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
             
             <Link 
               to="/seller/products/add"
-              className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+              className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -122,15 +112,15 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         </div>
 
         {/* Products Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mx-2">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Products</h2>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[800px]">
               <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
+                <tr className="whitespace-nowrap">
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Product</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Price</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Stock</th>
@@ -141,9 +131,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
+                  <tr key={product.id} className="hover:bg-gray-50 whitespace-nowrap">
                     <td className="py-4 px-6">
-                      <div className="flex items-center">
+                      <div className="flex items-center min-w-[200px]">
                         <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3 flex-shrink-0"></div>
                         <span className="font-medium text-gray-900">{product.name}</span>
                       </div>
@@ -161,7 +151,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                     </td>
                     <td className="py-4 px-6 text-gray-900">{product.sales}</td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-[120px]">
                         <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -188,7 +178,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center mt-8">
+        <div className="flex items-center justify-center mt-8 px-2">
           <nav className="flex items-center space-x-1">
             <button className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,7 +202,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
         {/* Empty State if no products */}
         {products.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-12 px-2">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />

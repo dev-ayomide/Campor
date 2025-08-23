@@ -22,9 +22,9 @@ export default function SellerLayout({ children }) {
         {/* Mobile Sidebar Overlay - REMOVED, now handled in Navbar */}
         
         {/* Main Content */}
-        <div className="flex-1 lg:ml-64">
+        <div className="flex-1 lg:ml-64 min-w-0 overflow-hidden">
           {/* Page Content - Scrollable */}
-          <main className="h-[calc(100vh-5rem)] mt-20 lg:mt-20 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <main className="h-[calc(100vh-5rem)] mt-20 lg:mt-20 p-6 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {cloneElement(children, { 
               isMobileMenuOpen, 
               setIsMobileMenuOpen,

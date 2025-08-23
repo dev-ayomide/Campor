@@ -4,7 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 export default function SellerDashboardPage({ toggleMobileMenu }) {
   return (
     <SellerLayout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full overflow-hidden">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">

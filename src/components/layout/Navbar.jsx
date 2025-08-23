@@ -20,7 +20,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
           <div className="flex items-center">
             <Link to={isSignedIn ? "/marketplace" : "/"} className="flex items-center">
               <img 
-                src="/logo.png" 
+                src="/logo.svg" 
                 alt="Campor Logo" 
                 className="w-8 h-8 mr-3 object-contain"
               />

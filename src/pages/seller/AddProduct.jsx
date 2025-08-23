@@ -52,7 +52,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
 
   return (
     <SellerLayout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto overflow-hidden">
         {/* Breadcrumb */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center text-sm text-gray-500">
