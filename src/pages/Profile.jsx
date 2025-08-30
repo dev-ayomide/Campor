@@ -1,15 +1,22 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { getCurrentUser, updateProfile } from '../services/authService';
 import profileImage from '../assets/images/profile.png';
 import productImage from '../assets/images/product.png';
 
 export default function ProfilePage() {
+  const { user, token, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Orders');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [accountData, setAccountData] = useState({
-    firstName: 'Sofia',
-    lastName: 'Havertz',
-    displayName: 'Sofia Havertz',
-    email: 'sofia.havertz@example.com'
+    firstName: '',
+    lastName: '',
+    displayName: '',
+    email: ''
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -17,6 +24,47 @@ export default function ProfilePage() {
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Fetch user profile data on component mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!token) {
+        navigate('/auth');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('🔍 Profile: Fetching user profile...');
+        const userData = await getCurrentUser();
+        console.log('✅ Profile: User profile fetched:', userData);
+        
+        // Update account data with real user data
+        setAccountData({
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          displayName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+          email: userData.email || ''
+        });
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('❌ Profile: Failed to fetch user profile:', err);
+        setError('Failed to load profile data. Please try again.');
+        setLoading(false);
+        
+        // If token is invalid, redirect to login
+        if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+          logout();
+          navigate('/auth');
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [token, navigate, logout]);
 
   // Mock orders data
   const orders = [
@@ -50,336 +98,163 @@ export default function ProfilePage() {
   const wishlistItems = [
     {
       id: 1,
-      name: 'VR Goggles',
+      name: 'Wireless Headphones',
+      price: 'N15,000.00',
       color: 'Black',
-      price: 'N19.19',
       image: productImage
     },
     {
       id: 2,
-      name: 'Speaker',
-      color: 'Beige',
-      price: 'N345',
-      image: productImage
-    },
-    {
-      id: 3,
-      name: 'Iphone 13',
-      color: 'Beige',
-      price: 'N8.80',
-      image: productImage
-    },
-    {
-      id: 4,
-      name: 'Macbook',
-      color: 'Beige',
-      price: 'N8.80',
+      name: 'Smart Watch',
+      price: 'N25,000.00',
+      color: 'Silver',
       image: productImage
     }
   ];
 
-  const handleAccountSubmit = (e) => {
+  const handleAccountSubmit = async (e) => {
     e.preventDefault();
-    console.log('Account updated:', accountData);
-  };
-
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    console.log('Password updated');
-    setPasswordData({
-      oldPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-  };
-
-  const removeFromWishlist = (itemId) => {
-    console.log('Remove item from wishlist:', itemId);
-  };
-
-  const addToCart = (itemId) => {
-    console.log('Add item to cart:', itemId);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'delivered':
-        return 'text-green-600 bg-green-50';
-      case 'cancelled':
-        return 'text-red-600 bg-red-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 Profile: Updating profile...');
+      await updateProfile(accountData);
+      
+      console.log('✅ Profile: Profile updated successfully');
+      // You could show a success message here
+      
+    } catch (err) {
+      console.error('❌ Profile: Failed to update profile:', err);
+      setError(err.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen">
-      {/* Breadcrumb */}
-      <div className="border-b" style={{ backgroundColor: '#F7F5F0' }}>
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Link to="/" className="hover:text-gray-900 transition-colors">Home</Link>
-            <span>›</span>
-            <span className="text-gray-900">Profile</span>
-          </div>
+  const removeFromWishlist = (id) => {
+    // Mock function - would integrate with backend later
+    console.log('Removing item from wishlist:', id);
+  };
+
+  const addToCart = (id) => {
+    // Mock function - would integrate with backend later
+    console.log('Adding item to cart:', id);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Page Title */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900">My Account</h1>
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Try Again
+          </button>
         </div>
+      </div>
+    );
+  }
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              {/* Profile Section */}
-              <div className="text-center mb-8">
-                <div className="relative inline-block">
-                  <img 
-                    src={profileImage} 
-                    alt="Profile"
-                    className="w-20 h-20 rounded-full object-cover mx-auto"
-                  />
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </div>
-                </div>
-                <h2 className="text-lg font-bold text-gray-900 mt-4">{accountData.displayName}</h2>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="px-6 py-8">
+            {/* Header */}
+            <div className="flex items-center gap-6 mb-8">
+              <img 
+                src={profileImage} 
+                alt="Profile" 
+                className="w-20 h-20 rounded-full object-cover"
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {user?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User Profile'}
+                </h1>
+                <p className="text-gray-600">{user?.email || accountData.email}</p>
+                <p className="text-sm text-gray-500">
+                  Role: {user?.role || 'Customer'} | 
+                  Seller Status: {user?.sellerCompleted ? 'Completed' : 'Not Completed'}
+                </p>
               </div>
+            </div>
 
-              {/* Navigation Menu */}
-              <nav className="space-y-2">
-                {[
-                  { id: 'Account', label: 'Account', active: activeTab === 'Account' },
-                  { id: 'Orders', label: 'Orders', active: activeTab === 'Orders' },
-                  { id: 'Wishlist', label: 'Wishlist', active: activeTab === 'Wishlist' },
-                  { id: 'LogOut', label: 'Log Out', active: false }
-                ].map((item) => (
+            {/* Tabs */}
+            <div className="border-b border-gray-200 mb-8">
+              <nav className="flex space-x-8">
+                {['Orders', 'Wishlist', 'Account'].map((tab) => (
                   <button
-                    key={item.id}
-                    onClick={() => item.id !== 'LogOut' ? setActiveTab(item.id) : console.log('Logout')}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                      item.active
-                        ? 'bg-blue-50 text-blue-600 font-medium border-r-2 border-blue-600'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === tab
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    {item.label}
+                    {tab}
                   </button>
                 ))}
               </nav>
             </div>
-          </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-              
+            {/* Tab Content */}
+            <div>
               {/* Orders Tab */}
               {activeTab === 'Orders' && (
                 <div>
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Orders History</h2>
-                    <p className="text-gray-600">Click on an order to view order details</p>
-                  </div>
-
+                  <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Orders</h2>
+                  
                   {/* Orders Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Number ID</th>
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Dates</th>
+                          <th className="text-left py-4 text-sm font-medium text-gray-600">Order ID</th>
+                          <th className="text-left py-4 text-sm font-medium text-gray-600">Date</th>
                           <th className="text-left py-4 text-sm font-medium text-gray-600">Status</th>
                           <th className="text-left py-4 text-sm font-medium text-gray-600">Price</th>
                         </tr>
                       </thead>
                       <tbody>
                         {orders.map((order) => (
-                          <tr 
-                            key={order.id} 
-                            className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                          >
-                            <td className="py-4">
-                              <span className="text-gray-900 font-medium">{order.id}</span>
+                          <tr key={order.id} className="border-b border-gray-100">
+                            <td className="py-6">
+                              <span className="font-medium text-gray-900">{order.id}</span>
                             </td>
-                            <td className="py-4">
-                              <span className="text-gray-600">{order.date}</span>
-                            </td>
-                            <td className="py-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            <td className="py-6 text-gray-600">{order.date}</td>
+                            <td className="py-6">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                order.status === 'Delivered' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
                                 {order.status}
                               </span>
                             </td>
-                            <td className="py-4">
-                              <span className="text-gray-900 font-medium">{order.price}</span>
+                            <td className="py-6">
+                              <span className="font-medium text-gray-900">{order.price}</span>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-
-                  {/* Pagination */}
-                  <div className="flex items-center justify-center mt-8">
-                    <nav className="flex items-center gap-2">
-                      <button className="px-3 py-2 text-gray-400 hover:text-gray-600 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
-                      
-                      {[1, 2, 9, 10].map((page, index) => (
-                        <div key={page} className="flex items-center">
-                          <button
-                            className={`px-4 py-2 rounded-lg transition-colors ${
-                              page === 1
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                          {index === 1 && <span className="px-2 text-gray-400">...</span>}
-                        </div>
-                      ))}
-                      
-                      <button className="px-3 py-2 text-gray-600 hover:text-gray-700 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </nav>
-                  </div>
-                </div>
-              )}
-
-              {/* Account Tab */}
-              {activeTab === 'Account' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-8">Account Details</h2>
-                  
-                  <form onSubmit={handleAccountSubmit} className="space-y-6">
-                    {/* Account Details Section */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          FIRST NAME *
-                        </label>
-                        <input
-                          type="text"
-                          value={accountData.firstName}
-                          onChange={(e) => setAccountData({...accountData, firstName: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="First name"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          LAST NAME *
-                        </label>
-                        <input
-                          type="text"
-                          value={accountData.lastName}
-                          onChange={(e) => setAccountData({...accountData, lastName: e.target.value})}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Last name"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        DISPLAY NAME *
-                      </label>
-                      <input
-                        type="text"
-                        value={accountData.displayName}
-                        onChange={(e) => setAccountData({...accountData, displayName: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Display name"
-                      />
-                      <p className="text-xs text-gray-500 mt-2">
-                        This will be how your name will be displayed in the account section and in reviews
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        EMAIL *
-                      </label>
-                      <input
-                        type="email"
-                        value={accountData.email}
-                        onChange={(e) => setAccountData({...accountData, email: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Email"
-                      />
-                    </div>
-
-                    {/* Password Section */}
-                    <div className="border-t border-gray-200 pt-8">
-                      <h3 className="text-lg font-bold text-gray-900 mb-6">Password</h3>
-                      
-                      <div className="space-y-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            OLD PASSWORD
-                          </label>
-                          <input
-                            type="password"
-                            value={passwordData.oldPassword}
-                            onChange={(e) => setPasswordData({...passwordData, oldPassword: e.target.value})}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Old password"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            NEW PASSWORD
-                          </label>
-                          <input
-                            type="password"
-                            value={passwordData.newPassword}
-                            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="New password"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            REPEAT NEW PASSWORD
-                          </label>
-                          <input
-                            type="password"
-                            value={passwordData.confirmPassword}
-                            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Repeat new password"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-6">
-                      <button
-                        type="submit"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-                      >
-                        Save changes
-                      </button>
-                    </div>
-                  </form>
                 </div>
               )}
 
@@ -440,6 +315,131 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
+
+              {/* Account Tab */}
+              {activeTab === 'Account' && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-8">Account Details</h2>
+                  
+                  <form onSubmit={handleAccountSubmit} className="space-y-6">
+                    {/* Account Details Section */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          FIRST NAME
+                        </label>
+                        <input
+                          type="text"
+                          value={accountData.firstName}
+                          onChange={(e) => setAccountData({...accountData, firstName: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="First name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          LAST NAME
+                        </label>
+                        <input
+                          type="text"
+                          value={accountData.lastName}
+                          onChange={(e) => setAccountData({...accountData, lastName: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Last name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          DISPLAY NAME
+                        </label>
+                        <input
+                          type="text"
+                          value={accountData.displayName}
+                          onChange={(e) => setAccountData({...accountData, displayName: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Display name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          EMAIL
+                        </label>
+                        <input
+                          type="email"
+                          value={accountData.email}
+                          disabled
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                          placeholder="Email"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
+                      </div>
+                    </div>
+
+                    {/* Password Section */}
+                    <div className="border-t border-gray-200 pt-8">
+                      <h3 className="text-lg font-bold text-gray-900 mb-6">Password</h3>
+                      
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            OLD PASSWORD
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.oldPassword}
+                            onChange={(e) => setPasswordData({...passwordData, oldPassword: e.target.value})}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Old password"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            NEW PASSWORD
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="New password"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            REPEAT NEW PASSWORD
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Repeat new password"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-6">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className={`px-8 py-3 rounded-lg font-medium transition-colors ${
+                          loading 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        } text-white`}
+                      >
+                        {loading ? 'Saving...' : 'Save changes'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -447,3 +447,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

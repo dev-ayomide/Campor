@@ -19,7 +19,7 @@ import {
   Analytics, 
   AddProduct 
 } from './pages/seller';
-import { AuthLanding, Login, Register, Verify } from './pages/auth';
+import { AuthLanding, Login, Register, Verify, ForgotPassword, ResetPassword } from './pages/auth';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -81,6 +81,8 @@ export default function App() {
         <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
         <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
         <Route path="/verify" element={<AuthLayout heroImage={verifyImage}><Verify /></AuthLayout>} />
+        <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+        <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
       </Routes>

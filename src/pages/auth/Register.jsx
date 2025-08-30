@@ -24,10 +24,12 @@ export default function RegisterPage() {
 
     try {
       await register({ fullName, email, password });
+      // Store email for verification
+      localStorage.setItem('campor_verification_email', email);
       // after registration you might want to redirect to verify
       navigate('/verify');
     } catch (err) {
-      setLocalErr(err?.response?.data?.message || err.message || 'Registration failed');
+      setLocalErr(err.message || 'Registration failed');
     }
   };
 

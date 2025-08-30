@@ -1,12 +1,32 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import * as authService from '../../services/authService';
 
 export default function VerifyAccountPage() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const inputRefs = useRef([]);
+
+  // Get email from URL params or localStorage
+  useEffect(() => {
+    const emailFromParams = searchParams.get('email');
+    const emailFromStorage = localStorage.getItem('campor_verification_email');
+    
+    if (emailFromParams) {
+      setEmail(emailFromParams);
+      localStorage.setItem('campor_verification_email', emailFromParams);
+    } else if (emailFromStorage) {
+      setEmail(emailFromStorage);
+    } else {
+      // No email found, redirect to login
+      navigate('/login');
+    }
+  }, [searchParams, navigate]);
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return; // Only allow single digit
@@ -41,28 +61,55 @@ export default function VerifyAccountPage() {
     setLoading(true);
     
     try {
-      // Mock verification for now
-      setMsg('Verified! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 900);
+      const response = await authService.verifyEmail(email, verificationCode);
+      
+      // Email verification successful
+      setMsg('Email verified successfully! Redirecting to login...');
+      
+      // Clear any stored verification email
+      localStorage.removeItem('campor_verification_email');
+      
+      // Always redirect to login page after verification
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+      
     } catch (err) {
-      setMsg('Verification failed. Please check your code and try again.');
+      setMsg(err.message || 'Verification failed. Please check your code and try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
+    try {
+      setLoading(true);
+      await authService.resendVerificationCode(email);
     setMsg('Verification code has been resent to your email.');
     setCode(['', '', '', '', '', '']);
     inputRefs.current[0]?.focus();
+    } catch (err) {
+      setMsg(err.message || 'Failed to resend code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!email) {
+    return (
+      <div className="w-full max-w-md mx-auto text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-blue-600 mb-4">Verify Your Account</h1>
         <p className="text-gray-600">
-          We sent a code to your email : <span className="font-medium">user.email@run.edu.ng</span>
+          We sent a code to your email : <span className="font-medium">{email}</span>
         </p>
       </div>
 
@@ -113,6 +160,7 @@ export default function VerifyAccountPage() {
         <button 
           onClick={handleResendCode}
           className="text-gray-600 hover:text-gray-800 font-medium transition-colors"
+          disabled={loading}
         >
           Resend Code
         </button>
