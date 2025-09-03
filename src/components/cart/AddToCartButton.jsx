@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import { useCart } from '../../contexts/CartContext';
-import { ShoppingBag, Check } from 'lucide-react';
 
 export default function AddToCartButton({ productId, className = '' }) {
-  const { addProductToCart, checkProductInCart } = useCart();
+  const { 
+    addProductToCart, 
+    checkProductInCart, 
+    getCartItem, 
+    updateItemQuantity, 
+    removeItemFromCart 
+  } = useCart();
   const [loading, setLoading] = useState(false);
-  const [added, setAdded] = useState(false);
 
   const isInCart = checkProductInCart(productId);
+  const cartItem = getCartItem(productId);
+  const quantity = cartItem?.quantity || 0;
 
   const handleAddToCart = async () => {
-    if (isInCart || loading) return;
+    if (loading) return;
     
     try {
       setLoading(true);
       await addProductToCart(productId, 1);
-      setAdded(true);
-      
-      // Reset added state after 2 seconds
-      setTimeout(() => setAdded(false), 2000);
     } catch (error) {
       console.error('Failed to add to cart:', error);
     } finally {
@@ -26,15 +28,48 @@ export default function AddToCartButton({ productId, className = '' }) {
     }
   };
 
-  if (isInCart) {
+  const handleQuantityChange = async (newQuantity) => {
+    if (loading || !cartItem) return;
+    
+    try {
+      setLoading(true);
+      if (newQuantity <= 0) {
+        await removeItemFromCart(cartItem.id);
+      } else {
+        await updateItemQuantity(cartItem.id, newQuantity);
+      }
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isInCart && cartItem) {
     return (
-      <button
-        disabled
-        className={`flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg cursor-not-allowed ${className}`}
-      >
-        <Check className="h-4 w-4 mr-2" />
-        In Cart
-      </button>
+      <div className={`flex items-center justify-center border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+        <button
+          onClick={() => handleQuantityChange(quantity - 1)}
+          disabled={loading}
+          className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors disabled:opacity-50"
+        >
+          -
+        </button>
+        <span className="px-4 py-2 bg-white text-gray-900 font-medium min-w-[3rem] text-center">
+          {loading ? (
+            <div className="inline-flex items-center justify-center">
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600"></div>
+            </div>
+          ) : quantity}
+        </span>
+        <button
+          onClick={() => handleQuantityChange(quantity + 1)}
+          disabled={loading}
+          className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors disabled:opacity-50"
+        >
+          +
+        </button>
+      </div>
     );
   }
 
@@ -45,13 +80,13 @@ export default function AddToCartButton({ productId, className = '' }) {
       className={`flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 ${className}`}
     >
       {loading ? (
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-      ) : added ? (
-        <Check className="h-4 w-4 mr-2" />
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+          Adding...
+        </>
       ) : (
-        <ShoppingBag className="h-4 w-4 mr-2" />
+        'Add to Cart'
       )}
-      {loading ? 'Adding...' : added ? 'Added!' : 'Add to Cart'}
     </button>
   );
 }

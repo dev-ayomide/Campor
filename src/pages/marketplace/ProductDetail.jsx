@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProductBySlug } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
+import { AddToCartButton } from '../../components/cart';
 import { Star, ChevronLeft, ChevronRight, Heart, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
@@ -9,15 +10,13 @@ import profileImage from '../../assets/images/profile.png';
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { addProductToCart, checkProductInCart } = useCart();
+  const { checkProductInCart, getCartItem } = useCart();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('Reviews');
-  const [addingToCart, setAddingToCart] = useState(false);
 
   // Fetch product data
   useEffect(() => {
@@ -48,23 +47,10 @@ export default function ProductDetailPage() {
     }
   }, [slug]);
 
-  // Handle add to cart
-  const handleAddToCart = async () => {
-    if (!product || addingToCart) return;
-    
-    try {
-      setAddingToCart(true);
-      await addProductToCart(product.id, quantity);
-      console.log('✅ Product added to cart successfully');
-    } catch (error) {
-      console.error('❌ Failed to add product to cart:', error);
-    } finally {
-      setAddingToCart(false);
-    }
-  };
-
-  // Check if product is in cart
+  // Check if product is in cart and get cart item details
   const isInCart = product ? checkProductInCart(product.id) : false;
+  const cartItem = product ? getCartItem(product.id) : null;
+  const cartQuantity = cartItem?.quantity || 0;
 
   // Format price
   const formatPrice = (price) => {
@@ -95,18 +81,20 @@ export default function ProductDetailPage() {
     setCurrentImageIndex(prev => prev < product.imageUrls.length - 1 ? prev + 1 : 0);
   };
 
-  const handleQuantityChange = (change) => {
-    setQuantity(prev => Math.max(1, prev + change));
-  };
+
 
   // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading product details...</span>
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+            </div>
+            <span className="mt-4 text-gray-600 font-medium">Loading product details...</span>
+            <span className="mt-1 text-sm text-gray-500">This might take a moment</span>
           </div>
         </div>
       </div>
@@ -264,27 +252,18 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Quantity and Actions */}
+            {/* Cart Status and Actions */}
             <div className="space-y-4">
-              {/* Quantity */}
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-900">Quantity:</label>
-                <button 
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                  className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  -
-                </button>
-                <span className="text-lg font-medium min-w-[2rem] text-center">{quantity}</span>
-                <button 
-                  onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= product.stockQuantity}
-                  className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  +
-                </button>
-              </div>
+              {/* Show current cart quantity if product is in cart */}
+              {isInCart && cartQuantity > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-800">
+                      You have {cartQuantity} {cartQuantity === 1 ? 'item' : 'items'} of this product in your cart
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-3">
@@ -293,30 +272,20 @@ export default function ProductDetailPage() {
                   Wishlist
                 </button>
                 
-                {isInCart ? (
+                {product.stockQuantity <= 0 ? (
                   <button 
                     disabled
-                    className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-gray-400 text-white py-3 px-6 rounded-lg font-medium cursor-not-allowed"
                   >
-                    <span>✓ In Cart</span>
+                    Out of Stock
                   </button>
                 ) : (
-                  <button 
-                    onClick={handleAddToCart}
-                    disabled={addingToCart || product.stockQuantity <= 0}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {addingToCart ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Adding...
-                      </>
-                    ) : (
-                      <>
-                        <span>Add to Cart</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex-1">
+                    <AddToCartButton 
+                      productId={product.id} 
+                      className="w-full py-3 px-6 font-medium"
+                    />
+                  </div>
                 )}
               </div>
             </div>
