@@ -10,7 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "algoliasearch": "^5.36.0",
     "axios": "^1.11.0",
+    "instantsearch.css": "^8.5.1",
+    "instantsearch.js": "^4.79.2",
+    "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.0"

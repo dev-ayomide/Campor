@@ -1,22 +1,39 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://campor-service-production.up.railway.app';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://campor-aa1452bb8116.herokuapp.com/api/v1';
 export const RUN_EMAIL_REGEX = /^[^\s@]+@run\.edu\.ng$/i;
 
 // API Endpoints
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/api/v1/auth/login',
-    REGISTER: '/api/v1/auth/register',
-    VERIFY_EMAIL: '/api/v1/auth/email/verify',
-    ME: '/api/v1/auth/me',
-    FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
-    RESET_PASSWORD: '/api/v1/auth/reset-password',
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    VERIFY_EMAIL: '/auth/email/verify',
+    ME: '/auth/me',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
   USER: {
-    PROFILE: '/api/v1/users/profile',
-    UPDATE_PROFILE: '/api/v1/users/profile',
+    PROFILE: '/users/profile',
+    UPDATE_PROFILE: '/users/profile',
   },
   SELLER: {
-    ONBOARDING: '/api/v1/seller/onboarding',
-    PROFILE: '/api/v1/seller/profile',
+    ONBOARDING: '/seller/onboarding',
+    PROFILE: '/seller/profile',
+  },
+  PRODUCTS: {
+    ALL: '/products/all',
+    SEARCH: '/products/search',
+    BY_SLUG: '/products',
+  },
+  CATEGORIES: {
+    ALL: '/categories/all',
+    ONLY: '/categories/only',
+    BY_ID: '/categories',
+  },
+  CART: {
+    GET: '/cart',
+    ADD: '/cart/add',
+    UPDATE_ITEM: '/cart/item/update',
+    REMOVE_ITEM: '/cart/item/remove',
+    CLEAR: '/cart/clear',
   }
 };

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import { AuthenticatedRedirect, RequireAuth } from './components/ProtectedRoute';
+import { CartProvider } from './contexts/CartContext';
 
 // Import the verify image
 import verifyImage from './assets/images/verifyscreen.png';
@@ -10,6 +11,7 @@ import verifyImage from './assets/images/verifyscreen.png';
 import { Landing, Marketplace, ProductDetail } from './pages/marketplace';
 import { Cart } from './pages/cart';
 import Profile from './pages/Profile';
+import CategoryPage from './pages/categories/CategoryPage';
 import { 
   Onboarding, 
   Dashboard, 
@@ -25,14 +27,15 @@ import NotFound from './pages/NotFound';
 export default function App() {
   return (
     <Router>
-      <Routes>
+      <CartProvider>
+        <Routes>
         <Route path="/" element={
           <AuthenticatedRedirect>
             <MainLayout><Landing /></MainLayout>
           </AuthenticatedRedirect>
         } />
         <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
-        <Route path="/product/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
+        <Route path="/product/:slug" element={<MainLayout><ProductDetail /></MainLayout>} />
         <Route path="/cart" element={
           <RequireAuth>
             <MainLayout><Cart /></MainLayout>
@@ -42,6 +45,11 @@ export default function App() {
           <RequireAuth>
             <MainLayout><Profile /></MainLayout>
           </RequireAuth>
+        } />
+        
+        {/* Category Routes */}
+        <Route path="/category/:categoryId" element={
+          <MainLayout><CategoryPage /></MainLayout>
         } />
         
         {/* Seller Routes */}
@@ -85,7 +93,11 @@ export default function App() {
         <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
-      </Routes>
+        </Routes>
+      </CartProvider>
     </Router>
   );
 }
+
+
+

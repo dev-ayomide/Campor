@@ -1,102 +1,49 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
 export default function CartPage() {
   const { user } = useAuth();
+  const { cart, loading, error, updateItemQuantity, removeItemFromCart, clearUserCart, getCartTotals } = useCart();
   const isSignedIn = !!user;
   
-  const [cartItems, setCartItems] = useState([
-    // Fatima's Finds items
-    {
-      id: 1,
-      sellerId: 1,
-      sellerName: "Fatima's Finds",
-      sellerAvatar: profileImage,
-      productName: 'Evostik VR Headset Virtual Reality Adjustable 3D Glasses',
-      price: 150000,
-      quantity: 1,
-      image: productImage
-    },
-    {
-      id: 2,
-      sellerId: 1,
-      sellerName: "Fatima's Finds",
-      sellerAvatar: profileImage,
-      productName: 'Evostik VR Headset Virtual Reality Adjustable 3D Glasses',
-      price: 150000,
-      quantity: 1,
-      image: productImage
-    },
-    // David Ventures items
-    {
-      id: 3,
-      sellerId: 2,
-      sellerName: "David Ventures",
-      sellerAvatar: profileImage,
-      productName: 'Evostik VR Headset Virtual Reality Adjustable 3D Glasses',
-      price: 150000,
-      quantity: 1,
-      image: productImage
-    },
-    {
-      id: 4,
-      sellerId: 2,
-      sellerName: "David Ventures",
-      sellerAvatar: profileImage,
-      productName: 'Evostik VR Headset Virtual Reality Adjustable 3D Glasses',
-      price: 150000,
-      quantity: 1,
-      image: productImage
-    }
-  ]);
+  // Use cart data from context (already grouped by seller)
+  const groupedItems = cart || [];
 
-  // Group items by seller
-  const groupedItems = cartItems.reduce((groups, item) => {
-    const sellerId = item.sellerId;
-    if (!groups[sellerId]) {
-      groups[sellerId] = {
-        seller: {
-          id: sellerId,
-          name: item.sellerName,
-          avatar: item.sellerAvatar
-        },
-        items: []
-      };
-    }
-    groups[sellerId].items.push(item);
-    return groups;
-  }, {});
-
-  const updateQuantity = (itemId, newQuantity) => {
+  const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
-    setCartItems(items =>
-      items.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    try {
+      await updateItemQuantity(itemId, newQuantity);
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+    }
   };
 
-  const removeItem = (itemId) => {
-    setCartItems(items => items.filter(item => item.id !== itemId));
+  const removeItem = async (itemId) => {
+    try {
+      await removeItemFromCart(itemId);
+    } catch (error) {
+      console.error('Failed to remove item:', error);
+    }
   };
 
   const getSellerTotal = (sellerItems) => {
-    return sellerItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return sellerItems.reduce((total, item) => total + (parseFloat(item.product?.price || 0) * item.quantity), 0);
   };
 
   const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+    return getCartTotals().totalItems;
   };
 
   const getTotalAmount = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return getCartTotals().totalPrice;
   };
 
   const formatPrice = (price) => {
-    return `N${price.toLocaleString()}`;
+    return `₦${parseFloat(price || 0).toLocaleString()}`;
   };
 
   const handleCheckoutSeller = (sellerId) => {
@@ -128,24 +75,67 @@ export default function CartPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-6">
-            {Object.values(groupedItems).map((group) => (
-              <div key={group.seller.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600">Loading cart...</span>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-8">
+              <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {/* Empty Cart State */}
+          {!loading && !error && groupedItems.length === 0 && (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m0-6a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
+                  </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">You do not have items in your cart</h2>
+              <p className="text-gray-600 mb-8">Try searching for your desired terms or shop from the categories above.</p>
+              <Link
+                to="/marketplace"
+                className="inline-flex items-center px-6 py-3 border border-blue-600 text-blue-600 bg-white rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                Start Shopping
+              </Link>
+            </div>
+          )}
+
+          {/* Cart Content */}
+          {!loading && !error && groupedItems.length > 0 && (
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2 space-y-6">
+              {groupedItems.map((group) => (
+              <div key={group.sellerId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Seller Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                   <div className="flex items-center gap-3">
-                    <img 
-                      src={group.seller.avatar} 
-                      alt={group.seller.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        {group.sellerId?.charAt(0) || 'S'}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
-                      <span className="font-medium text-gray-900">{group.seller.name}</span>
+                      <span className="font-medium text-gray-900">Seller ID: {group.sellerId?.slice(0, 8)}...</span>
                     </div>
                   </div>
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
@@ -164,19 +154,22 @@ export default function CartPage() {
                         {/* Product Image */}
                         <div className="flex-shrink-0">
                           <img 
-                            src={item.image} 
-                            alt={item.productName}
+                            src={item.product?.imageUrls?.[0] || productImage} 
+                            alt={item.product?.name || 'Product'}
                             className="w-20 h-20 object-cover rounded-lg bg-gray-100"
+                            onError={(e) => {
+                              e.target.src = productImage;
+                            }}
                           />
                         </div>
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                            {item.productName}
+                            {item.product?.name || 'Product'}
                           </h3>
                           <p className="text-lg font-bold text-gray-900 mb-3">
-                            {formatPrice(item.price)}
+                            {formatPrice(item.product?.price || 0)}
                           </p>
 
                           {/* Quantity Controls */}
@@ -260,6 +253,21 @@ export default function CartPage() {
                 Checkout All
               </button>
 
+              <button 
+                onClick={async () => {
+                  if (window.confirm('Are you sure you want to clear your cart?')) {
+                    try {
+                      await clearUserCart();
+                    } catch (error) {
+                      console.error('Failed to clear cart:', error);
+                    }
+                  }
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+              >
+                Clear Cart
+              </button>
+
               <div className="text-xs text-gray-500 space-y-2">
                 <p>
                   <strong>Tip:</strong> You can checkout with each seller separately or message them directly from your cart.
@@ -269,6 +277,8 @@ export default function CartPage() {
             </div>
           </div>
         </div>
+          )}
+        </>
       </div>
     </div>
   );

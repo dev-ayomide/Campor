@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import { useState } from 'react';
 import MobileSellerMenu from './MobileSellerMenu';
 
 export default function Navbar({ variant = 'default', onSellerMenuToggle, isSellerMenuOpen, setIsSellerMenuOpen }) {
   const { user, logout, isSeller } = useAuth();
+  const { getItemCount } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   
@@ -143,9 +145,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m0-6a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
                   </svg>
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
-                    2
-                  </span>
+                  {getItemCount() > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                      {getItemCount() > 99 ? '99+' : getItemCount()}
+                    </span>
+                  )}
                 </Link>
               )}
 
@@ -170,9 +174,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m0-6a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
               </svg>
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
-                2
-              </span>
+              {getItemCount() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                  {getItemCount() > 99 ? '99+' : getItemCount()}
+                </span>
+              )}
             </Link>
           )}
           
