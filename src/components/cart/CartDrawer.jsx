@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { initiatePayment, redirectToPayment } from '../../services/paymentService';
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
 
 export default function CartDrawer({ isOpen, onClose }) {
@@ -13,8 +15,10 @@ export default function CartDrawer({ isOpen, onClose }) {
     removeItemFromCart, 
     clearUserCart 
   } = useCart();
+  const { user } = useAuth();
 
   const [updatingItem, setUpdatingItem] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -44,6 +48,50 @@ export default function CartDrawer({ isOpen, onClose }) {
       } catch (error) {
         console.error('Failed to clear cart:', error);
       }
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!user || !user.email || !user.cart?.id) {
+      console.error('❌ PaymentService: Missing user data for payment');
+      return;
+    }
+
+    if (cart.length === 0) {
+      console.error('❌ PaymentService: Cart is empty');
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      
+      const { totalPrice } = getCartTotals();
+      
+      console.log('🔍 PaymentService: Initiating payment for user:', user.email);
+      console.log('🔍 PaymentService: Cart ID:', user.cart.id);
+      console.log('🔍 PaymentService: Total amount:', totalPrice);
+      
+      // Initiate payment
+      const paymentResponse = await initiatePayment(
+        user.email,
+        totalPrice,
+        user.cart.id
+      );
+      
+      console.log('✅ PaymentService: Payment initiated, redirecting to:', paymentResponse.authorization_url);
+      
+      // Redirect to payment URL
+      if (paymentResponse.authorization_url) {
+        redirectToPayment(paymentResponse.authorization_url);
+      } else {
+        throw new Error('Payment URL not received from server');
+      }
+      
+    } catch (error) {
+      console.error('❌ PaymentService: Checkout failed:', error);
+      alert(error.message || 'Failed to process checkout. Please try again.');
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -204,13 +252,18 @@ export default function CartDrawer({ isOpen, onClose }) {
                 </button>
                 
                 <button
-                  onClick={() => {
-                    // TODO: Navigate to checkout
-                    console.log('Navigate to checkout');
-                  }}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={handleCheckout}
+                  disabled={processingPayment || cart.length === 0}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Proceed to Checkout
+                  {processingPayment ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Processing Payment...
+                    </>
+                  ) : (
+                    'Proceed to Checkout'
+                  )}
                 </button>
               </div>
             </div>

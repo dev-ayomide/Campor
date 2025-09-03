@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { initiatePayment, redirectToPayment } from '../../services/paymentService';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
@@ -9,6 +10,8 @@ export default function CartPage() {
   const { user } = useAuth();
   const { cart, loading, error, updateItemQuantity, removeItemFromCart, clearUserCart, getCartTotals } = useCart();
   const isSignedIn = !!user;
+  
+  const [processingPayment, setProcessingPayment] = useState(false);
   
   // Use cart data from context (already grouped by seller)
   const groupedItems = cart || [];
@@ -46,14 +49,56 @@ export default function CartPage() {
     return `₦${parseFloat(price || 0).toLocaleString()}`;
   };
 
-  const handleCheckoutSeller = (sellerId) => {
-    const sellerItems = groupedItems[sellerId].items;
-    const total = getSellerTotal(sellerItems);
-    console.log(`Checkout for ${groupedItems[sellerId].seller.name}: ${formatPrice(total)}`);
+  const handleCheckoutSeller = async (sellerId) => {
+    // For now, we'll handle individual seller checkout the same as checkout all
+    // In the future, this could be enhanced to checkout specific seller items only
+    await handleCheckoutAll();
   };
 
-  const handleCheckoutAll = () => {
-    console.log(`Checkout all items: ${formatPrice(getTotalAmount())}`);
+  const handleCheckoutAll = async () => {
+    if (!user || !user.email || !user.cart?.id) {
+      console.error('❌ PaymentService: Missing user data for payment');
+      alert('Unable to process payment. Please refresh the page and try again.');
+      return;
+    }
+
+    if (groupedItems.length === 0) {
+      console.error('❌ PaymentService: Cart is empty');
+      alert('Your cart is empty. Add some items before checkout.');
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      
+      const { totalPrice } = getCartTotals();
+      
+      console.log('🔍 PaymentService: Initiating payment for user:', user.email);
+      console.log('🔍 PaymentService: Cart ID:', user.cart.id);
+      console.log('🔍 PaymentService: Total amount:', totalPrice);
+      
+      // Initiate payment
+      const paymentResponse = await initiatePayment(
+        user.email,
+        totalPrice,
+        user.cart.id
+      );
+      
+      console.log('✅ PaymentService: Payment initiated, redirecting to:', paymentResponse.authorization_url);
+      
+      // Redirect to payment URL
+      if (paymentResponse.authorization_url) {
+        redirectToPayment(paymentResponse.authorization_url);
+      } else {
+        throw new Error('Payment URL not received from server');
+      }
+      
+    } catch (error) {
+      console.error('❌ PaymentService: Checkout failed:', error);
+      alert(error.message || 'Failed to process checkout. Please try again.');
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   return (
@@ -78,9 +123,13 @@ export default function CartPage() {
         <>
           {/* Loading State */}
           {loading && (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading cart...</span>
+            <div className="flex flex-col items-center justify-center h-64">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+              </div>
+              <span className="mt-4 text-gray-600 font-medium">Loading your cart...</span>
+              <span className="mt-1 text-sm text-gray-500">Getting your items ready</span>
             </div>
           )}
 
@@ -248,9 +297,17 @@ export default function CartPage() {
 
               <button 
                 onClick={handleCheckoutAll}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4"
+                disabled={processingPayment || groupedItems.length === 0}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Checkout All
+                {processingPayment ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Processing Payment...
+                  </>
+                ) : (
+                  'Checkout All'
+                )}
               </button>
 
               <button 
@@ -263,16 +320,17 @@ export default function CartPage() {
                     }
                   }
                 }}
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+                disabled={processingPayment}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Clear Cart
               </button>
 
               <div className="text-xs text-gray-500 space-y-2">
                 <p>
-                  <strong>Tip:</strong> You can checkout with each seller separately or message them directly from your cart.
+                  <strong>Secure Checkout:</strong> All payments are processed securely through Paystack.
                 </p>
-                <p>All payments are processed securely through Paystack.</p>
+                <p>You'll be redirected to complete your payment safely.</p>
               </div>
             </div>
           </div>
