@@ -92,9 +92,13 @@ export default function CartDrawer({ isOpen, onClose }) {
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading cart...</span>
+              <div className="flex flex-col items-center justify-center h-32">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+                </div>
+                <span className="mt-3 text-gray-600 font-medium">Loading cart...</span>
+                <span className="mt-1 text-sm text-gray-500">Getting your items</span>
               </div>
             ) : cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-500">
