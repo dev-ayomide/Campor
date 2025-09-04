@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { addToCart } from '../../services/authService';
+// import { addToCart } from '../../services/authService';
 import { 
   getAllProductsAlgolia, 
   searchProductsAlgolia, 
@@ -8,12 +8,15 @@ import {
   debouncedSearch 
 } from '../../services/algoliaService';
 import { AuthContext } from '../../context/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import marketplaceImage from '../../assets/images/marketplace.png';
 import productImage from '../../assets/images/product.png';
 import SearchHighlight from '../../components/search/SearchHighlight';
+import { AddToCartButton } from '../../components/cart';
 
 export default function MarketplacePage() {
   const { user, token } = useContext(AuthContext);
+  const { addProductToCart } = useCart();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
@@ -255,21 +258,8 @@ export default function MarketplacePage() {
       setCartLoading(true);
       setCartMessage('');
       
-      console.log('🔍 Marketplace: Adding product to cart:', { productId, quantity });
-      
-      // Get cart ID from user data (assuming it's stored in user.cart.id)
-      const cartId = user.cart?.id;
-      if (!cartId) {
-        setCartMessage('Cart not found. Please try again.');
-        return;
-      }
-      
-      const cartItems = [{
-        productId: productId,
-        quantity: quantity
-      }];
-      
-      await addToCart(cartId, cartItems);
+      console.log('🔍 Marketplace: Adding product to cart via CartContext:', { productId, quantity });
+      await addProductToCart(productId, quantity);
       
       setCartMessage('Product added to cart successfully!');
       setTimeout(() => setCartMessage(''), 3000);
@@ -855,20 +845,14 @@ export default function MarketplacePage() {
 
                             {/* Action Buttons - Bottom aligned */}
                             <div className="flex gap-2 items-center">
-                              <button 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleAddToCart(product.id);
-                                }}
-                                disabled={cartLoading || productStock === 0}
-                                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                                  cartLoading || productStock === 0
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                }`}
-                              >
-                                {cartLoading ? 'Adding...' : productStock === 0 ? 'Out of Stock' : 'Add to cart'}
-                              </button>
+                              {productStock === 0 ? (
+                                <button disabled className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
+                              ) : (
+                                <div className="flex-1">
+                                  {/* Reusable quantity-aware button */}
+                                  <AddToCartButton productId={product.id} className="w-full" />
+                                </div>
+                              )}
                               <button 
                                 onClick={(e) => e.preventDefault()}
                                 className="p-2 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors flex-shrink-0"
@@ -916,20 +900,14 @@ export default function MarketplacePage() {
 
                             {/* Action Buttons */}
                             <div className="flex gap-2">
-                              <button 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleAddToCart(product.id);
-                                }}
-                                disabled={cartLoading || productStock === 0}
-                                className={`flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                                  cartLoading || productStock === 0
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                }`}
-                              >
-                                {cartLoading ? 'Adding...' : productStock === 0 ? 'Out of Stock' : 'Add to cart'}
-                              </button>
+                              {productStock === 0 ? (
+                                <button disabled className="flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
+                              ) : (
+                                <div className="flex-1">
+                                  {/* Reusable quantity-aware button */}
+                                  <AddToCartButton productId={product.id} className="w-full" />
+                                </div>
+                              )}
                               <button 
                                 onClick={(e) => e.preventDefault()}
                                 className="p-2.5 md:p-2 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors"

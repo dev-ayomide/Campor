@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProductBySlug } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
+import { AddToCartButton } from '../../components/cart';
 import { Star, ChevronLeft, ChevronRight, Heart, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
@@ -9,7 +10,7 @@ import profileImage from '../../assets/images/profile.png';
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { addProductToCart, checkProductInCart } = useCart();
+  const { checkProductInCart } = useCart();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,20 +49,7 @@ export default function ProductDetailPage() {
     }
   }, [slug]);
 
-  // Handle add to cart
-  const handleAddToCart = async () => {
-    if (!product || addingToCart) return;
-    
-    try {
-      setAddingToCart(true);
-      await addProductToCart(product.id, quantity);
-      console.log('✅ Product added to cart successfully');
-    } catch (error) {
-      console.error('❌ Failed to add product to cart:', error);
-    } finally {
-      setAddingToCart(false);
-    }
-  };
+  // Handle add to cart (no longer needed; using AddToCartButton controls per item)
 
   // Check if product is in cart
   const isInCart = product ? checkProductInCart(product.id) : false;
@@ -266,58 +254,15 @@ export default function ProductDetailPage() {
 
             {/* Quantity and Actions */}
             <div className="space-y-4">
-              {/* Quantity */}
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-900">Quantity:</label>
-                <button 
-                  onClick={() => handleQuantityChange(-1)}
-                  disabled={quantity <= 1}
-                  className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  -
-                </button>
-                <span className="text-lg font-medium min-w-[2rem] text-center">{quantity}</span>
-                <button 
-                  onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= product.stockQuantity}
-                  className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* Action Buttons */}
+              {/* Unified quantity-aware cart control */}
               <div className="flex gap-3">
                 <button className="flex-1 bg-white border border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                   <Heart className="w-5 h-5" />
                   Wishlist
                 </button>
-                
-                {isInCart ? (
-                  <button 
-                    disabled
-                    className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <span>✓ In Cart</span>
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleAddToCart}
-                    disabled={addingToCart || product.stockQuantity <= 0}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {addingToCart ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Adding...
-                      </>
-                    ) : (
-                      <>
-                        <span>Add to Cart</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <div className="flex-1">
+                  <AddToCartButton productId={product.id} className="w-full" />
+                </div>
               </div>
             </div>
 

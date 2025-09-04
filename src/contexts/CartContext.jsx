@@ -26,14 +26,28 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cartId, setCartId] = useState(null);
+  
+  // Fallback: try to derive cartId from stored user if present (read-only)
+  useEffect(() => {
+    if (!cartId) {
+      try {
+        const raw = localStorage.getItem('campor_user');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const fallbackId = parsed?.cart?.id || null;
+          if (fallbackId) setCartId(fallbackId);
+        }
+      } catch (_) {}
+    }
+  }, [cartId]);
 
   // Load cart from backend
-  const loadCart = useCallback(async () => {
+  const loadCart = useCallback(async (force = false) => {
     try {
       setLoading(true);
       setError(null);
       
-      const cartData = await getCart();
+      const cartData = await getCart(force);
       console.log('🔍 CartContext: Raw cart data:', cartData);
       
       // Ensure cart is always an array
@@ -71,7 +85,7 @@ export const CartProvider = ({ children }) => {
       const response = await addToCart(currentCartId, items);
       
       // Reload cart to get updated data
-      await loadCart();
+      await loadCart(true); // bypass cache right after add
       
       console.log('✅ Items added to cart successfully:', response);
       return response;

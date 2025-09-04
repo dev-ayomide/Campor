@@ -46,13 +46,13 @@ const setCachedCart = (cart) => {
 
 
 // Get user cart
-export async function getCart() {
+export async function getCart(force = false) {
   try {
     console.log('🔍 CartService: Fetching user cart...');
     
-    // Check cache first
+    // Check cache first (unless forced)
     const cachedCart = getCachedCart();
-    if (cachedCart) {
+    if (cachedCart && !force) {
       console.log('✅ CartService: Returning cached cart');
       return cachedCart;
     }
@@ -220,7 +220,10 @@ export function isProductInCart(cart, productId) {
   
   return cart.some(sellerGroup => 
     sellerGroup.items && Array.isArray(sellerGroup.items) &&
-    sellerGroup.items.some(item => item.productId === productId)
+    sellerGroup.items.some(item => {
+      const itemProductId = item.productId || item.product?.id;
+      return itemProductId === productId;
+    })
   );
 }
 
@@ -230,7 +233,10 @@ export function getCartItemByProductId(cart, productId) {
   
   for (const sellerGroup of cart) {
     if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
-      const item = sellerGroup.items.find(item => item.productId === productId);
+      const item = sellerGroup.items.find(item => {
+        const itemProductId = item.productId || item.product?.id;
+        return itemProductId === productId;
+      });
       if (item) return item;
     }
   }
