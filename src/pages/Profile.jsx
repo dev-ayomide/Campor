@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('Orders');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -52,11 +53,14 @@ export default function ProfilePage() {
           displayName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
           email: userData.email || ''
         });
-        
+        // Mark profile as loaded and clear any prior error
+        setProfileLoaded(true);
+        setError(null);
         setLoading(false);
       } catch (err) {
         console.error('❌ Profile: Failed to fetch user profile:', err);
         setError('Failed to load profile data. Please try again.');
+        setProfileLoaded(false);
         setLoading(false);
         
         // If token is invalid, redirect to login
@@ -139,7 +143,7 @@ export default function ProfilePage() {
     console.log('Adding item to cart:', id);
   };
 
-  if (loading) {
+  if (loading && !profileLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -150,7 +154,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (error) {
+  if (error && !profileLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
