@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../cart';
-import { Star, Heart } from 'lucide-react';
+import { WishlistButton } from '../wishlist';
+import { Star } from 'lucide-react';
 
 export default function ProductCard({ product }) {
   const formatPrice = (price) => {
@@ -40,10 +41,7 @@ export default function ProductCard({ product }) {
             </div>
           )}
           
-          {/* Wishlist Button */}
-          <button className="absolute top-2 right-2 p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-sm transition-all">
-            <Heart className="w-4 h-4 text-gray-600" />
-          </button>
+
         </div>
       </Link>
 
@@ -106,7 +104,7 @@ export default function ProductCard({ product }) {
           </div>
         )}
 
-        {/* Add to Cart Button */}
+        {/* Add to Cart and Wishlist Buttons */}
         <div className="mt-auto">
           {product.stockQuantity <= 0 ? (
             <button 
@@ -116,10 +114,15 @@ export default function ProductCard({ product }) {
               Out of Stock
             </button>
           ) : (
-            <AddToCartButton 
-              productId={product.id} 
-              className="w-full"
-            />
+            <div className="flex items-center gap-2">
+              <AddToCartButton 
+                productId={product.id} 
+                className="flex-1"
+              />
+              <WishlistButton 
+                productId={product.id}
+              />
+            </div>
           )}
         </div>
       </div>

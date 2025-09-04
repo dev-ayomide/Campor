@@ -3,7 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProductBySlug } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
-import { Star, ChevronLeft, ChevronRight, Heart, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
+import { WishlistButton } from '../../components/wishlist';
+import { Star, ChevronLeft, ChevronRight, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
@@ -256,10 +257,10 @@ export default function ProductDetailPage() {
             <div className="space-y-4">
               {/* Unified quantity-aware cart control */}
               <div className="flex gap-3">
-                <button className="flex-1 bg-white border border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                  <Heart className="w-5 h-5" />
-                  Wishlist
-                </button>
+                <WishlistButton 
+                  productId={product.id} 
+                  className="flex-1 py-3 px-6"
+                />
                 <div className="flex-1">
                   <AddToCartButton productId={product.id} className="w-full" />
                 </div>

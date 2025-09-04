@@ -13,6 +13,7 @@ import marketplaceImage from '../../assets/images/marketplace.png';
 import productImage from '../../assets/images/product.png';
 import SearchHighlight from '../../components/search/SearchHighlight';
 import { AddToCartButton } from '../../components/cart';
+import { WishlistButton } from '../../components/wishlist';
 
 export default function MarketplacePage() {
   const { user, token } = useContext(AuthContext);
@@ -321,14 +322,14 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative bg-blue-900 text-white overflow-hidden">
+      <section className="relative bg-blue-900 text-white overflow-hidden mx-4 mt-4 rounded-3xl">
         <div className="absolute inset-0">
           <img 
             src={marketplaceImage} 
             alt="Marketplace" 
-            className="w-full h-full object-cover opacity-80"
+            className="w-full h-full object-cover opacity-80 rounded-3xl"
           />
-          <div className="absolute inset-0 bg-blue-900 bg-opacity-60"></div>
+          <div className="absolute inset-0 bg-blue-900 bg-opacity-40 rounded-3xl"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-16 lg:py-24">
@@ -427,7 +428,7 @@ export default function MarketplacePage() {
                 {/* Mobile Dropdown Container */}
                 <div className="flex gap-3 flex-1 relative">
                 {/* Category Dropdown */}
-                <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: 1000000 }}>
+                <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: 40 }}>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -453,7 +454,7 @@ export default function MarketplacePage() {
 
                   {/* Category Options */}
                   {openDropdown === 'category' && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" style={{ zIndex: 999999, position: 'absolute !important' }}>
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-40">
 
                       {categoriesLoading ? (
                         <div className="px-4 py-3 text-sm text-gray-500">Loading categories...</div>
@@ -486,7 +487,7 @@ export default function MarketplacePage() {
                 </div>
 
                 {/* Price Dropdown */}
-                <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: 1000000 }}>
+                <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: 40 }}>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -508,7 +509,7 @@ export default function MarketplacePage() {
 
                   {/* Price Options */}
                   {openDropdown === 'price' && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" style={{ zIndex: 999999, position: 'absolute !important' }}>
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-40">
 
                       {priceRanges.map((price) => (
                         <button
@@ -539,7 +540,7 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            <div className={`bg-white rounded-xl shadow-sm sticky top-4 overflow-hidden ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
+            <div className={`bg-white rounded-xl shadow-sm sticky top-4 overflow-hidden z-30 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
               {/* Search Section */}
               <div className="p-3 border-b border-gray-100">
                 <div className="relative">
@@ -777,17 +778,7 @@ export default function MarketplacePage() {
                           </>
                         )}
 
-                        {/* Favorite Button - Only for grid view */}
-                        {viewMode === 'grid' && (
-                          <button 
-                            onClick={(e) => e.preventDefault()}
-                            className="absolute top-3 right-3 p-1.5 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full shadow-md transition-all"
-                          >
-                            <svg className="w-4 h-4 text-gray-600 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                          </button>
-                        )}
+
 
                         {/* Image indicator dots - Only for grid view */}
                         {productImages.length > 1 && viewMode === 'grid' && (
@@ -853,14 +844,10 @@ export default function MarketplacePage() {
                                   <AddToCartButton productId={product.id} className="w-full" />
                                 </div>
                               )}
-                              <button 
-                                onClick={(e) => e.preventDefault()}
-                                className="p-2 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors flex-shrink-0"
-                              >
-                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                              </button>
+                              <WishlistButton 
+                                productId={product.id}
+                                className="flex-shrink-0"
+                              />
                             </div>
                           </div>
                         ) : (
@@ -908,14 +895,9 @@ export default function MarketplacePage() {
                                   <AddToCartButton productId={product.id} className="w-full" />
                                 </div>
                               )}
-                              <button 
-                                onClick={(e) => e.preventDefault()}
-                                className="p-2.5 md:p-2 border border-gray-300 hover:border-gray-400 rounded-lg transition-colors"
-                              >
-                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                              </button>
+                              <WishlistButton 
+                                productId={product.id}
+                              />
                             </div>
                           </div>
                         )}

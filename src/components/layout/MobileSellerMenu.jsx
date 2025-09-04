@@ -108,79 +108,102 @@ export default function MobileSellerMenu({ isOpen, onClose }) {
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="lg:hidden absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mx-4 mt-2 z-40">
-      <div className="py-2">
+    <>
+      {/* Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Mobile Seller Menu */}
+      <div
+        className={`
+          fixed inset-0 z-50 bg-white flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100">
+        <div className="w-full flex items-center justify-between px-4 pt-4 pb-0">
+          <div className="flex items-center">
+            <img 
+              src="/logo.svg" 
+              alt="Campor Logo" 
+              className="w-8 h-8 mr-3 object-contain"
+            />
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Seller Dashboard</div>
+              <div className="text-xs text-gray-500">Manage your business</div>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <div>
-            <div className="text-sm font-semibold text-gray-900">Seller Dashboard</div>
-            <div className="text-xs text-gray-500">Manage your business</div>
-          </div>
         </div>
 
-        {/* Seller Navigation */}
-        {sellerMenuItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            onClick={onClose}
-            className={`flex items-center px-4 py-3 hover:bg-gray-50 transition-colors ${
-              item.isSpecial
-                ? 'text-blue-600 hover:bg-blue-50 border border-blue-200 mx-2 rounded-lg'
-                : item.active 
-                ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' 
-                : 'text-gray-700'
-            }`}
-          >
-            {item.icon}
-            <span className="ml-3 text-sm font-medium">{item.label}</span>
-          </Link>
-        ))}
-
-        {/* General Section */}
-        <div className="border-t border-gray-100 mt-2">
-          <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide">
-            General
-          </div>
-          {generalItems.map((item) => (
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          {/* Seller Navigation */}
+          {sellerMenuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               onClick={onClose}
-              className={`flex items-center px-4 py-3 hover:bg-gray-50 transition-colors ${
-                item.active ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+              className={`flex items-center px-4 py-3 hover:bg-gray-50 transition-colors rounded-lg mb-2 ${
+                item.isSpecial
+                  ? 'text-blue-600 hover:bg-blue-50 border border-blue-200'
+                  : item.active 
+                  ? 'bg-blue-50 text-blue-600' 
+                  : 'text-gray-700'
               }`}
             >
               {item.icon}
               <span className="ml-3 text-sm font-medium">{item.label}</span>
             </Link>
           ))}
-        </div>
 
-        {/* Logout */}
-        <div className="border-t border-gray-100">
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span className="ml-3 text-sm font-medium">Sign Out</span>
-          </button>
+          {/* General Section */}
+          <div className="border-t border-gray-100 mt-4 pt-4">
+            <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide mb-2">
+              General
+            </div>
+            {generalItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
+                className={`flex items-center px-4 py-3 hover:bg-gray-50 transition-colors rounded-lg mb-2 ${
+                  item.active ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+              >
+                {item.icon}
+                <span className="ml-3 text-sm font-medium">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Logout */}
+          <div className="border-t border-gray-100 mt-4 pt-4">
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors rounded-lg"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="text-sm font-medium">Sign Out</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

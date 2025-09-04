@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import { AuthenticatedRedirect, RequireAuth } from './components/ProtectedRoute';
 import { CartProvider } from './contexts/CartContext';
+import { WishlistProvider } from './contexts/WishlistContext';
 
 // Import the verify image
 import verifyImage from './assets/images/verifyscreen.png';
@@ -10,6 +11,7 @@ import verifyImage from './assets/images/verifyscreen.png';
 // Import pages from new organized structure
 import { Landing, Marketplace, ProductDetail } from './pages/marketplace';
 import { Cart } from './pages/cart';
+import { Wishlist } from './pages/wishlist';
 import Profile from './pages/Profile';
 import CategoryPage from './pages/categories/CategoryPage';
 import { 
@@ -28,17 +30,31 @@ export default function App() {
   return (
     <Router>
       <CartProvider>
-        <Routes>
+        <WishlistProvider>
+          <Routes>
         <Route path="/" element={
           <AuthenticatedRedirect>
             <MainLayout><Landing /></MainLayout>
           </AuthenticatedRedirect>
         } />
-        <Route path="/marketplace" element={<MainLayout><Marketplace /></MainLayout>} />
-        <Route path="/product/:slug" element={<MainLayout><ProductDetail /></MainLayout>} />
+        <Route path="/marketplace" element={
+          <RequireAuth>
+            <MainLayout><Marketplace /></MainLayout>
+          </RequireAuth>
+        } />
+        <Route path="/product/:slug" element={
+          <RequireAuth>
+            <MainLayout><ProductDetail /></MainLayout>
+          </RequireAuth>
+        } />
         <Route path="/cart" element={
           <RequireAuth>
             <MainLayout><Cart /></MainLayout>
+          </RequireAuth>
+        } />
+        <Route path="/wishlist" element={
+          <RequireAuth>
+            <MainLayout><Wishlist /></MainLayout>
           </RequireAuth>
         } />
         <Route path="/profile" element={
@@ -49,11 +65,17 @@ export default function App() {
         
         {/* Category Routes */}
         <Route path="/category/:categoryId" element={
-          <MainLayout><CategoryPage /></MainLayout>
+          <RequireAuth>
+            <MainLayout><CategoryPage /></MainLayout>
+          </RequireAuth>
         } />
         
         {/* Seller Routes */}
-        <Route path="/seller/onboarding" element={<MainLayout><Onboarding /></MainLayout>} />
+        <Route path="/seller/onboarding" element={
+          <RequireAuth>
+            <MainLayout><Onboarding /></MainLayout>
+          </RequireAuth>
+        } />
         <Route path="/seller/dashboard" element={
           <RequireAuth>
             <Dashboard />
@@ -94,6 +116,7 @@ export default function App() {
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
+        </WishlistProvider>
       </CartProvider>
     </Router>
   );
