@@ -29,6 +29,12 @@ export const API_ENDPOINTS = {
     ONLY: '/categories/only',
     BY_ID: '/categories',
   },
+  ORDERS: {
+    USER: '/orders/user',
+  },
+  PAYMENTS: {
+    INITIATE: '/payments/initiate',
+  },
   CART: {
     GET: '/cart',
     ADD: '/cart/add',

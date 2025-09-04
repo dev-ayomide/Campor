@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { initiatePayment } from '../../services/paymentsService';
 import { useCart } from '../../contexts/CartContext';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
 export default function CartPage() {
   const { user } = useAuth();
-  const { cart, loading, error, updateItemQuantity, removeItemFromCart, clearUserCart, getCartTotals } = useCart();
+  const { cart, loading, error, updateItemQuantity, removeItemFromCart, clearUserCart, getCartTotals, cartId } = useCart();
   const isSignedIn = !!user;
   
   // Use cart data from context (already grouped by seller)
@@ -52,8 +53,29 @@ export default function CartPage() {
     console.log(`Checkout for ${groupedItems[sellerId].seller.name}: ${formatPrice(total)}`);
   };
 
-  const handleCheckoutAll = () => {
-    console.log(`Checkout all items: ${formatPrice(getTotalAmount())}`);
+  const handleCheckoutAll = async () => {
+    try {
+      if (!isSignedIn) {
+        alert('Please sign in to continue');
+        return;
+      }
+      const totalAmountNaira = getTotalAmount();
+      const amountInKobo = Math.round((Number(totalAmountNaira) || 0) * 100);
+      if (amountInKobo <= 0) return;
+      const email = user?.email;
+      const currentCartId = cartId;
+      const res = await initiatePayment({ email, amount: amountInKobo, cartId: currentCartId });
+      const url = res?.authorization_url || res?.data?.authorization_url;
+      if (url) {
+        window.location.href = url;
+      } else {
+        console.error('Payment initiation did not return authorization_url', res);
+        alert('Unable to start payment. Please try again.');
+      }
+    } catch (e) {
+      console.error('Failed to initiate payment', e);
+      alert(e.message || 'Failed to initiate payment');
+    }
   };
 
   return (
