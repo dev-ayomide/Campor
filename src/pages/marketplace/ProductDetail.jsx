@@ -10,13 +10,15 @@ import profileImage from '../../assets/images/profile.png';
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { checkProductInCart, getCartItem } = useCart();
+  const { checkProductInCart } = useCart();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('Reviews');
+  const [addingToCart, setAddingToCart] = useState(false);
 
   // Fetch product data
   useEffect(() => {
@@ -47,10 +49,10 @@ export default function ProductDetailPage() {
     }
   }, [slug]);
 
-  // Check if product is in cart and get cart item details
+  // Handle add to cart (no longer needed; using AddToCartButton controls per item)
+
+  // Check if product is in cart
   const isInCart = product ? checkProductInCart(product.id) : false;
-  const cartItem = product ? getCartItem(product.id) : null;
-  const cartQuantity = cartItem?.quantity || 0;
 
   // Format price
   const formatPrice = (price) => {
@@ -81,20 +83,18 @@ export default function ProductDetailPage() {
     setCurrentImageIndex(prev => prev < product.imageUrls.length - 1 ? prev + 1 : 0);
   };
 
-
+  const handleQuantityChange = (change) => {
+    setQuantity(prev => Math.max(1, prev + change));
+  };
 
   // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col items-center justify-center h-64">
-            <div className="relative">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200"></div>
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
-            </div>
-            <span className="mt-4 text-gray-600 font-medium">Loading product details...</span>
-            <span className="mt-1 text-sm text-gray-500">This might take a moment</span>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading product details...</span>
           </div>
         </div>
       </div>
@@ -252,41 +252,17 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Cart Status and Actions */}
+            {/* Quantity and Actions */}
             <div className="space-y-4">
-              {/* Show current cart quantity if product is in cart */}
-              {isInCart && cartQuantity > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-800">
-                      You have {cartQuantity} {cartQuantity === 1 ? 'item' : 'items'} of this product in your cart
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
+              {/* Unified quantity-aware cart control */}
               <div className="flex gap-3">
                 <button className="flex-1 bg-white border border-gray-300 text-gray-900 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                   <Heart className="w-5 h-5" />
                   Wishlist
                 </button>
-                
-                {product.stockQuantity <= 0 ? (
-                  <button 
-                    disabled
-                    className="flex-1 bg-gray-400 text-white py-3 px-6 rounded-lg font-medium cursor-not-allowed"
-                  >
-                    Out of Stock
-                  </button>
-                ) : (
-                  <div className="flex-1">
-                    <AddToCartButton 
-                      productId={product.id} 
-                      className="w-full py-3 px-6 font-medium"
-                    />
-                  </div>
-                )}
+                <div className="flex-1">
+                  <AddToCartButton productId={product.id} className="w-full" />
+                </div>
               </div>
             </div>
 

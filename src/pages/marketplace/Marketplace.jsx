@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+// import { addToCart } from '../../services/authService';
 import { 
   getAllProductsAlgolia, 
   searchProductsAlgolia, 
@@ -7,13 +8,15 @@ import {
   debouncedSearch 
 } from '../../services/algoliaService';
 import { AuthContext } from '../../context/AuthContext';
-import { AddToCartButton } from '../../components/cart';
+import { useCart } from '../../contexts/CartContext';
 import marketplaceImage from '../../assets/images/marketplace.png';
 import productImage from '../../assets/images/product.png';
 import SearchHighlight from '../../components/search/SearchHighlight';
+import { AddToCartButton } from '../../components/cart';
 
 export default function MarketplacePage() {
   const { user, token } = useContext(AuthContext);
+  const { addProductToCart } = useCart();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
@@ -38,7 +41,9 @@ export default function MarketplacePage() {
     itemsPerPage: 10
   });
   
-
+  // Cart states
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
 
   // Categories state - will be fetched from backend
   const [categories, setCategories] = useState(['All']); // Start with 'All' option
@@ -240,7 +245,35 @@ export default function MarketplacePage() {
     });
   };
 
+  const handleAddToCart = async (productId, quantity = 1) => {
+    // Check if user is authenticated
+    if (!token || !user) {
+      setCartMessage('Please sign in to add items to cart');
+      setTimeout(() => setCartMessage(''), 3000);
+      navigate('/auth');
+      return;
+    }
 
+    try {
+      setCartLoading(true);
+      setCartMessage('');
+      
+      console.log('🔍 Marketplace: Adding product to cart via CartContext:', { productId, quantity });
+      await addProductToCart(productId, quantity);
+      
+      setCartMessage('Product added to cart successfully!');
+      setTimeout(() => setCartMessage(''), 3000);
+      
+      console.log('✅ Marketplace: Product added to cart successfully');
+      
+    } catch (err) {
+      console.error('❌ Marketplace: Failed to add product to cart:', err);
+      setCartMessage(err.message || 'Failed to add product to cart. Please try again.');
+      setTimeout(() => setCartMessage(''), 3000);
+    } finally {
+      setCartLoading(false);
+    }
+  };
 
   const handlePrevImage = (productId, totalImages) => {
     setProductImageIndexes(prev => ({
@@ -620,6 +653,16 @@ export default function MarketplacePage() {
 
           {/* Main Content Area */}
           <main className="flex-1 min-w-0">
+            {/* Cart Message Display */}
+            {cartMessage && (
+              <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${
+                cartMessage.includes('successfully') 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {cartMessage}
+              </div>
+            )}
             
             {/* Products Grid/List */}
             <div className={`overflow-hidden ${
@@ -629,13 +672,9 @@ export default function MarketplacePage() {
             }`}>
               {loading ? (
                 <div className="text-center py-10">
-                  <div className="inline-flex flex-col items-center gap-3 text-gray-500">
-                    <div className="relative">
-                      <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-200"></div>
-                      <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
-                    </div>
-                    <span className="font-medium">{searchQuery.trim() ? 'Searching products...' : 'Loading products...'}</span>
-                    <span className="text-sm text-gray-400">Please wait a moment</span>
+                  <div className="inline-flex items-center gap-2 text-gray-500">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span>{searchQuery.trim() ? 'Searching...' : 'Loading products...'}</span>
                   </div>
                 </div>
               ) : error ? (
@@ -807,21 +846,11 @@ export default function MarketplacePage() {
                             {/* Action Buttons - Bottom aligned */}
                             <div className="flex gap-2 items-center">
                               {productStock === 0 ? (
-                                <button 
-                                  disabled
-                                  className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 cursor-not-allowed text-white"
-                                >
-                                  Out of Stock
-                                </button>
+                                <button disabled className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
                               ) : (
-                                <div 
-                                  onClick={(e) => e.preventDefault()}
-                                  className="flex-1"
-                                >
-                                  <AddToCartButton 
-                                    productId={product.id} 
-                                    className="w-full py-2 px-3 text-sm font-medium"
-                                  />
+                                <div className="flex-1">
+                                  {/* Reusable quantity-aware button */}
+                                  <AddToCartButton productId={product.id} className="w-full" />
                                 </div>
                               )}
                               <button 
@@ -872,21 +901,11 @@ export default function MarketplacePage() {
                             {/* Action Buttons */}
                             <div className="flex gap-2">
                               {productStock === 0 ? (
-                                <button 
-                                  disabled
-                                  className="flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 cursor-not-allowed text-white"
-                                >
-                                  Out of Stock
-                                </button>
+                                <button disabled className="flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
                               ) : (
-                                <div 
-                                  onClick={(e) => e.preventDefault()}
-                                  className="flex-1"
-                                >
-                                  <AddToCartButton 
-                                    productId={product.id} 
-                                    className="w-full py-2.5 md:py-2 px-3 text-sm font-medium"
-                                  />
+                                <div className="flex-1">
+                                  {/* Reusable quantity-aware button */}
+                                  <AddToCartButton productId={product.id} className="w-full" />
                                 </div>
                               )}
                               <button 

@@ -8,8 +8,7 @@ import {
   calculateCartTotals,
   getCartItemCount,
   isProductInCart,
-  getCartItemByProductId,
-  clearCartCache
+  getCartItemByProductId
 } from '../services/cartService';
 
 const CartContext = createContext();
@@ -27,19 +26,28 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [cartId, setCartId] = useState(null);
+  
+  // Fallback: try to derive cartId from stored user if present (read-only)
+  useEffect(() => {
+    if (!cartId) {
+      try {
+        const raw = localStorage.getItem('campor_user');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const fallbackId = parsed?.cart?.id || null;
+          if (fallbackId) setCartId(fallbackId);
+        }
+      } catch (_) {}
+    }
+  }, [cartId]);
 
   // Load cart from backend
-  const loadCart = useCallback(async (forceRefresh = false) => {
+  const loadCart = useCallback(async (force = false) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Clear cache if force refresh is requested
-      if (forceRefresh) {
-        clearCartCache();
-      }
-      
-      const cartData = await getCart();
+      const cartData = await getCart(force);
       console.log('🔍 CartContext: Raw cart data:', cartData);
       
       // Ensure cart is always an array
@@ -71,16 +79,13 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Clear cache before adding to ensure fresh data
-      clearCartCache();
-      
       // Only pass cartId if it exists and is not null
       const currentCartId = cartId || null;
       
       const response = await addToCart(currentCartId, items);
       
-      // Immediately reload cart with force refresh to get updated data
-      await loadCart(true);
+      // Reload cart to get updated data
+      await loadCart(true); // bypass cache right after add
       
       console.log('✅ Items added to cart successfully:', response);
       return response;
@@ -99,13 +104,10 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Clear cache before updating
-      clearCartCache();
-      
       const response = await updateCartItemQuantity(itemId, quantity);
       
-      // Immediately reload cart with force refresh to get updated data
-      await loadCart(true);
+      // Reload cart to get updated data
+      await loadCart();
       
       console.log('✅ Cart item quantity updated successfully:', response);
       return response;
@@ -124,13 +126,10 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Clear cache before removing
-      clearCartCache();
-      
       const response = await removeFromCart(itemId);
       
-      // Immediately reload cart with force refresh to get updated data
-      await loadCart(true);
+      // Reload cart to get updated data
+      await loadCart();
       
       console.log('✅ Item removed from cart successfully:', response);
       return response;
