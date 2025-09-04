@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { getCurrentUser, updateProfile } from '../services/authService';
+import { getUserOrders } from '../services/ordersService';
 import profileImage from '../assets/images/profile.png';
 import productImage from '../assets/images/product.png';
 
@@ -11,6 +12,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('Orders');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState(null);
+  const [orders, setOrders] = useState([]);
   
   const [accountData, setAccountData] = useState({
     firstName: '',
@@ -66,33 +70,25 @@ export default function ProfilePage() {
     fetchUserProfile();
   }, [token, navigate, logout]);
 
-  // Mock orders data
-  const orders = [
-    {
-      id: '#3456_768',
-      date: 'October 17, 2023',
-      status: 'Pending',
-      price: 'N1234.00'
-    },
-    {
-      id: '#3456_980',
-      date: 'October 11, 2023',
-      status: 'Delivered',
-      price: 'N345.00'
-    },
-    {
-      id: '#3456_120',
-      date: 'August 24, 2023',
-      status: 'Delivered',
-      price: 'N2345.00'
-    },
-    {
-      id: '#3456_030',
-      date: 'August 12, 2023',
-      status: 'Delivered',
-      price: 'N845.00'
-    }
-  ];
+  // Fetch user orders when Orders tab active
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (activeTab !== 'Orders') return;
+      if (!token) return;
+      try {
+        setOrdersLoading(true);
+        setOrdersError(null);
+        const data = await getUserOrders();
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setOrdersError(e.message || 'Failed to load orders');
+        setOrders([]);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [activeTab, token]);
 
   // Mock wishlist data
   const wishlistItems = [
@@ -222,38 +218,69 @@ export default function ProfilePage() {
                   
                   {/* Orders Table */}
                   <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Order ID</th>
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Date</th>
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Status</th>
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders.map((order) => (
-                          <tr key={order.id} className="border-b border-gray-100">
-                            <td className="py-6">
-                              <span className="font-medium text-gray-900">{order.id}</span>
-                            </td>
-                            <td className="py-6 text-gray-600">{order.date}</td>
-                            <td className="py-6">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                order.status === 'Delivered' 
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="py-6">
-                              <span className="font-medium text-gray-900">{order.price}</span>
-                            </td>
+                    {ordersLoading ? (
+                      <div className="flex items-center gap-2 text-gray-600 p-6">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent"></div>
+                        <span>Loading orders...</span>
+                      </div>
+                    ) : ordersError ? (
+                      <div className="p-6 text-red-600">{ordersError}</div>
+                    ) : orders.length === 0 ? (
+                      <div className="p-6 text-gray-600">No orders yet.</div>
+                    ) : (
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-4 text-sm font-medium text-gray-600">Order Code</th>
+                            <th className="text-left py-4 text-sm font-medium text-gray-600">Date</th>
+                            <th className="text-left py-4 text-sm font-medium text-gray-600">Status</th>
+                            <th className="text-left py-4 text-sm font-medium text-gray-600">Total</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {orders.map((order) => (
+                            <tr key={order.id} className="border-b border-gray-100 align-top">
+                              <td className="py-6">
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-gray-900">{order.orderCode || order.id}</span>
+                                  {order.settlementCode && (
+                                    <span className="text-xs text-gray-500">Settlement: {order.settlementCode}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-6 text-gray-600">{new Date(order.createdAt).toLocaleString()}</td>
+                              <td className="py-6">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  order.orderStatus === 'DELIVERED'
+                                    ? 'bg-green-100 text-green-800'
+                                    : order.orderStatus === 'CANCELLED'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {order.orderStatus}
+                                </span>
+                              </td>
+                              <td className="py-6">
+                                <span className="font-medium text-gray-900">₦{Number(order.totalPrice || 0).toLocaleString()}</span>
+                                {Array.isArray(order.orderItems) && order.orderItems.length > 0 && (
+                                  <div className="mt-2 space-y-2">
+                                    {order.orderItems.map((item) => (
+                                      <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
+                                        <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
+                                        <div className="flex-1">
+                                          <div className="font-medium text-gray-900">{item.product?.name}</div>
+                                          <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               )}
