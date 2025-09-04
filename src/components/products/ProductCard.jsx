@@ -108,10 +108,19 @@ export default function ProductCard({ product }) {
 
         {/* Add to Cart Button */}
         <div className="mt-auto">
-          <AddToCartButton 
-            productId={product.id} 
-            className="w-full"
-          />
+          {product.stockQuantity <= 0 ? (
+            <button 
+              disabled
+              className="w-full py-2 px-4 bg-gray-400 text-white rounded-lg cursor-not-allowed"
+            >
+              Out of Stock
+            </button>
+          ) : (
+            <AddToCartButton 
+              productId={product.id} 
+              className="w-full"
+            />
+          )}
         </div>
       </div>
     </div>
