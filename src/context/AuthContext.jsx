@@ -190,6 +190,45 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateSellerData = async (sellerId) => {
+    try {
+      // Since getSellerProfile might not work, let's use getSellerCatalogue
+      // which includes seller information and is known to work
+      const catalogueData = await authService.getSellerCatalogue(sellerId);
+      console.log('✅ AuthContext: Updated seller data from catalogue:', catalogueData);
+      
+      // Extract seller info from catalogue data
+      const sellerProfile = {
+        id: sellerId,
+        catalogueName: catalogueData.catalogueName,
+        storeDescription: catalogueData.storeDescription,
+        cataloguePicture: catalogueData.cataloguePicture,
+        phoneNumber: catalogueData.phoneNumber,
+        whatsappNumber: catalogueData.whatsappNumber,
+        location: catalogueData.location,
+        bankName: catalogueData.bankName,
+        accountNumber: catalogueData.accountNumber,
+        accountName: catalogueData.accountName
+      };
+      
+      // Update the user context with the new seller data
+      setUser(prevUser => {
+        const updatedUser = {
+          ...prevUser,
+          seller: sellerProfile
+        };
+        console.log('🔄 AuthContext: Updating user context with new seller data:', sellerProfile.catalogueName);
+        return updatedUser;
+      });
+      
+      return sellerProfile;
+    } catch (err) {
+      console.error('❌ AuthContext: Failed to update seller data:', err);
+      // Don't throw the error, just log it and continue
+      console.log('ℹ️ AuthContext: Continuing without updating seller data');
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -203,6 +242,7 @@ export function AuthProvider({ children }) {
       completeSellersOnboarding,
       updateUserProfile,
       refreshUserProfile,
+      updateSellerData,
       fetchUserProfile
     }}>
       {children}

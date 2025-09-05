@@ -17,23 +17,26 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
       try {
         setLoading(true);
         
-        // Get seller data from user context first
+        // Always use seller data from user context first (this has the latest updates)
         if (user?.seller) {
           setSellerData(user.seller);
           console.log('✅ Dashboard: Using seller data from context:', user.seller);
+          console.log('✅ Dashboard: Seller name:', user.seller.catalogueName);
+          console.log('✅ Dashboard: Seller description:', user.seller.storeDescription);
         }
         
-        // If we have a seller ID, fetch the catalogue and orders
+        // If we have a seller ID, fetch only products and orders (don't override seller profile)
         if (user?.seller?.id) {
           const [catalogueData, ordersData] = await Promise.all([
             getSellerCatalogue(user.seller.id),
             getSellerOrders(user.seller.id)
           ]);
           
+          // Only update products and orders, keep the seller profile from context
           setProducts(catalogueData.products || []);
           setOrders(ordersData.data || []);
-          console.log('✅ Dashboard: Fetched seller catalogue:', catalogueData);
-          console.log('✅ Dashboard: Fetched seller orders:', ordersData);
+          console.log('✅ Dashboard: Fetched products:', catalogueData.products?.length || 0);
+          console.log('✅ Dashboard: Fetched orders:', ordersData.data?.length || 0);
         }
         
       } catch (err) {
@@ -46,6 +49,14 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
 
     fetchSellerData();
   }, [user]);
+
+  // Separate effect to update seller data when user context changes
+  useEffect(() => {
+    if (user?.seller) {
+      setSellerData(user.seller);
+      console.log('🔄 Dashboard: Seller data updated from context:', user.seller.catalogueName);
+    }
+  }, [user?.seller]);
 
   // Calculate stats from real data
   const totalProducts = products.length;

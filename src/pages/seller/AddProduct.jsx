@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { addProductToCatalogue, getAllCategories } from '../../services/authService';
+import { addProductToCatalogue, getCategoriesOnly } from '../../services/authService';
 
 export default function AddProductPage({ toggleMobileMenu }) {
   const navigate = useNavigate();
@@ -23,12 +23,20 @@ export default function AddProductPage({ toggleMobileMenu }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const categoriesData = await getAllCategories();
-        setCategories(categoriesData);
-        console.log('✅ AddProduct: Fetched categories:', categoriesData);
+        const categoriesData = await getCategoriesOnly();
+        console.log('🔍 AddProduct: Raw categories response:', categoriesData);
+        
+        // Handle different response structures
+        const categories = categoriesData.data || categoriesData || [];
+        console.log('🔍 AddProduct: Processed categories:', categories);
+        console.log('🔍 AddProduct: Is array?', Array.isArray(categories));
+        
+        setCategories(Array.isArray(categories) ? categories : []);
+        console.log('✅ AddProduct: Set categories state:', Array.isArray(categories) ? categories : []);
       } catch (err) {
         console.error('❌ AddProduct: Failed to fetch categories:', err);
         setError('Failed to load categories');
+        setCategories([]); // Set empty array as fallback
       }
     };
 
@@ -246,7 +254,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
                     required
                   >
                     <option value="">Select a category</option>
-                    {categories.map((category) => (
+                    {Array.isArray(categories) && categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
                       </option>

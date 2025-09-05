@@ -21,7 +21,8 @@ import {
   Orders, 
   Customers, 
   Analytics, 
-  AddProduct 
+  AddProduct,
+  Settings
 } from './pages/seller';
 import { AuthLanding, Login, Register, Verify, ForgotPassword, ResetPassword } from './pages/auth';
 import NotFound from './pages/NotFound';
@@ -104,6 +105,11 @@ export default function App() {
         <Route path="/seller/products/add" element={
           <RequireAuth>
             <AddProduct />
+          </RequireAuth>
+        } />
+        <Route path="/seller/settings" element={
+          <RequireAuth>
+            <Settings />
           </RequireAuth>
         } />
 

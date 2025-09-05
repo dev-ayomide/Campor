@@ -161,33 +161,33 @@ export default function SellerOrdersPage() {
 
         {/* Orders Table */}
         {!loading && !error && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
                 All Orders ({filteredOrders.length})
               </h2>
-            </div>
-            
+          </div>
+          
             {filteredOrders.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Order ID</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Customer</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Items</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Status</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Total</th>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Order ID</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Customer</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Items</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Status</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Total</th>
                       <th className="text-left py-3 px-6 font-medium text-gray-600">Date</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
                     {filteredOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="py-4 px-6">
-                          <span className="font-medium text-gray-900">{order.id}</span>
-                        </td>
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="py-4 px-6">
+                      <span className="font-medium text-gray-900">{order.id}</span>
+                    </td>
                         <td className="py-4 px-6">
                           <div>
                             <div className="text-gray-900 font-medium">User ID: {order.userId}</div>
@@ -195,17 +195,17 @@ export default function SellerOrdersPage() {
                           </div>
                         </td>
                         <td className="py-4 px-6 text-gray-900">-</td>
-                        <td className="py-4 px-6">
+                    <td className="py-4 px-6">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
                             {order.orderStatus}
-                          </span>
-                        </td>
+                      </span>
+                    </td>
                         <td className="py-4 px-6 text-gray-900">₦{parseFloat(order.totalPrice || 0).toLocaleString()}</td>
                         <td className="py-4 px-6 text-gray-900">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
                             {order.orderStatus === 'PENDING' && (
                               <button 
                                 onClick={() => handleStatusUpdate(order.id, 'CONFIRMED')}
@@ -224,19 +224,19 @@ export default function SellerOrdersPage() {
                                 Process
                               </button>
                             )}
-                            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="View Order">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="View Order">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
             ) : (
               <div className="text-center py-12">
                 <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,7 +253,7 @@ export default function SellerOrdersPage() {
                 </p>
               </div>
             )}
-          </div>
+        </div>
         )}
 
         {/* Pagination */}
