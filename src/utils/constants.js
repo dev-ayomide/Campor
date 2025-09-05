@@ -16,8 +16,12 @@ export const API_ENDPOINTS = {
     UPDATE_PROFILE: '/users/profile',
   },
   SELLER: {
+    REGISTER: '/sellers/register',
     ONBOARDING: '/seller/onboarding',
     PROFILE: '/seller/profile',
+    CATALOGUE: '/sellers',
+    UPDATE: '/sellers',
+    DELETE_PRODUCT: '/sellers',
   },
   PRODUCTS: {
     ALL: '/products/all',
@@ -43,5 +47,11 @@ export const API_ENDPOINTS = {
     ADD: '/wishlist/add',
     GET: '/wishlist',
     REMOVE: '/wishlist/remove',
+  },
+  ORDERS: {
+    USER: '/orders/user',
+    SELLER: '/orders',
+    CREATE: '/orders',
+    UPDATE_STATUS: '/orders',
   }
 };

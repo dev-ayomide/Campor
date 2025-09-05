@@ -31,12 +31,15 @@ export const WishlistProvider = ({ children }) => {
       
       const wishlistData = await getWishlist(force);
       console.log('🔍 WishlistContext: Raw wishlist data:', wishlistData);
+      console.log('🔍 WishlistContext: Data type:', typeof wishlistData);
+      console.log('🔍 WishlistContext: Is array:', Array.isArray(wishlistData));
       
       // Ensure wishlist is always an array
       const normalizedWishlist = Array.isArray(wishlistData) ? wishlistData : [];
       setWishlist(normalizedWishlist);
       
       console.log('✅ Wishlist loaded successfully:', normalizedWishlist);
+      console.log('🔍 WishlistContext: First item structure:', normalizedWishlist[0]);
     } catch (err) {
       console.error('❌ Failed to load wishlist:', err);
       // Don't set error for authentication issues, just set empty wishlist

@@ -6,7 +6,9 @@ export default function WishlistButton({ productId, className = '' }) {
   const { toggleProductInWishlist, checkProductInWishlist, loading } = useWishlist();
   const [localLoading, setLocalLoading] = useState(false);
   
+  console.log('🔍 WishlistButton: productId:', productId, 'type:', typeof productId);
   const isInWishlist = checkProductInWishlist(productId);
+  console.log('🔍 WishlistButton: isInWishlist:', isInWishlist);
   const isLoading = loading || localLoading;
 
   const handleToggleWishlist = async (e) => {

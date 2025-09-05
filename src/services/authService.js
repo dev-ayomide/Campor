@@ -150,8 +150,7 @@ export async function register(userData) {
     }
     
     const response = await api.post(API_ENDPOINTS.AUTH.REGISTER, {
-      firstName: userData.firstName,
-      lastName: userData.lastName,
+      name: userData.name,
       email: userData.email,
       password: userData.password
     });
@@ -179,7 +178,7 @@ export async function verifyEmail(email, verificationCode) {
     
     const response = await api.post(API_ENDPOINTS.AUTH.VERIFY_EMAIL, {
       email,
-      verificationCode
+      code: verificationCode
     });
     
     console.log('✅ Email verification successful:', response.data);
@@ -277,6 +276,281 @@ export async function updateProfile(userData) {
   }
 }
 
+// ===== SELLER SERVICES =====
+
+// Test function to check seller endpoint connectivity
+export async function testSellerEndpoint() {
+  try {
+    console.log('🔍 SellerService: Testing seller endpoint connectivity...');
+    
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    // Test with a simple GET request first (if available)
+    const testApi = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    
+    // Try to access a simple endpoint first
+    console.log('🔍 SellerService: Testing basic connectivity...');
+    const testResponse = await testApi.get('/auth/me');
+    console.log('✅ SellerService: Basic connectivity test passed');
+    
+    return {
+      success: true,
+      message: 'Seller endpoint connectivity test passed'
+    };
+  } catch (error) {
+    console.error('❌ SellerService: Connectivity test failed:', error);
+    return {
+      success: false,
+      error: error.message,
+      details: error
+    };
+  }
+}
+
+export async function registerSeller(sellerData) {
+  try {
+    console.log('🔍 SellerService: Registering seller...');
+    console.log('🔍 SellerService: Seller data received:', sellerData);
+    
+    // Create FormData for multipart/form-data request
+    const formData = new FormData();
+    
+    // Add required fields
+    formData.append('catalogueName', sellerData.catalogueName);
+    formData.append('bankName', sellerData.bankName);
+    formData.append('accountNumber', sellerData.accountNumber);
+    formData.append('accountName', sellerData.accountName);
+    formData.append('phoneNumber', sellerData.phoneNumber);
+    formData.append('location', sellerData.location);
+    
+    // Add optional fields
+    if (sellerData.storeDescription) {
+      formData.append('storeDescription', sellerData.storeDescription);
+    }
+    if (sellerData.whatsappNumber) {
+      formData.append('whatsappNumber', sellerData.whatsappNumber);
+    }
+    if (sellerData.cataloguePicture) {
+      formData.append('cataloguePicture', sellerData.cataloguePicture);
+    }
+    
+    // Create a new axios instance for multipart/form-data
+    const multipartApi = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 30000, // Longer timeout for file uploads
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // Add auth token
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (token) {
+      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Log FormData contents for debugging
+    console.log('🔍 SellerService: FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    
+    console.log('🔍 SellerService: Making request to:', `${API_BASE_URL}${API_ENDPOINTS.SELLER.REGISTER}`);
+    console.log('🔍 SellerService: Request headers:', multipartApi.defaults.headers);
+    
+    const response = await multipartApi.post(API_ENDPOINTS.SELLER.REGISTER, formData);
+    console.log('✅ SellerService: Seller registered successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to register seller:', error);
+    
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid seller data. Please check your information.');
+    } else if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    } else if (error.response?.status === 409) {
+      throw new Error('You are already registered as a seller.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to register as seller.');
+    }
+  }
+}
+
+export async function getSellerCatalogue(sellerId) {
+  try {
+    console.log('🔍 SellerService: Fetching seller catalogue for ID:', sellerId);
+    
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
+    console.log('✅ SellerService: Seller catalogue fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to fetch seller catalogue:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch seller catalogue.');
+  }
+}
+
+export async function addProductToCatalogue(sellerId, productData) {
+  try {
+    console.log('🔍 SellerService: Adding product to catalogue...');
+    
+    // Create FormData for multipart/form-data request
+    const formData = new FormData();
+    
+    // Add required fields
+    formData.append('name', productData.name);
+    formData.append('description', productData.description);
+    formData.append('price', productData.price);
+    formData.append('stockQuantity', productData.stockQuantity);
+    formData.append('categoryId', productData.categoryId);
+    
+    // Add product images (max 4 files)
+    if (productData.files && productData.files.length > 0) {
+      productData.files.forEach((file, index) => {
+        formData.append('files', file);
+      });
+    }
+    
+    // Create a new axios instance for multipart/form-data
+    const multipartApi = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 30000, // Longer timeout for file uploads
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // Add auth token
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (token) {
+      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await multipartApi.post(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`, formData);
+    console.log('✅ SellerService: Product added to catalogue successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to add product to catalogue:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add product to catalogue.');
+  }
+}
+
+export async function updateProductInCatalogue(productId, productData) {
+  try {
+    console.log('🔍 SellerService: Updating product in catalogue...');
+    
+    // Create FormData for multipart/form-data request
+    const formData = new FormData();
+    
+    // Add fields that are being updated
+    if (productData.name) formData.append('name', productData.name);
+    if (productData.description) formData.append('description', productData.description);
+    if (productData.price) formData.append('price', productData.price);
+    if (productData.stockQuantity) formData.append('stockQuantity', productData.stockQuantity);
+    if (productData.categoryId) formData.append('categoryId', productData.categoryId);
+    
+    // Add product images if provided
+    if (productData.files && productData.files.length > 0) {
+      productData.files.forEach((file, index) => {
+        formData.append('files', file);
+      });
+    }
+    
+    // Create a new axios instance for multipart/form-data
+    const multipartApi = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 30000, // Longer timeout for file uploads
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // Add auth token
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (token) {
+      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await multipartApi.put(`${API_ENDPOINTS.SELLER.UPDATE}/${productId}/catalogue`, formData);
+    console.log('✅ SellerService: Product updated successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to update product:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update product.');
+  }
+}
+
+export async function updateSellerInfo(sellerId, sellerData) {
+  try {
+    console.log('🔍 SellerService: Updating seller information...');
+    
+    // Create FormData for multipart/form-data request
+    const formData = new FormData();
+    
+    // Add fields that are being updated
+    if (sellerData.catalogueName) formData.append('catalogueName', sellerData.catalogueName);
+    if (sellerData.storeDescription) formData.append('storeDescription', sellerData.storeDescription);
+    if (sellerData.bankName) formData.append('bankName', sellerData.bankName);
+    if (sellerData.accountNumber) formData.append('accountNumber', sellerData.accountNumber);
+    if (sellerData.accountName) formData.append('accountName', sellerData.accountName);
+    if (sellerData.phoneNumber) formData.append('phoneNumber', sellerData.phoneNumber);
+    if (sellerData.whatsappNumber) formData.append('whatsappNumber', sellerData.whatsappNumber);
+    if (sellerData.location) formData.append('location', sellerData.location);
+    
+    // Add catalogue picture if provided
+    if (sellerData.cataloguePicture) {
+      formData.append('cataloguePicture', sellerData.cataloguePicture);
+    }
+    
+    // Create a new axios instance for multipart/form-data
+    const multipartApi = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 30000, // Longer timeout for file uploads
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // Add auth token
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (token) {
+      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await multipartApi.put(`${API_ENDPOINTS.SELLER.UPDATE}/${sellerId}`, formData);
+    console.log('✅ SellerService: Seller information updated successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to update seller information:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update seller information.');
+  }
+}
+
+export async function deleteProduct(productId) {
+  try {
+    console.log('🔍 SellerService: Deleting product:', productId);
+    
+    const response = await api.delete(`${API_ENDPOINTS.SELLER.DELETE_PRODUCT}/${productId}`);
+    console.log('✅ SellerService: Product deleted successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to delete product:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete product.');
+  }
+}
+
+// Legacy functions for backward compatibility
 export async function completeSellerOnboarding(sellerData) {
   try {
     const response = await api.post(API_ENDPOINTS.SELLER.ONBOARDING, sellerData);
@@ -550,3 +824,40 @@ export async function deleteCategory(categoryId) {
     throw new Error(error.response?.data?.message || 'Failed to delete category.');
   }
 }
+
+// Seller Orders Functions
+export const getSellerOrders = async (sellerId) => {
+  try {
+    console.log('📦 SellerService: Fetching seller orders for seller:', sellerId);
+    const response = await api.get(`/orders/${sellerId}/seller`);
+    console.log('✅ SellerService: Seller orders fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to fetch seller orders:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch seller orders');
+  }
+};
+
+export const getOrderDetails = async (orderId) => {
+  try {
+    console.log('📦 SellerService: Fetching order details for order:', orderId);
+    const response = await api.get(`/orders/${orderId}`);
+    console.log('✅ SellerService: Order details fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to fetch order details:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch order details');
+  }
+};
+
+export const updateOrderStatus = async (orderId, orderStatus) => {
+  try {
+    console.log('📦 SellerService: Updating order status:', { orderId, orderStatus });
+    const response = await api.put(`/orders/${orderId}/status`, { orderStatus });
+    console.log('✅ SellerService: Order status updated successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to update order status:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update order status');
+  }
+};

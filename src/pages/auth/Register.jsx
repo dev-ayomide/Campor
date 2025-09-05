@@ -23,7 +23,7 @@ export default function RegisterPage() {
     if (password !== confirm) return setLocalErr('Passwords do not match');
 
     try {
-      await register({ fullName, email, password });
+      await register({ name: fullName, email, password });
       // Store email for verification
       localStorage.setItem('campor_verification_email', email);
       // after registration you might want to redirect to verify

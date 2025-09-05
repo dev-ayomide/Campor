@@ -54,6 +54,9 @@ export function clearWishlistCache() {
 export async function getWishlist(force = false) {
   try {
     console.log('🔍 WishlistService: Fetching user wishlist...');
+    console.log('🔍 WishlistService: API Base URL:', API_BASE_URL);
+    console.log('🔍 WishlistService: Endpoint:', API_ENDPOINTS.WISHLIST.GET);
+    console.log('🔍 WishlistService: Full URL:', `${API_BASE_URL}${API_ENDPOINTS.WISHLIST.GET}`);
     
     // Check cache first (unless forced)
     const cachedWishlist = getCachedWishlist();
@@ -64,6 +67,11 @@ export async function getWishlist(force = false) {
     
     const response = await api.get(API_ENDPOINTS.WISHLIST.GET);
     
+    console.log('🔍 WishlistService: Raw API response:', response);
+    console.log('🔍 WishlistService: Response data:', response.data);
+    console.log('🔍 WishlistService: Response data type:', typeof response.data);
+    console.log('🔍 WishlistService: Response data is array:', Array.isArray(response.data));
+    
     // Cache the response
     setCachedWishlist(response.data);
     
@@ -71,6 +79,8 @@ export async function getWishlist(force = false) {
     return response.data;
   } catch (error) {
     console.error('❌ WishlistService: Failed to fetch wishlist:', error);
+    console.error('❌ WishlistService: Error response:', error.response);
+    console.error('❌ WishlistService: Error data:', error.response?.data);
     
     // If it's an authentication error (401), return empty wishlist instead of throwing
     if (error.response?.status === 401) {
@@ -98,13 +108,19 @@ export async function addToWishlist(productId) {
     return response.data;
   } catch (error) {
     console.error('❌ WishlistService: Failed to add product to wishlist:', error);
+    console.error('🔍 WishlistService: Error response data:', error.response?.data);
     
     // Handle the case where product is already in wishlist
-    if (error.response?.status === 400 && error.response?.data?.message?.includes('already in your wishlist')) {
-      console.log('🔍 WishlistService: Product is already in wishlist, treating as success');
-      // Clear cache to force refresh and return success
-      clearWishlistCache();
-      return { message: 'Product is already in your wishlist', alreadyExists: true };
+    if (error.response?.status === 400) {
+      const errorMessage = error.response?.data?.message || '';
+      console.log('🔍 WishlistService: 400 error message:', errorMessage);
+      
+      if (errorMessage.includes('already in your wishlist')) {
+        console.log('🔍 WishlistService: Product is already in wishlist, treating as success');
+        // Clear cache to force refresh and return success
+        clearWishlistCache();
+        return { message: 'Product is already in your wishlist', alreadyExists: true };
+      }
     }
     
     throw new Error(error.response?.data?.message || 'Failed to add product to wishlist.');
@@ -125,13 +141,19 @@ export async function removeFromWishlist(productId) {
     return response.data;
   } catch (error) {
     console.error('❌ WishlistService: Failed to remove product from wishlist:', error);
+    console.error('🔍 WishlistService: Error response data:', error.response?.data);
     
     // Handle the case where product is not in wishlist
-    if (error.response?.status === 400 && error.response?.data?.message?.includes('not in your wishlist')) {
-      console.log('🔍 WishlistService: Product is not in wishlist, treating as success');
-      // Clear cache to force refresh and return success
-      clearWishlistCache();
-      return { message: 'Product is not in your wishlist', notFound: true };
+    if (error.response?.status === 400) {
+      const errorMessage = error.response?.data?.message || '';
+      console.log('🔍 WishlistService: 400 error message:', errorMessage);
+      
+      if (errorMessage.includes('not in your wishlist')) {
+        console.log('🔍 WishlistService: Product is not in wishlist, treating as success');
+        // Clear cache to force refresh and return success
+        clearWishlistCache();
+        return { message: 'Product is not in wishlist', notFound: true };
+      }
     }
     
     throw new Error(error.response?.data?.message || 'Failed to remove product from wishlist.');
@@ -142,10 +164,26 @@ export async function removeFromWishlist(productId) {
 export function isProductInWishlist(wishlist, productId) {
   if (!wishlist || !Array.isArray(wishlist) || !productId) return false;
   
-  return wishlist.some(item => {
+  console.log('🔍 isProductInWishlist: Checking productId:', productId, 'type:', typeof productId);
+  console.log('🔍 isProductInWishlist: Wishlist items:', wishlist);
+  
+  const result = wishlist.some(item => {
+    console.log('🔍 isProductInWishlist: Item structure:', item);
     const itemProductId = item.productId || item.product?.id || item.id;
-    return itemProductId === productId;
+    console.log('🔍 isProductInWishlist: Item productId:', itemProductId, 'type:', typeof itemProductId);
+    
+    // Convert both to strings for comparison to handle type mismatches
+    const normalizedProductId = String(productId);
+    const normalizedItemProductId = String(itemProductId);
+    
+    console.log('🔍 isProductInWishlist: Comparing', normalizedItemProductId, 'with', normalizedProductId);
+    const match = normalizedItemProductId === normalizedProductId;
+    console.log('🔍 isProductInWishlist: Match:', match);
+    return match;
   });
+  
+  console.log('🔍 isProductInWishlist: Final result:', result);
+  return result;
 }
 
 // Helper function to get wishlist item by product ID

@@ -12,6 +12,13 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   
+  // Debug logging for seller status
+  console.log('🔍 Navbar: User:', user);
+  console.log('🔍 Navbar: isSeller:', isSeller);
+  console.log('🔍 Navbar: user.sellerCompleted:', user?.sellerCompleted);
+  console.log('🔍 Navbar: user.isSeller:', user?.isSeller);
+  console.log('🔍 Navbar: user.seller:', user?.seller);
+  
   // Determine if user is signed in for navbar state
   const isSignedIn = !!user;
   
@@ -100,6 +107,19 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 </svg>
                 {isSellerPage ? "Buyers" : "Chat"}
               </Link>
+
+              {/* Sell/Seller Dashboard Button - only show on non-seller pages */}
+              {!isSellerPage && (
+                <Link 
+                  to={isSeller ? "/seller/dashboard" : "/seller/onboarding"} 
+                  className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  {isSeller ? "Seller Dashboard" : "Sell"}
+                </Link>
+              )}
 
               {/* Me Button */}
               <Link 
@@ -426,3 +446,4 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
     </nav>
   );
 }
+

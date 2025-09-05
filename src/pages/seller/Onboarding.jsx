@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { registerSeller, testSellerEndpoint } from '../../services/authService';
 
 export default function SellerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -11,26 +12,24 @@ export default function SellerOnboardingPage() {
   const [storeInfo, setStoreInfo] = useState({
     catalogueName: '',
     storeDescription: '',
-    coverImage: null
+    cataloguePicture: null
   });
 
   const [bankDetails, setBankDetails] = useState({
     accountNumber: '',
     accountName: '',
-    bankName: '',
-    bvn: ''
+    bankName: ''
   });
 
   const [contactInfo, setContactInfo] = useState({
-    address: '',
+    location: '',
     phoneNumber: '',
-    email: '',
-    socialMedia: {
-      instagram: '',
-      twitter: '',
-      whatsapp: ''
-    }
+    whatsappNumber: ''
   });
+
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const steps = [
     { number: 1, title: 'Store Info', isCompleted: currentStep > 1 },
@@ -41,7 +40,7 @@ export default function SellerOnboardingPage() {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setStoreInfo(prev => ({ ...prev, coverImage: file }));
+      setStoreInfo(prev => ({ ...prev, cataloguePicture: file }));
     }
   };
 
@@ -57,20 +56,62 @@ export default function SellerOnboardingPage() {
     }
   };
 
-  const handleSubmit = () => {
-    const sellerData = {
-      storeInfo,
-      bankDetails,
-      contactInfo
-    };
+  const handleTestConnection = async () => {
+    setIsLoading(true);
+    setError(null);
     
-    console.log('Seller onboarding completed:', sellerData);
+    try {
+      console.log('Testing seller endpoint connectivity...');
+      const result = await testSellerEndpoint();
+      
+      if (result.success) {
+        setError('✅ Connection test passed! Backend is accessible.');
+      } else {
+        setError(`❌ Connection test failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      setError(`❌ Connection test failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setError(null);
     
-    // Update user's seller status in context
-    completeSellersOnboarding(sellerData);
-    
-    // Navigate to seller dashboard once created
-    navigate('/seller/dashboard');
+    try {
+      // Prepare seller data according to API requirements
+      const sellerData = {
+        catalogueName: storeInfo.catalogueName,
+        storeDescription: storeInfo.storeDescription,
+        cataloguePicture: storeInfo.cataloguePicture,
+        bankName: bankDetails.bankName,
+        accountNumber: bankDetails.accountNumber,
+        accountName: bankDetails.accountName,
+        phoneNumber: contactInfo.phoneNumber,
+        whatsappNumber: contactInfo.whatsappNumber || contactInfo.phoneNumber, // Use phone number if WhatsApp is empty
+        location: contactInfo.location
+      };
+      
+      console.log('Seller registration data:', sellerData);
+      
+      // Call the API to register seller
+      const response = await registerSeller(sellerData);
+      console.log('Seller registration successful:', response);
+      
+      // Update user's seller status in context
+      completeSellersOnboarding(response);
+      
+      // Navigate to seller dashboard
+      navigate('/seller/dashboard');
+    } catch (error) {
+      console.error('Seller registration failed:', error);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -134,9 +175,9 @@ export default function SellerOnboardingPage() {
                     <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
                   </div>
                 </label>
-                {storeInfo.coverImage && (
+                {storeInfo.cataloguePicture && (
                   <p className="mt-2 text-sm text-blue-600">
-                    Selected: {storeInfo.coverImage.name}
+                    Selected: {storeInfo.cataloguePicture.name}
                   </p>
                 )}
               </div>
@@ -283,10 +324,10 @@ export default function SellerOnboardingPage() {
                   </div>
                   <input
                     type="tel"
-                    value={contactInfo.socialMedia.whatsapp}
+                    value={contactInfo.whatsappNumber}
                     onChange={(e) => setContactInfo(prev => ({ 
                       ...prev, 
-                      socialMedia: { ...prev.socialMedia, whatsapp: e.target.value }
+                      whatsappNumber: e.target.value
                     }))}
                     placeholder="eg. 09012345678"
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -307,9 +348,9 @@ export default function SellerOnboardingPage() {
                   </div>
                   <input
                     type="text"
-                    value={contactInfo.address}
-                    onChange={(e) => setContactInfo(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="eg. Block D"
+                    value={contactInfo.location}
+                    onChange={(e) => setContactInfo(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="eg. RUN Campus, Ogun State"
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     required
                   />
@@ -405,6 +446,35 @@ export default function SellerOnboardingPage() {
             {renderStepContent()}
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-red-800">Error:</p>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Debug Section - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Tools</h3>
+              <button
+                onClick={handleTestConnection}
+                disabled={isLoading}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Test Backend Connection
+              </button>
+            </div>
+          )}
+
           {/* Navigation Buttons */}
           <div className="mt-8 flex gap-4">
             {currentStep > 1 && (
@@ -426,9 +496,24 @@ export default function SellerOnboardingPage() {
             ) : (
               <button
                 onClick={handleSubmit}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                disabled={isLoading}
+                className={`flex-1 font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center ${
+                  isLoading 
+                    ? 'bg-blue-400 text-white cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                Finish
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Registering...
+                  </>
+                ) : (
+                  'Finish'
+                )}
               </button>
             )}
           </div>

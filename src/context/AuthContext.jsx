@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   // Check if user is a seller (has completed onboarding)
-  const isSeller = user?.sellerCompleted || false;
+  const isSeller = user?.sellerCompleted || user?.isSeller || user?.seller || false;
 
   useEffect(() => {
     if (user) localStorage.setItem('campor_user', JSON.stringify(user));
@@ -37,7 +37,22 @@ export function AuthProvider({ children }) {
   const fetchUserProfile = async () => {
     try {
       const userData = await authService.getCurrentUser();
-      setUser(userData);
+      
+      // Check if user is already a seller by trying to get seller profile
+      try {
+        const sellerProfile = await authService.getSellerProfile();
+        console.log('✅ AuthContext: User is already a seller:', sellerProfile);
+        setUser({ 
+          ...userData, 
+          sellerCompleted: true, 
+          isSeller: true, 
+          seller: sellerProfile 
+        });
+      } catch (sellerError) {
+        // User is not a seller yet, this is normal
+        console.log('ℹ️ AuthContext: User is not a seller yet');
+        setUser(userData);
+      }
     } catch (err) {
       console.error('Failed to fetch user profile:', err);
       // If token is invalid, clear it
@@ -73,7 +88,23 @@ export function AuthProvider({ children }) {
         
         try {
           const userData = await authService.getCurrentUser();
-          setUser(userData);
+          
+          // Check if user is already a seller
+          try {
+            const sellerProfile = await authService.getSellerProfile();
+            console.log('✅ AuthContext: User is already a seller:', sellerProfile);
+            setUser({ 
+              ...userData, 
+              sellerCompleted: true, 
+              isSeller: true, 
+              seller: sellerProfile 
+            });
+          } catch (sellerError) {
+            // User is not a seller yet, this is normal
+            console.log('ℹ️ AuthContext: User is not a seller yet');
+            setUser(userData);
+          }
+          
           console.log('🔍 AuthContext: User profile fetched on second attempt');
         } catch (profileError) {
           console.error('❌ AuthContext: Failed to fetch user profile on second attempt:', profileError);
@@ -125,15 +156,17 @@ export function AuthProvider({ children }) {
 
   const completeSellersOnboarding = async (sellerData) => {
     try {
-      const response = await authService.completeSellerOnboarding(sellerData);
+      // For the new seller registration API, sellerData is the response from registerSeller
       // Update user with seller information
       const updatedUser = { 
         ...user, 
         sellerCompleted: true, 
-        seller: response.seller || sellerData 
+        seller: sellerData, // sellerData is the full seller response from the API
+        isSeller: true // Add explicit seller flag
       };
       setUser(updatedUser);
-      return response;
+      console.log('✅ AuthContext: Seller onboarding completed, user updated:', updatedUser);
+      return sellerData;
     } catch (err) {
       setError(err.message || 'Failed to complete seller onboarding');
       throw err;
