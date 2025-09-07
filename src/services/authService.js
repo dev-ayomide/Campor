@@ -494,23 +494,50 @@ export async function updateProductInCatalogue(productId, productData) {
 export async function updateSellerInfo(sellerId, sellerData) {
   try {
     console.log('🔍 SellerService: Updating seller information...');
+    console.log('🔍 SellerService: Seller ID:', sellerId);
+    console.log('🔍 SellerService: Seller data received:', sellerData);
     
     // Create FormData for multipart/form-data request
     const formData = new FormData();
     
     // Add fields that are being updated
-    if (sellerData.catalogueName) formData.append('catalogueName', sellerData.catalogueName);
-    if (sellerData.storeDescription) formData.append('storeDescription', sellerData.storeDescription);
-    if (sellerData.bankName) formData.append('bankName', sellerData.bankName);
-    if (sellerData.accountNumber) formData.append('accountNumber', sellerData.accountNumber);
-    if (sellerData.accountName) formData.append('accountName', sellerData.accountName);
-    if (sellerData.phoneNumber) formData.append('phoneNumber', sellerData.phoneNumber);
-    if (sellerData.whatsappNumber) formData.append('whatsappNumber', sellerData.whatsappNumber);
-    if (sellerData.location) formData.append('location', sellerData.location);
+    if (sellerData.catalogueName) {
+      formData.append('catalogueName', sellerData.catalogueName);
+      console.log('🔍 SellerService: Added catalogueName:', sellerData.catalogueName);
+    }
+    if (sellerData.storeDescription) {
+      formData.append('storeDescription', sellerData.storeDescription);
+      console.log('🔍 SellerService: Added storeDescription:', sellerData.storeDescription);
+    }
+    if (sellerData.bankName) {
+      formData.append('bankName', sellerData.bankName);
+      console.log('🔍 SellerService: Added bankName:', sellerData.bankName);
+    }
+    if (sellerData.accountNumber) {
+      formData.append('accountNumber', sellerData.accountNumber);
+      console.log('🔍 SellerService: Added accountNumber:', sellerData.accountNumber);
+    }
+    if (sellerData.accountName) {
+      formData.append('accountName', sellerData.accountName);
+      console.log('🔍 SellerService: Added accountName:', sellerData.accountName);
+    }
+    if (sellerData.phoneNumber) {
+      formData.append('phoneNumber', sellerData.phoneNumber);
+      console.log('🔍 SellerService: Added phoneNumber:', sellerData.phoneNumber);
+    }
+    if (sellerData.whatsappNumber) {
+      formData.append('whatsappNumber', sellerData.whatsappNumber);
+      console.log('🔍 SellerService: Added whatsappNumber:', sellerData.whatsappNumber);
+    }
+    if (sellerData.location) {
+      formData.append('location', sellerData.location);
+      console.log('🔍 SellerService: Added location:', sellerData.location);
+    }
     
     // Add catalogue picture if provided
     if (sellerData.cataloguePicture) {
       formData.append('cataloguePicture', sellerData.cataloguePicture);
+      console.log('🔍 SellerService: Added cataloguePicture:', sellerData.cataloguePicture);
     }
     
     // Create a new axios instance for multipart/form-data

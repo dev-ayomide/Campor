@@ -95,18 +95,17 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
         throw new Error('Seller information not found');
       }
 
-      const formData = new FormData();
-      formData.append('catalogueName', storeInfo.catalogueName);
-      formData.append('storeDescription', storeInfo.storeDescription);
-      formData.append('phoneNumber', storeInfo.phoneNumber);
-      formData.append('whatsappNumber', storeInfo.whatsappNumber);
-      formData.append('location', storeInfo.location);
+      // Prepare seller data object (not FormData - the service function creates FormData)
+      const sellerData = {
+        catalogueName: storeInfo.catalogueName,
+        storeDescription: storeInfo.storeDescription,
+        phoneNumber: storeInfo.phoneNumber,
+        whatsappNumber: storeInfo.whatsappNumber,
+        location: storeInfo.location,
+        cataloguePicture: storeInfo.cataloguePicture
+      };
 
-      if (storeInfo.cataloguePicture) {
-        formData.append('cataloguePicture', storeInfo.cataloguePicture);
-      }
-
-      await updateSellerInfo(user.seller.id, formData);
+      await updateSellerInfo(user.seller.id, sellerData);
       setSuccess('Store information updated successfully!');
       
       // Update seller data in context with latest information
@@ -138,12 +137,14 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
         throw new Error('Seller information not found');
       }
 
-      const formData = new FormData();
-      formData.append('bankName', paymentInfo.bankName);
-      formData.append('accountNumber', paymentInfo.accountNumber);
-      formData.append('accountName', paymentInfo.accountName);
+      // Prepare seller data object (not FormData - the service function creates FormData)
+      const sellerData = {
+        bankName: paymentInfo.bankName,
+        accountNumber: paymentInfo.accountNumber,
+        accountName: paymentInfo.accountName
+      };
 
-      await updateSellerInfo(user.seller.id, formData);
+      await updateSellerInfo(user.seller.id, sellerData);
       setSuccess('Payment information updated successfully!');
       
       // Update seller data in context with latest information
