@@ -110,9 +110,9 @@ export default function SellerSidebar({ onMobileClose, isMobile = false }) {
   };
 
   return (
-    <div className="fixed left-0 top-20 w-64 h-[calc(100vh-5rem)] bg-[#F7F5F0] shadow-lg flex flex-col overflow-hidden z-40">
+    <div className="fixed left-0 top-0 w-64 h-screen bg-white flex flex-col overflow-hidden z-40">
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <nav className="flex-1 pt-20 px-4 pb-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <ul className="space-y-2">
           {menuItems.map((item) => (
             <li key={item.path}>
@@ -123,8 +123,8 @@ export default function SellerSidebar({ onMobileClose, isMobile = false }) {
                   item.isSpecial
                     ? 'text-blue-600 hover:bg-blue-50 border border-blue-200'
                     : item.active
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-800 hover:bg-gray-200 hover:text-gray-900'
                 }`}
               >
                 {item.icon}
@@ -163,7 +163,7 @@ export default function SellerSidebar({ onMobileClose, isMobile = false }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-[#F7F5F0]">
+      <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-white">
         <button 
           onClick={handleLogout}
           className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

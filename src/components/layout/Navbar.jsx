@@ -4,12 +4,14 @@ import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useState } from 'react';
 import MobileSellerMenu from './MobileSellerMenu';
+import CompleteOrderModal from '../common/CompleteOrderModal';
 
 export default function Navbar({ variant = 'default', onSellerMenuToggle, isSellerMenuOpen, setIsSellerMenuOpen }) {
   const { user, logout, isSeller } = useAuth();
   const { getItemCount } = useCart();
   const { getItemCount: getWishlistCount } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCompleteOrderModalOpen, setIsCompleteOrderModalOpen] = useState(false);
   const location = useLocation();
   
   // Debug logging for seller status
@@ -25,18 +27,46 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
   // Check if we're on a seller page (excluding onboarding which should show buyer navbar)
   const isSellerPage = location.pathname.startsWith('/seller/') && location.pathname !== '/seller/onboarding';
 
+  // Handle complete order
+  const handleCompleteOrder = async (completionCode) => {
+    try {
+      // TODO: Implement API call to complete order with completion code
+      console.log('Completing order with code:', completionCode);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Show success message
+      alert('Order completed successfully!');
+    } catch (error) {
+      console.error('Error completing order:', error);
+      throw error;
+    }
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 px-6 py-4" style={{ backgroundColor: '#F7F5F0' }}>
+    <nav className="fixed top-0 left-0 right-0 z-50 pl-0 pr-6 py-4 bg-white">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            <Link to={isSignedIn ? "/marketplace" : "/"} className="flex items-center">
+          <div className="flex items-center pl-6">
+            <Link to="/marketplace" className="flex items-center">
               <img 
                 src="/logo.svg" 
                 alt="Campor Logo" 
                 className="w-8 h-8 mr-3 object-contain"
               />
-              <span className="text-xl font-bold text-gray-900">Campor</span>
+              <span className="text-xl font-bold text-gray-900 mr-12">Campor</span>
             </Link>
+            {/* Dynamic Page Title - only show on seller pages and desktop */}
+            {isSellerPage && (
+              <span className="hidden md:block text-xl font-bold text-gray-900">
+                {location.pathname === '/seller/dashboard' && 'Seller Dashboard'}
+                {location.pathname.startsWith('/seller/products') && 'Products Management'}
+                {location.pathname === '/seller/orders' && 'Orders Management'}
+                {location.pathname === '/seller/customers' && 'Customers Management'}
+                {location.pathname === '/seller/analytics' && 'Analytics'}
+                {location.pathname === '/seller/settings' && 'Settings'}
+              </span>
+            )}
           </div>
 
           {/* Desktop Navigation - Show different navigation based on sign-in status */}
@@ -98,6 +128,19 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
             // Buttons for signed-in users
             <>
               {/* Chat Button */}
+              {/* Accept Order Button - only show on seller pages */}
+              {isSellerPage && (
+                <button 
+                  onClick={() => setIsCompleteOrderModalOpen(true)}
+                  className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Accept Order
+                </button>
+              )}
+
               <Link 
                 to="/chat" 
                 className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
@@ -210,6 +253,19 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 </span>
               )}
             </Link>
+          )}
+          
+          {/* Accept Order Button for Mobile (only on seller pages) */}
+          {isSellerPage && (
+            <button 
+              onClick={() => setIsCompleteOrderModalOpen(true)}
+              className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-sm">Accept</span>
+            </button>
           )}
           
           {/* Seller Sidebar Menu Button (only on seller pages) */}
@@ -443,6 +499,13 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
           onClose={() => setIsSellerMenuOpen && setIsSellerMenuOpen(false)} 
         />
       )}
+
+      {/* Complete Order Modal */}
+      <CompleteOrderModal
+        isOpen={isCompleteOrderModalOpen}
+        onClose={() => setIsCompleteOrderModalOpen(false)}
+        onSubmit={handleCompleteOrder}
+      />
     </nav>
   );
 }

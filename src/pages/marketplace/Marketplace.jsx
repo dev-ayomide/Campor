@@ -337,7 +337,6 @@ export default function MarketplacePage() {
             {/* Breadcrumb */}
             <div className="flex items-center justify-center gap-2 text-sm text-blue-100 mb-6">
               <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              <span>›</span>
               <span className="text-white">Market Place</span>
             </div>
             

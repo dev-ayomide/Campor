@@ -5,7 +5,7 @@ export default function SellerLayout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F7F5F0' }}>
+    <div className="min-h-screen bg-[#F7F5F0]">
       {/* Navbar with seller menu toggle */}
       <Navbar 
         onSellerMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 

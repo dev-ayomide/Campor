@@ -168,33 +168,8 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   return (
     <SellerLayout>
       <div className="max-w-4xl mx-auto overflow-hidden">
-        {/* Breadcrumb */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center text-sm text-gray-500">
-            <Link to="/" className="hover:text-gray-700">Home</Link>
-            <span className="mx-2">›</span>
-            <Link to="/seller" className="hover:text-gray-700">Sell</Link>
-            <span className="mx-2">›</span>
-            <span className="text-gray-900">Settings</span>
-          </div>
-          
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={toggleMobileMenu}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Manage your store configuration and preferences
-          </h1>
-        </div>
+        {/* Descriptive Text */}
+        <p className="text-gray-600 mb-6">Manage your store configuration and preferences.</p>
 
         {/* Tabs */}
         <div className="flex space-x-1 mb-8">
@@ -268,7 +243,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                   />
                   <label
                     htmlFor="cover-image"
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative"
                   >
                     {storeInfo.cataloguePicture ? (
                       <div className="flex items-center justify-center w-full h-full">
@@ -280,10 +255,23 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                           alt="Cover preview"
                           className="w-full h-full object-cover rounded-lg"
                         />
+                        {/* Upload overlay */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 rounded-lg opacity-0 hover:opacity-100 transition-opacity">
+                          <svg className="w-8 h-8 text-white mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          <p className="text-sm text-white">Click to upload cover image PNG, JPG up to 5MB</p>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {/* Placeholder image */}
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-sm text-gray-500">Click to upload cover image PNG, JPG up to 5MB</p>
@@ -326,7 +314,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               </div>
 
               {/* Contact Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-6">
                 {/* Phone Number */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Phone number</label>
@@ -384,11 +372,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               </div>
 
               {/* Submit Button */}
-              <div className="pt-4">
+              <div className="pt-6">
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                  className={`w-full py-4 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center ${
                     loading 
                       ? 'bg-blue-400 text-white cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -509,11 +497,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               </div>
 
               {/* Submit Button */}
-              <div className="pt-4">
+              <div className="pt-6">
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-3 px-6 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                  className={`w-full py-4 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center ${
                     loading 
                       ? 'bg-blue-400 text-white cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'

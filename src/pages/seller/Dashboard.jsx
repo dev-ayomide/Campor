@@ -88,11 +88,11 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   };
 
   if (loading) {
-    return (
-      <SellerLayout>
+  return (
+    <SellerLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+            </div>
       </SellerLayout>
     );
   }
@@ -104,7 +104,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           <div className="flex items-start">
             <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+              </svg>
             <div>
               <p className="text-sm font-medium text-red-800">Error loading dashboard</p>
               <p className="text-sm text-red-700 mt-1">{error}</p>
@@ -118,45 +118,8 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   return (
     <SellerLayout>
       <div className="max-w-full overflow-hidden">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center text-sm text-gray-500">
-              <Link to="/" className="hover:text-gray-700">Home</Link>
-              <span className="mx-2">›</span>
-              <Link to="/seller" className="hover:text-gray-700">Sell</Link>
-              <span className="mx-2">›</span>
-              <span className="text-gray-900">Dashboard</span>
-            </div>
-            
-            {/* Mobile Menu Button */}
-            <button 
-              onClick={toggleMobileMenu}
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex items-center gap-4 mb-2">
-            {sellerData?.cataloguePicture && (
-              <img 
-                src={sellerData.cataloguePicture} 
-                alt={sellerData.catalogueName}
-                className="w-16 h-16 rounded-xl object-cover border-2 border-gray-200"
-              />
-            )}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {sellerData?.catalogueName || 'My Dashboard'}
-              </h1>
-              <p className="text-gray-600">
-                {sellerData?.storeDescription || 'Welcome back! Here\'s what\'s happening with your store today.'}
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Descriptive Text */}
+        <p className="text-gray-600 mb-6">Welcome back! Here's what's happening with your store today.</p>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -223,46 +186,6 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           </div>
         </div>
 
-        {/* Seller Profile Info */}
-        {sellerData && (
-          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Store Name</p>
-                <p className="text-gray-900">{sellerData.catalogueName}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Location</p>
-                <p className="text-gray-900">{sellerData.location}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Phone</p>
-                <p className="text-gray-900">{sellerData.phoneNumber}</p>
-              </div>
-              {sellerData.whatsappNumber && (
-                <div>
-                  <p className="text-sm font-medium text-gray-500">WhatsApp</p>
-                  <p className="text-gray-900">{sellerData.whatsappNumber}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium text-gray-500">Bank</p>
-                <p className="text-gray-900">{sellerData.bankName}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Account</p>
-                <p className="text-gray-900">{sellerData.accountNumber}</p>
-              </div>
-            </div>
-            {sellerData.storeDescription && (
-              <div className="mt-4">
-                <p className="text-sm font-medium text-gray-500">Description</p>
-                <p className="text-gray-900 mt-1">{sellerData.storeDescription}</p>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -270,24 +193,24 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Orders</h3>
             {recentOrders.length > 0 ? (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 {recentOrders.map((order) => (
                   <div key={order.id} className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0">
-                    <div>
+                <div>
                       <p className="font-medium text-gray-900">{order.id}</p>
                       <p className="text-sm text-gray-500">
                         User: {order.userId} • {order.hostelName} - Block {order.blockNumber}, Room {order.roomNo}
                       </p>
-                    </div>
-                    <div className="text-right">
+                </div>
+                <div className="text-right">
                       <p className="font-semibold text-gray-900">₦{parseFloat(order.totalPrice).toLocaleString()}</p>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
                         {order.orderStatus}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  </span>
+                </div>
               </div>
+                ))}
+                </div>
             ) : (
               <div className="text-center py-8">
                 <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,7 +218,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 </svg>
                 <p className="text-gray-500 mb-4">No orders yet</p>
                 <p className="text-sm text-gray-400">Your customer orders will appear here</p>
-              </div>
+                </div>
             )}
             <div className="mt-6">
               <Link 
@@ -311,10 +234,10 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Your Products</h3>
             {products.length > 0 ? (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 {products.slice(0, 4).map((product) => (
                   <div key={product.id} className="flex items-center justify-between">
-                    <div className="flex items-center">
+                <div className="flex items-center">
                       <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3 overflow-hidden">
                         {product.imageUrls && product.imageUrls.length > 0 ? (
                           <img 
@@ -327,18 +250,18 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                          </div>
+                  </div>
                         )}
-                      </div>
-                      <div>
+              </div>
+                  <div>
                         <p className="font-medium text-gray-900">{product.name}</p>
                         <p className="text-sm text-gray-500">{product.stockQuantity} in stock</p>
-                      </div>
-                    </div>
-                    <p className="font-semibold text-gray-900">₦{parseFloat(product.price).toLocaleString()}</p>
                   </div>
-                ))}
+                </div>
+                    <p className="font-semibold text-gray-900">₦{parseFloat(product.price).toLocaleString()}</p>
               </div>
+                ))}
+                  </div>
             ) : (
               <div className="text-center py-8">
                 <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,7 +269,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 </svg>
                 <p className="text-gray-500 mb-4">No products yet</p>
                 <p className="text-sm text-gray-400">Start by adding your first product</p>
-              </div>
+                </div>
             )}
             <div className="mt-6">
               <Link 

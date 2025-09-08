@@ -85,56 +85,40 @@ export default function SellerOrdersPage() {
   return (
     <SellerLayout>
       <div className="max-w-full overflow-hidden">
-        {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-4">
-          <Link to="/" className="hover:text-gray-700">Home</Link>
-          <span className="mx-2">›</span>
-          <Link to="/seller" className="hover:text-gray-700">Sell</Link>
-          <span className="mx-2">›</span>
-          <span className="text-gray-900">Orders</span>
-        </div>
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">My Orders</h1>
-          <p className="text-gray-600">Track and manage customer orders.</p>
-        </div>
 
-        {/* Search and Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
+        {/* Descriptive Text */}
+        <p className="text-gray-600 mb-4">Track and manage customer orders.</p>
+        
+        {/* Mobile Design - Search, Filter, Export */}
+        <div className="flex items-center space-x-3 mb-6">
+          {/* Search Bar */}
+          <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search orders..."
+              placeholder="Search...."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-400 absolute right-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           
-          <div className="flex gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="PROCESSING">Processing</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-            
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Export Orders
-            </button>
-          </div>
+          {/* Filter Button */}
+          <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+          </button>
+          
+          {/* Export Button */}
+          <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </button>
         </div>
 
         {/* Loading State */}
@@ -161,14 +145,11 @@ export default function SellerOrdersPage() {
 
         {/* Orders Table */}
         {!loading && !error && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                All Orders ({filteredOrders.length})
-              </h2>
-          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">All Orders</h3>
           
-            {filteredOrders.length > 0 ? (
+              {filteredOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -178,52 +159,52 @@ export default function SellerOrdersPage() {
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Items</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Status</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Total</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-600">Date</th>
+                        <th className="text-left py-3 px-6 font-medium text-gray-600">Date</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                    {filteredOrders.map((order) => (
+                      {filteredOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="py-4 px-6">
                       <span className="font-medium text-gray-900">{order.id}</span>
                     </td>
-                        <td className="py-4 px-6">
-                          <div>
-                            <div className="text-gray-900 font-medium">User ID: {order.userId}</div>
-                            <div className="text-sm text-gray-500">{order.hostelName} - Block {order.blockNumber}, Room {order.roomNo}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-gray-900">-</td>
+                          <td className="py-4 px-6">
+                            <div>
+                              <div className="text-gray-900 font-medium">User ID: {order.userId}</div>
+                              <div className="text-sm text-gray-500">{order.hostelName} - Block {order.blockNumber}, Room {order.roomNo}</div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-gray-900">-</td>
                     <td className="py-4 px-6">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
-                            {order.orderStatus}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
+                              {order.orderStatus}
                       </span>
                     </td>
-                        <td className="py-4 px-6 text-gray-900">₦{parseFloat(order.totalPrice || 0).toLocaleString()}</td>
-                        <td className="py-4 px-6 text-gray-900">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </td>
+                          <td className="py-4 px-6 text-gray-900">₦{parseFloat(order.totalPrice || 0).toLocaleString()}</td>
+                          <td className="py-4 px-6 text-gray-900">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                            {order.orderStatus === 'PENDING' && (
-                              <button 
-                                onClick={() => handleStatusUpdate(order.id, 'CONFIRMED')}
-                                className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                                title="Confirm Order"
-                              >
-                                Confirm
-                              </button>
-                            )}
-                            {order.orderStatus === 'CONFIRMED' && (
-                              <button 
-                                onClick={() => handleStatusUpdate(order.id, 'PROCESSING')}
-                                className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
-                                title="Mark as Processing"
-                              >
-                                Process
-                              </button>
-                            )}
+                              {order.orderStatus === 'PENDING' && (
+                                <button 
+                                  onClick={() => handleStatusUpdate(order.id, 'CONFIRMED')}
+                                  className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                                  title="Confirm Order"
+                                >
+                                  Confirm
+                                </button>
+                              )}
+                              {order.orderStatus === 'CONFIRMED' && (
+                                <button 
+                                  onClick={() => handleStatusUpdate(order.id, 'PROCESSING')}
+                                  className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
+                                  title="Mark as Processing"
+                                >
+                                  Process
+                                </button>
+                              )}
                         <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="View Order">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -237,24 +218,22 @@ export default function SellerOrdersPage() {
               </tbody>
             </table>
           </div>
-            ) : (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {searchTerm || statusFilter !== 'all' ? 'No orders found' : 'No orders yet'}
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? 'Try adjusting your search or filter criteria' 
-                    : 'Your customer orders will appear here when you start making sales'
-                  }
-                </p>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-12">
+                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {searchTerm || statusFilter !== 'all' ? 'No orders found' : 'No orders yet'}
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchTerm || statusFilter !== 'all' 
+                      ? 'Try adjusting your search or filter criteria' 
+                      : 'Your customer orders will appear here when you start making sales'
+                    }
+                  </p>
         </div>
-        )}
+              )}
 
         {/* Pagination */}
         <div className="flex items-center justify-center mt-8">
@@ -278,6 +257,9 @@ export default function SellerOrdersPage() {
             </button>
           </nav>
         </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </SellerLayout>
