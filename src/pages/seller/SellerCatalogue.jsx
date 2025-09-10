@@ -591,20 +591,12 @@ export default function SellerCatalogue() {
                             {/* Price - Prominent */}
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-                              <span className="text-xs text-gray-500 line-through">{product.originalPrice}</span>
+                              {product.stockQuantity > 0 && (
+                                <span className="text-xs text-gray-500">
+                                  {product.stockQuantity} left
+                                </span>
+                              )}
                             </div>
-
-                            {/* Seller Info - Compact */}
-                            <Link 
-                              to={`/seller/${product.seller?.id}/catalogue`}
-                              className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                              </svg>
-                              <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
-                            </Link>
                           </div>
 
                           {/* Action Buttons - Bottom aligned */}
@@ -648,20 +640,12 @@ export default function SellerCatalogue() {
                           {/* Price */}
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-lg md:text-xl font-bold text-gray-900">{formatPrice(product.price)}</span>
-                            <span className="text-sm text-gray-500 line-through">{product.originalPrice}</span>
+                            {product.stockQuantity > 0 && (
+                              <span className="text-xs text-gray-500">
+                                {product.stockQuantity} left
+                              </span>
+                            )}
                           </div>
-
-                          {/* Seller Info */}
-                          <Link 
-                            to={`/seller/${product.seller?.id}/catalogue`}
-                            className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                            <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
-                          </Link>
 
                           {/* Action Buttons */}
                           <div className="flex gap-2">
