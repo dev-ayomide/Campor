@@ -181,9 +181,9 @@ export default function SellerCatalogue() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden -mt-6">
-      {/* Full-width Cover Photo Section */}
-      <div className="relative w-screen h-64 sm:h-80 md:h-96 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-16 xl:-mx-32">
+    <div className="min-h-screen overflow-x-hidden -mt-6 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-16 xl:-mx-32">
+      {/* Full-width Cover Photo Section - Breaks out of container */}
+      <div className="relative w-screen h-64 sm:h-80 md:h-96">
         {/* Cover Photo/Banner - Full Screen Width */}
         {sellerData?.catalogueCover ? (
           <img 
@@ -195,10 +195,10 @@ export default function SellerCatalogue() {
           <div className="w-full h-full bg-gradient-to-r from-teal-400 to-teal-600"></div>
         )}
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-      </div>
-        
+        </div>
+
       {/* Profile Info Card - Responsive positioning */}
-      <div className="max-w-7xl mx-auto px-4 -mt-20 sm:-mt-24 md:-mt-32 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-32 -mt-20 sm:-mt-24 md:-mt-32 relative z-10">
         <div className="flex justify-center lg:justify-start">
           {/* White Card Container with responsive sizing */}
           <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:p-6 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none">
@@ -206,114 +206,114 @@ export default function SellerCatalogue() {
           <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
             {/* Profile Picture */}
             <div className="w-20 h-20 sm:w-20 sm:h-20 bg-white rounded-full p-1 shadow-lg flex-shrink-0 mx-auto sm:mx-0">
-              <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
-                {sellerData?.user?.profilePicture ? (
-                  <img 
-                    src={sellerData.user.profilePicture} 
-                    alt={sellerData.user.name || sellerData.catalogueName} 
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-2xl font-bold text-blue-600">
-                    {sellerData?.user?.name?.charAt(0) || sellerData?.catalogueName?.charAt(0) || 'S'}
-                  </span>
-                )}
-              </div>
-            </div>
+                  <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                    {sellerData?.user?.profilePicture ? (
+                      <img 
+                        src={sellerData.user.profilePicture} 
+                        alt={sellerData.user.name || sellerData.catalogueName} 
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-blue-600">
+                        {sellerData?.user?.name?.charAt(0) || sellerData?.catalogueName?.charAt(0) || 'S'}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
             {/* Content Area - Mobile: centered, Desktop: left-aligned */}
             <div className="flex-1 w-full flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
               {/* Seller Info */}
               <div className="flex-1 text-center sm:text-left">
-                {/* Store Name */}
+                    {/* Store Name */}
                 <h1 className="text-xl sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                  {sellerData?.catalogueName || 'Store Name'}
-                </h1>
-                
-                {/* Seller Name */}
+                      {sellerData?.catalogueName || 'Store Name'}
+                    </h1>
+                    
+                    {/* Seller Name */}
                 <p className="text-base sm:text-base text-gray-600 mb-1">
-                  by {sellerData?.user?.name || 'Seller Name'}
-                </p>
-                
-                {/* Rating and Sales */}
+                      by {sellerData?.user?.name || 'Seller Name'}
+                    </p>
+                    
+                    {/* Rating and Sales */}
                 <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
                   <span className="text-base font-semibold text-gray-900">
                     {sellerData?.averageRating || '4.7'}
-                  </span>
+                        </span>
                   <span className="text-gray-500 text-sm">
                     ({sellerData?.productCount || products.length} sales)
-                  </span>
-                </div>
-                
-                {/* Description */}
+                        </span>
+                      </div>
+                    
+                    {/* Description */}
                 <p className="text-gray-700 text-sm leading-relaxed">
                   {sellerData?.storeDescription || 'Premium electronics and gadgets with authentic warranties. Specializing in phones, laptops, and accessories.'}
-                </p>
-              </div>
-              
-              {/* Action Buttons - Mobile: centered, Desktop: right-aligned */}
-              {user?.seller?.id !== sellerId && (
-                <div className="flex flex-col gap-3 items-center sm:items-end">
-                  <button 
-                    className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
-                    onClick={() => {
-                      // TODO: Implement messaging functionality
-                      alert('Messaging feature coming soon!');
-                    }}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Message Seller
-                  </button>
-                  
-                  {/* Drop a Star rating section */}
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Drop a Star</p>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          className="text-yellow-400 hover:text-yellow-500 transition-colors touch-manipulation p-1"
-                          onClick={() => {
-                            // TODO: Implement rating functionality
-                            alert(`You rated ${star} stars!`);
-                          }}
-                        >
-                          <Star className="w-4 h-4" />
-                        </button>
-                      ))}
-                    </div>
+                      </p>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
+                  
+              {/* Action Buttons - Mobile: centered, Desktop: right-aligned */}
+                  {user?.seller?.id !== sellerId && (
+                <div className="flex flex-col gap-3 items-center sm:items-end">
+                      <button 
+                    className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
+                        onClick={() => {
+                          // TODO: Implement messaging functionality
+                          alert('Messaging feature coming soon!');
+                        }}
+                      >
+                    <MessageCircle className="w-4 h-4" />
+                        Message Seller
+                      </button>
+                      
+                      {/* Drop a Star rating section */}
+                      <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">Drop a Star</p>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                          className="text-yellow-400 hover:text-yellow-500 transition-colors touch-manipulation p-1"
+                              onClick={() => {
+                                // TODO: Implement rating functionality
+                                alert(`You rated ${star} stars!`);
+                              }}
+                            >
+                          <Star className="w-4 h-4" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+        </div>
+      </div>
 
           {/* Stats Section - Responsive grid */}
           <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
             <div className="grid grid-cols-3 gap-3 sm:gap-6 text-center">
-              <div>
+            <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Products</h3>
                 <p className="text-lg sm:text-xl font-bold text-gray-900">{sellerData?.productCount || products.length}</p>
-              </div>
-              <div>
+            </div>
+            <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Response Time</h3>
                 <p className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900">&lt; 1 hour</p>
-              </div>
-              <div>
+            </div>
+            <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Member Since</h3>
                 <p className="text-xs sm:text-sm lg:text-xl font-bold text-gray-900">
                   {sellerData?.createdAt ? new Date(sellerData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'January 2022'}
                 </p>
               </div>
             </div>
+            </div>
           </div>
-        </div>
         </div>
       </div>
 
       {/* Products Section */}
-      <div className="max-w-7xl mx-auto px-4 mt-6 sm:mt-8 pb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-32 mt-6 sm:mt-8 pb-6">
         <div className=" rounded-xl shadow-sm">
           {/* Mobile Filter Toolbar - Improved layout */}
           <div className="lg:hidden p-3 sm:p-4 border-b border-gray-200">
@@ -547,21 +547,21 @@ export default function SellerCatalogue() {
                         ? 'w-20 h-20 rounded-lg' 
                         : 'aspect-square rounded-t-lg'
                     }`}>
-                      <img
-                        src={product.imageUrls?.[0] || '/placeholder-product.png'}
-                        alt={product.name}
+                        <img
+                          src={product.imageUrls?.[0] || '/placeholder-product.png'}
+                          alt={product.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.src = '/placeholder-product.png';
                         }}
-                      />
-                      
+                        />
+                        
                       {/* Stock Status Badge */}
-                      {product.stockQuantity <= 0 && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          Out of Stock
-                        </div>
-                      )}
+                        {product.stockQuantity <= 0 && (
+                          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                            Out of Stock
+                          </div>
+                        )}
                     </div>
 
                     {/* Product Info */}
@@ -609,28 +609,28 @@ export default function SellerCatalogue() {
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
-                            {user?.seller?.id !== sellerId && (
-                              <WishlistButton 
-                                productId={product.id}
+                        {user?.seller?.id !== sellerId && (
+                            <WishlistButton 
+                              productId={product.id}
                                 className="flex-shrink-0"
-                              />
-                            )}
-                          </div>
+                            />
+                        )}
+                      </div>
                         </div>
                       ) : (
                         // Grid View Layout
                         <div>
                           {/* Rating Stars */}
-                          {product.ratings && product.ratings.length > 0 && (
+                      {product.ratings && product.ratings.length > 0 && (
                             <div className="flex items-center gap-0.5 mb-2">
-                              <div className="flex items-center">
-                                {renderStars(getAverageRating(product.ratings))}
-                              </div>
-                              <span className="text-xs text-gray-500 ml-1">
-                                ({product.ratings.length})
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-center">
+                            {renderStars(getAverageRating(product.ratings))}
+                          </div>
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({product.ratings.length})
+                          </span>
+                        </div>
+                      )}
 
                           {/* Product Name with highlighting */}
                           <h3 className="text-sm md:text-base font-medium text-gray-900 mb-1 line-clamp-2">
@@ -639,17 +639,17 @@ export default function SellerCatalogue() {
                               highlight={searchQuery} 
                               className="text-sm md:text-base font-medium text-gray-900"
                             />
-                          </h3>
+                        </h3>
 
-                          {/* Price */}
+                      {/* Price */}
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-lg md:text-xl font-bold text-gray-900">{formatPrice(product.price)}</span>
-                            {product.stockQuantity > 0 && (
-                              <span className="text-xs text-gray-500">
-                                {product.stockQuantity} left
-                              </span>
-                            )}
-                          </div>
+                        {product.stockQuantity > 0 && (
+                          <span className="text-xs text-gray-500">
+                            {product.stockQuantity} left
+                          </span>
+                        )}
+                      </div>
 
                           {/* Action Buttons */}
                           <div className="flex gap-2">
@@ -660,11 +660,11 @@ export default function SellerCatalogue() {
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
-                            {user?.seller?.id !== sellerId && (
+                      {user?.seller?.id !== sellerId && (
                               <WishlistButton 
-                                productId={product.id}
-                              />
-                            )}
+                              productId={product.id} 
+                            />
+                          )}
                           </div>
                         </div>
                       )}
@@ -704,13 +704,13 @@ export default function SellerCatalogue() {
                         Clear Search
                       </button>
                     )}
-                    {selectedCategory !== 'All' && (
-                      <button
-                        onClick={() => setSelectedCategory('All')}
+                {selectedCategory !== 'All' && (
+                  <button
+                    onClick={() => setSelectedCategory('All')}
                         className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                      >
-                        View All Products
-                      </button>
+                  >
+                    View All Products
+                  </button>
                     )}
                   </div>
                 )}
