@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { Copy, Check, ExternalLink } from 'lucide-react';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerCatalogue, getSellerOrders } from '../../services/authService';
@@ -11,6 +12,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [catalogueLinkCopied, setCatalogueLinkCopied] = useState(false);
 
   useEffect(() => {
     const fetchSellerData = async () => {
@@ -87,6 +89,18 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
     }
   };
 
+  // Handle catalogue link copy
+  const handleCopyCatalogueLink = async () => {
+    try {
+      const catalogueUrl = `${window.location.origin}/seller/${user?.seller?.id}/catalogue`;
+      await navigator.clipboard.writeText(catalogueUrl);
+      setCatalogueLinkCopied(true);
+      setTimeout(() => setCatalogueLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy catalogue link:', err);
+    }
+  };
+
   if (loading) {
   return (
     <SellerLayout>
@@ -120,6 +134,52 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
       <div className="max-w-full overflow-hidden">
         {/* Descriptive Text */}
         <p className="text-gray-600 mb-6">Welcome back! Here's what's happening with your store today.</p>
+
+        {/* Catalogue Sharing Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Share Your Catalogue</h3>
+              <p className="text-gray-600 mb-3">
+                Let customers view your products and make purchases. Share this link on social media, WhatsApp, or anywhere online.
+              </p>
+              <div className="flex items-center gap-2 bg-white rounded-lg p-3 border border-gray-200">
+                <code className="text-sm text-gray-700 flex-1 break-all">
+                  {window.location.origin}/seller/{user?.seller?.id}/catalogue
+                </code>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <Link
+                to={`/seller/${user?.seller?.id}/catalogue`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Preview
+              </Link>
+              
+              <button
+                onClick={handleCopyCatalogueLink}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {catalogueLinkCopied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Link
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

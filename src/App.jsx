@@ -25,6 +25,7 @@ import {
   EditProduct,
   Settings
 } from './pages/seller';
+import SellerCatalogue from './pages/seller/SellerCatalogue';
 import { AuthLanding, Login, Register, Verify, ForgotPassword, ResetPassword } from './pages/auth';
 import NotFound from './pages/NotFound';
 
@@ -69,6 +70,13 @@ export default function App() {
         <Route path="/category/:categoryId" element={
           <RequireAuth>
             <MainLayout><CategoryPage /></MainLayout>
+          </RequireAuth>
+        } />
+        
+        {/* Seller Catalogue Route - Public */}
+        <Route path="/seller/:sellerId/catalogue" element={
+          <RequireAuth>
+            <MainLayout><SellerCatalogue /></MainLayout>
           </RequireAuth>
         } />
         

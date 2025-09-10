@@ -70,7 +70,7 @@ export default function MarketplacePage() {
       // Immediate filter update for better UX
       fetchProducts(1);
     }
-  }, [selectedCategory, selectedPrice]);
+  }, [selectedCategory, selectedPrice, sortBy]);
 
   const fetchCategories = async () => {
     try {
@@ -116,6 +116,34 @@ export default function MarketplacePage() {
     return filters;
   };
 
+  // Sort products based on selected sort option
+  const sortProducts = (productsList) => {
+    if (!productsList || productsList.length === 0) return productsList;
+    
+    const sortedProducts = [...productsList].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return parseFloat(a.price || 0) - parseFloat(b.price || 0);
+        case 'price-high':
+          return parseFloat(b.price || 0) - parseFloat(a.price || 0);
+        case 'rating':
+          const aRating = a.averageRating || (a.ratings ? a.ratings.reduce((sum, r) => sum + r.rating, 0) / a.ratings.length : 0);
+          const bRating = b.averageRating || (b.ratings ? b.ratings.reduce((sum, r) => sum + r.rating, 0) / b.ratings.length : 0);
+          return bRating - aRating;
+        case 'oldest':
+          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        case 'newest':
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        case 'relevance':
+        default:
+          // For relevance, we'll keep the original order (as returned by Algolia)
+          return 0;
+      }
+    });
+    
+    return sortedProducts;
+  };
+
   const fetchProducts = async (page = 1, filters = null) => {
     try {
       setLoading(true);
@@ -128,14 +156,16 @@ export default function MarketplacePage() {
       const response = await getAllProductsAlgolia(page, 10, activeFilters);
       
       if (response?.data) {
-        setProducts(response.data.products || []);
+        const fetchedProducts = response.data.products || [];
+        const sortedProducts = sortProducts(fetchedProducts);
+        setProducts(sortedProducts);
         setPagination(response.data.pagination || {
           currentPage: 1,
           totalPages: 1,
           totalItems: 0,
           itemsPerPage: 10
         });
-        console.log('✅ Marketplace: Products loaded successfully from Algolia');
+        console.log('✅ Marketplace: Products loaded and sorted successfully from Algolia');
       }
     } catch (err) {
       console.error('❌ Marketplace: Failed to fetch products from Algolia:', err);
@@ -191,14 +221,16 @@ export default function MarketplacePage() {
       const response = await searchProductsAlgolia(searchQuery, 1, 10, buildFilters());
       
       if (response.data) {
-        setProducts(response.data.products || []);
+        const searchResults = response.data.products || [];
+        const sortedResults = sortProducts(searchResults);
+        setProducts(sortedResults);
         setPagination(response.data.pagination || {
           currentPage: 1,
           totalPages: 1,
           totalItems: 0,
           itemsPerPage: 10
         });
-        console.log('✅ Marketplace: Algolia search completed successfully');
+        console.log('✅ Marketplace: Algolia search completed and sorted successfully');
       }
     } catch (err) {
       console.error('❌ Marketplace: Algolia search failed:', err);
@@ -234,7 +266,9 @@ export default function MarketplacePage() {
     
     debouncedSearch(query, (result) => {
       if (result.data) {
-        setProducts(result.data.products || []);
+        const searchResults = result.data.products || [];
+        const sortedResults = sortProducts(searchResults);
+        setProducts(sortedResults);
         setPagination(result.data.pagination || {
           currentPage: 1,
           totalPages: 1,
@@ -409,6 +443,75 @@ export default function MarketplacePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
                   </button>
+                </div>
+              </div>
+
+              {/* Sort By for Mobile */}
+              <div className="mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Sort by:</span>
+                  <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: 100 }}>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
+                    >
+                      <span className="truncate">
+                        {sortBy === 'relevance' ? 'Relevance' : 
+                         sortBy === 'newest' ? 'Newest' :
+                         sortBy === 'oldest' ? 'Oldest' :
+                         sortBy === 'price-low' ? 'Price: Low to High' :
+                         sortBy === 'price-high' ? 'Price: High to Low' :
+                         sortBy === 'rating' ? 'Highest Rated' : 'Relevance'}
+                      </span>
+                      <svg className={`w-4 h-4 transition-transform flex-shrink-0 ml-2 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Sort Options */}
+                    {openDropdown === 'sort' && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-100">
+                        {[
+                          { value: 'relevance', label: 'Relevance' },
+                          { value: 'newest', label: 'Newest' },
+                          { value: 'oldest', label: 'Oldest' },
+                          { value: 'price-low', label: 'Price: Low to High' },
+                          { value: 'price-high', label: 'Price: High to Low' },
+                          { value: 'rating', label: 'Highest Rated' }
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSortBy(option.value);
+                              setOpenDropdown(null);
+                            }}
+                            onTouchStart={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSortBy(option.value);
+                              setOpenDropdown(null);
+                            }}
+                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 touch-manipulation ${
+                              sortBy === option.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -663,6 +766,85 @@ export default function MarketplacePage() {
                 {cartMessage}
               </div>
             )}
+
+            {/* Desktop Controls */}
+            <div className="hidden lg:flex items-center justify-between mb-4">
+              {/* Sort By Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sort by:</span>
+                <div className="relative min-w-0" data-dropdown style={{ zIndex: 100 }}>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                    }}
+                    className="flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors min-w-[200px]"
+                  >
+                    <span className="truncate">
+                      {sortBy === 'relevance' ? 'Relevance' : 
+                       sortBy === 'newest' ? 'Newest' :
+                       sortBy === 'oldest' ? 'Oldest' :
+                       sortBy === 'price-low' ? 'Price: Low to High' :
+                       sortBy === 'price-high' ? 'Price: High to Low' :
+                       sortBy === 'rating' ? 'Highest Rated' : 'Relevance'}
+                    </span>
+                    <svg className={`w-4 h-4 transition-transform flex-shrink-0 ml-2 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Sort Options */}
+                  {openDropdown === 'sort' && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-100">
+                      {[
+                        { value: 'relevance', label: 'Relevance' },
+                        { value: 'newest', label: 'Newest' },
+                        { value: 'oldest', label: 'Oldest' },
+                        { value: 'price-low', label: 'Price: Low to High' },
+                        { value: 'price-high', label: 'Price: High to Low' },
+                        { value: 'rating', label: 'Highest Rated' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSortBy(option.value);
+                            setOpenDropdown(null);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 ${
+                            sortBy === option.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
             
             {/* Products Grid/List */}
             <div className={`overflow-hidden ${
@@ -825,12 +1007,16 @@ export default function MarketplacePage() {
                               </div>
 
                               {/* Seller Info - Compact */}
-                              <div className="flex items-center gap-1 mb-2">
-                                <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <Link 
+                                to={`/seller/${product.seller?.id}/catalogue`}
+                                className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
-                                <span className="text-xs text-gray-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
-                              </div>
+                                <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
+                              </Link>
                             </div>
 
                             {/* Action Buttons - Bottom aligned */}
@@ -877,12 +1063,16 @@ export default function MarketplacePage() {
                             </div>
 
                             {/* Seller Info */}
-                            <div className="flex items-center gap-1 mb-3">
-                              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <Link 
+                              to={`/seller/${product.seller?.id}/catalogue`}
+                              className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
-                              <span className="text-xs text-gray-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
-                            </div>
+                              <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
+                            </Link>
 
                             {/* Action Buttons */}
                             <div className="flex gap-2">

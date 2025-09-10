@@ -75,16 +75,19 @@ export default function ProductCard({ product }) {
 
         {/* Seller Info */}
         {product.seller && (
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-xs font-medium text-gray-600">
+          <Link 
+            to={`/seller/${product.seller.id}/catalogue`}
+            className="flex items-center gap-2 mb-3 hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors group"
+          >
+            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+              <span className="text-xs font-medium text-gray-600 group-hover:text-blue-600">
                 {product.seller.catalogueName?.charAt(0) || 'S'}
               </span>
             </div>
-            <span className="text-sm text-gray-600 truncate">
+            <span className="text-sm text-gray-600 truncate group-hover:text-blue-600 transition-colors">
               {product.seller.catalogueName || 'Unknown Seller'}
             </span>
-          </div>
+          </Link>
         )}
 
         {/* Rating */}

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as authService from '../services/authService';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export { AuthContext };
 
@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
     return raw ? JSON.parse(raw) : null;
   });
   const [token, setToken] = useState(() => localStorage.getItem('campor_token') || null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState(null);
 
   // Check if user is a seller (has completed onboarding)
@@ -27,15 +27,23 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem('campor_token');
   }, [token]);
 
-  // Fetch user profile when token changes
+  // Initialize auth state and fetch user profile when needed
   useEffect(() => {
-    if (token && !user) {
-      fetchUserProfile();
-    }
+    const initializeAuth = async () => {
+      if (token && !user) {
+        await fetchUserProfile();
+      } else {
+        // If no token or already have user, stop loading
+        setLoading(false);
+      }
+    };
+    
+    initializeAuth();
   }, [token]);
 
   const fetchUserProfile = async () => {
     try {
+      setLoading(true);
       const userData = await authService.getCurrentUser();
       
       // Check if user is already a seller by trying to get seller profile
@@ -60,6 +68,8 @@ export function AuthProvider({ children }) {
         setToken(null);
         setUser(null);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -229,25 +239,53 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const contextValue = { 
+    user, 
+    token, 
+    loading, 
+    error, 
+    login, 
+    register, 
+    logout, 
+    isSeller,
+    completeSellersOnboarding,
+    updateUserProfile,
+    refreshUserProfile,
+    updateSellerData,
+    fetchUserProfile
+  };
+  
+  // Debug logging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 AuthProvider: Providing context value:', {
+      user: user ? 'User object present' : 'No user',
+      token: token ? 'Token present' : 'No token',
+      loading,
+      error: error || 'No error'
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      token, 
-      loading, 
-      error, 
-      login, 
-      register, 
-      logout, 
-      isSeller,
-      completeSellersOnboarding,
-      updateUserProfile,
-      refreshUserProfile,
-      updateSellerData,
-      fetchUserProfile
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  
+  // Debug logging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 useAuth: Context value:', context);
+    console.log('🔍 useAuth: Context type:', typeof context);
+  }
+  
+  if (context === undefined || context === null) {
+    console.error('❌ useAuth: Context is null/undefined. Make sure component is wrapped in AuthProvider.');
+    console.error('❌ useAuth: Check provider hierarchy in main.jsx and App.jsx');
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+};

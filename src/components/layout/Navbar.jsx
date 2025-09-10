@@ -24,8 +24,10 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
   // Determine if user is signed in for navbar state
   const isSignedIn = !!user;
   
-  // Check if we're on a seller page (excluding onboarding which should show buyer navbar)
-  const isSellerPage = location.pathname.startsWith('/seller/') && location.pathname !== '/seller/onboarding';
+  // Check if we're on a seller dashboard page (excluding onboarding and catalogue which should show buyer navbar)
+  const isSellerPage = location.pathname.startsWith('/seller/') && 
+    location.pathname !== '/seller/onboarding' && 
+    !location.pathname.includes('/catalogue');
 
   // Handle complete order
   const handleCompleteOrder = async (completionCode) => {

@@ -246,9 +246,17 @@ export default function ProductDetailPage() {
                       <p className="text-sm text-gray-600">Seller ID: {product.seller.id?.slice(0, 8)}...</p>
                     </div>
                   </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Message
-                  </button>
+                  <div className="flex gap-2">
+                    <Link 
+                      to={`/seller/${product.seller.id}/catalogue`}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      View Store
+                    </Link>
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                      Message
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

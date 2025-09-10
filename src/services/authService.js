@@ -394,10 +394,57 @@ export async function getSellerCatalogue(sellerId) {
     
     const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
     console.log('✅ SellerService: Seller catalogue fetched successfully:', response.data);
-    return response.data;
+    
+    // The API now returns updated structure with user profile and catalogue cover
+    const data = response.data;
+    return {
+      seller: {
+        id: sellerId,
+        user: data.user, // Contains name and profilePicture
+        catalogueName: data.catalogueName,
+        catalogueCover: data.catalogueCover, // New cover photo field
+        storeDescription: data.storeDescription,
+        location: data.location,
+        createdAt: data.createdAt,
+        averageRating: data.averageRating,
+        productCount: data._count?.products || 0
+      },
+      products: data.products || []
+    };
   } catch (error) {
     console.error('❌ SellerService: Failed to fetch seller catalogue:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch seller catalogue.');
+  }
+}
+
+// Public seller catalogue - can be used for public viewing (if needed without auth)
+export async function getPublicSellerCatalogue(sellerId) {
+  try {
+    console.log('🔍 SellerService: Fetching public seller catalogue for ID:', sellerId);
+    
+    // Use the same endpoint but could be modified for public access in the future
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
+    console.log('✅ SellerService: Public seller catalogue fetched successfully:', response.data);
+    
+    // Transform response to match the new API structure
+    const data = response.data;
+    return {
+      seller: {
+        id: sellerId,
+        user: data.user, // Contains name and profilePicture
+        catalogueName: data.catalogueName,
+        catalogueCover: data.catalogueCover, // New cover photo field
+        storeDescription: data.storeDescription,
+        location: data.location,
+        createdAt: data.createdAt,
+        averageRating: data.averageRating,
+        productCount: data._count?.products || 0
+      },
+      products: data.products || []
+    };
+  } catch (error) {
+    console.error('❌ SellerService: Failed to fetch public seller catalogue:', error);
+    throw new Error(error.response?.data?.message || 'Seller catalogue not found or not available.');
   }
 }
 
