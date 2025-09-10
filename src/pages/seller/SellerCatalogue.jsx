@@ -181,9 +181,9 @@ export default function SellerCatalogue() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden -m-6 -mt-20">
-      {/* Full-width Cover Photo Section - Breaks out of container */}
-      <div className="relative w-screen h-80 md:h-96 -mx-4 md:-mx-8 lg:-mx-16 xl:-mx-32">
+    <div className="min-h-screen overflow-x-hidden -mt-6">
+      {/* Full-width Cover Photo Section */}
+      <div className="relative w-screen h-64 sm:h-80 md:h-96 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-16 xl:-mx-32">
         {/* Cover Photo/Banner - Full Screen Width */}
         {sellerData?.catalogueCover ? (
           <img 
@@ -197,15 +197,15 @@ export default function SellerCatalogue() {
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
       </div>
         
-      {/* Profile Info Card - Positioned higher */}
-      <div className="max-w-6xl mx-auto px-4 -mt-32 relative z-10 pt-6">
+      {/* Profile Info Card - Responsive positioning */}
+      <div className="max-w-7xl mx-auto px-4 -mt-20 sm:-mt-24 md:-mt-32 relative z-10">
         <div className="flex justify-center lg:justify-start">
-          {/* White Card Container with rounded corners */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 lg:p-6 w-full max-w-sm lg:max-w-none">
-          {/* Main Content Row */}
-          <div className="flex items-start gap-4">
-            {/* Profile Picture - Left side */}
-            <div className="w-20 h-20 bg-white rounded-full p-1 shadow-lg flex-shrink-0">
+          {/* White Card Container with responsive sizing */}
+          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:p-6 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none">
+          {/* Main Content Row - Mobile: vertical, Desktop: horizontal */}
+          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+            {/* Profile Picture */}
+            <div className="w-20 h-20 sm:w-20 sm:h-20 bg-white rounded-full p-1 shadow-lg flex-shrink-0 mx-auto sm:mx-0">
               <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
                 {sellerData?.user?.profilePicture ? (
                   <img 
@@ -221,22 +221,22 @@ export default function SellerCatalogue() {
               </div>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-              {/* Left Column - Seller Info */}
-              <div className="flex-1">
+            {/* Content Area - Mobile: centered, Desktop: left-aligned */}
+            <div className="flex-1 w-full flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+              {/* Seller Info */}
+              <div className="flex-1 text-center sm:text-left">
                 {/* Store Name */}
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                <h1 className="text-xl sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
                   {sellerData?.catalogueName || 'Store Name'}
                 </h1>
                 
                 {/* Seller Name */}
-                <p className="text-base text-gray-600 mb-1">
+                <p className="text-base sm:text-base text-gray-600 mb-1">
                   by {sellerData?.user?.name || 'Seller Name'}
                 </p>
                 
                 {/* Rating and Sales */}
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
                   <span className="text-base font-semibold text-gray-900">
                     {sellerData?.averageRating || '4.7'}
@@ -247,16 +247,16 @@ export default function SellerCatalogue() {
                 </div>
                 
                 {/* Description */}
-                <p className="text-gray-700 text-sm max-w-2xl leading-relaxed">
+                <p className="text-gray-700 text-sm leading-relaxed">
                   {sellerData?.storeDescription || 'Premium electronics and gadgets with authentic warranties. Specializing in phones, laptops, and accessories.'}
                 </p>
               </div>
               
-              {/* Right Column - Action Buttons - Only show if user is not the seller */}
+              {/* Action Buttons - Mobile: centered, Desktop: right-aligned */}
               {user?.seller?.id !== sellerId && (
-                <div className="flex flex-col gap-3 items-center lg:items-end">
+                <div className="flex flex-col gap-3 items-center sm:items-end">
                   <button 
-                    className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm"
+                    className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
                     onClick={() => {
                       // TODO: Implement messaging functionality
                       alert('Messaging feature coming soon!');
@@ -273,7 +273,7 @@ export default function SellerCatalogue() {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
-                          className="text-yellow-400 hover:text-yellow-500 transition-colors"
+                          className="text-yellow-400 hover:text-yellow-500 transition-colors touch-manipulation p-1"
                           onClick={() => {
                             // TODO: Implement rating functionality
                             alert(`You rated ${star} stars!`);
@@ -289,20 +289,20 @@ export default function SellerCatalogue() {
             </div>
           </div>
 
-          {/* Stats Section - Integrated into the main card */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-3 gap-6 text-center">
+          {/* Stats Section - Responsive grid */}
+          <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 text-center">
               <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Products</h3>
-                <p className="text-xl font-bold text-gray-900">{sellerData?.productCount || products.length}</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-900">{sellerData?.productCount || products.length}</p>
               </div>
               <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Response Time</h3>
-                <p className="text-lg lg:text-xl font-bold text-gray-900">&lt; 1 hour</p>
+                <p className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900">&lt; 1 hour</p>
               </div>
               <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Member Since</h3>
-                <p className="text-sm lg:text-xl font-bold text-gray-900">
+                <p className="text-xs sm:text-sm lg:text-xl font-bold text-gray-900">
                   {sellerData?.createdAt ? new Date(sellerData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'January 2022'}
                 </p>
               </div>
@@ -313,41 +313,11 @@ export default function SellerCatalogue() {
       </div>
 
       {/* Products Section */}
-      <div className="max-w-6xl mx-auto px-4 mt-8 pb-6">
+      <div className="max-w-7xl mx-auto px-4 mt-6 sm:mt-8 pb-6">
         <div className=" rounded-xl shadow-sm">
-          {/* Mobile Filter Toolbar */}
-          <div className="lg:hidden p-4 border-b border-gray-200">
-            {/* Filter Header with View Toggle */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.586V4z" />
-                </svg>
-                <span className="text-lg font-semibold text-gray-900">Filter</span>
-              </div>
-              
-              {/* View Mode Toggle */}
-              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Search Input for Mobile */}
+          {/* Mobile Filter Toolbar - Improved layout */}
+          <div className="lg:hidden p-3 sm:p-4 border-b border-gray-200">
+            {/* Search Input - Full width on mobile */}
             <div className="mb-3">
               <div className="relative">
                 <input
@@ -355,74 +325,91 @@ export default function SellerCatalogue() {
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation"
                 />
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               </div>
             </div>
 
-            {/* Sort By for Mobile */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Sort by:</span>
-              <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: openDropdown === 'sort' ? 50 : 40 }}>
+            {/* Filter Controls Row */}
+            <div className="flex items-center justify-between gap-3">
+              {/* Filter Label and Sort */}
+              <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.586V4z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-900">Filter</span>
+                </div>
+                
+                {/* Sort Dropdown */}
+                <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: openDropdown === 'sort' ? 50 : 40 }}>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
+                  >
+                    <span className="truncate">
+                      {sortBy === 'newest' ? 'Newest' :
+                       sortBy === 'oldest' ? 'Oldest' :
+                       sortBy === 'price-low' ? 'Price: Low to High' :
+                       sortBy === 'price-high' ? 'Price: High to Low' :
+                       sortBy === 'rating' ? 'Highest Rated' : 'Newest'}
+                    </span>
+                    <svg className={`w-3 h-3 transition-transform flex-shrink-0 ml-1 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Sort Options */}
+                  {openDropdown === 'sort' && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+                      {[
+                        { value: 'newest', label: 'Newest' },
+                        { value: 'oldest', label: 'Oldest' },
+                        { value: 'price-low', label: 'Price: Low to High' },
+                        { value: 'price-high', label: 'Price: High to Low' },
+                        { value: 'rating', label: 'Highest Rated' }
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSortBy(option.value);
+                            setOpenDropdown(null);
+                          }}
+                          className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors touch-manipulation"
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* View Mode Toggle */}
+              <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                 <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
-                  }}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors touch-manipulation`}
                 >
-                  <span className="truncate">
-                    {sortBy === 'newest' ? 'Newest' :
-                     sortBy === 'oldest' ? 'Oldest' :
-                     sortBy === 'price-low' ? 'Price: Low to High' :
-                     sortBy === 'price-high' ? 'Price: High to Low' :
-                     sortBy === 'rating' ? 'Highest Rated' : 'Newest'}
-                  </span>
-                  <svg className={`w-4 h-4 transition-transform flex-shrink-0 ml-2 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
                 </button>
-
-                {/* Sort Options */}
-                {openDropdown === 'sort' && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
-                    {[
-                      { value: 'newest', label: 'Newest' },
-                      { value: 'oldest', label: 'Oldest' },
-                      { value: 'price-low', label: 'Price: Low to High' },
-                      { value: 'price-high', label: 'Price: High to Low' },
-                      { value: 'rating', label: 'Highest Rated' }
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSortBy(option.value);
-                          setOpenDropdown(null);
-                        }}
-                        onTouchStart={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSortBy(option.value);
-                          setOpenDropdown(null);
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 touch-manipulation ${
-                          sortBy === option.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors touch-manipulation`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -543,16 +530,16 @@ export default function SellerCatalogue() {
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {sortedProducts.length > 0 ? (
               <div className={`overflow-hidden ${
                 viewMode === 'grid' 
-                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6' 
-                  : 'flex flex-col gap-4'
+                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6' 
+                  : 'flex flex-col gap-3 sm:gap-4'
               }`}>
                 {sortedProducts.map((product) => (
                   <Link key={product.id} to={`/product/${product.slug}`} className={`block bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden min-w-0 ${
-                    viewMode === 'list' ? 'flex flex-row items-center p-4 gap-4' : ''
+                    viewMode === 'list' ? 'flex flex-row items-center p-3 sm:p-4 gap-3 sm:gap-4' : ''
                   }`}>
                     {/* Product Image with Navigation */}
                     <div className={`block relative overflow-hidden flex-shrink-0 ${
