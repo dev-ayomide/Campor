@@ -338,20 +338,24 @@ export default function MarketplacePage() {
       let clickedInside = false;
       
       dropdownContainers.forEach(container => {
-        if (container.contains(event.target)) {
+        if (container.contains(event.target) || container.contains(event.target.closest('[data-dropdown]'))) {
           clickedInside = true;
         }
       });
       
-      if (!clickedInside) {
+      if (!clickedInside && openDropdown) {
         setOpenDropdown(null);
       }
     };
 
     if (openDropdown) {
-      // Use capture phase to ensure this runs before other click handlers
+      // Add both click and touchstart listeners for better mobile support
       document.addEventListener('click', handleClickOutside, true);
-      return () => document.removeEventListener('click', handleClickOutside, true);
+      document.addEventListener('touchstart', handleClickOutside, true);
+      return () => {
+        document.removeEventListener('click', handleClickOutside, true);
+        document.removeEventListener('touchstart', handleClickOutside, true);
+      };
     }
   }, [openDropdown]);
 
@@ -459,11 +463,6 @@ export default function MarketplacePage() {
                         e.stopPropagation();
                         setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
                       }}
-                      onTouchStart={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
-                      }}
                       className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
                     >
                       <span className="truncate">
@@ -493,12 +492,6 @@ export default function MarketplacePage() {
                           <button
                             key={option.value}
                             onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setSortBy(option.value);
-                              setOpenDropdown(null);
-                            }}
-                            onTouchStart={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               setSortBy(option.value);
@@ -537,16 +530,7 @@ export default function MarketplacePage() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('🔍 Category dropdown clicked, current state:', openDropdown);
                       setOpenDropdown(openDropdown === 'category' ? null : 'category');
-                      console.log('🔍 Category dropdown new state:', openDropdown === 'category' ? null : 'category');
-                    }}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      console.log('🔍 Category dropdown touched, current state:', openDropdown);
-                      setOpenDropdown(openDropdown === 'category' ? null : 'category');
-                      console.log('🔍 Category dropdown new state:', openDropdown === 'category' ? null : 'category');
                     }}
                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
                   >
@@ -572,12 +556,6 @@ export default function MarketplacePage() {
                               handleCategoryChange(category);
                               setOpenDropdown(null);
                             }}
-                            onTouchStart={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleCategoryChange(category);
-                              setOpenDropdown(null);
-                            }}
                             className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 touch-manipulation ${
                               selectedCategory === category ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
                             }`}
@@ -598,11 +576,6 @@ export default function MarketplacePage() {
                       e.stopPropagation();
                       setOpenDropdown(openDropdown === 'price' ? null : 'price');
                     }}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setOpenDropdown(openDropdown === 'price' ? null : 'price');
-                    }}
                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
                   >
                     <span className="truncate">{selectedPrice === 'All' ? 'Price' : selectedPrice}</span>
@@ -619,12 +592,6 @@ export default function MarketplacePage() {
                         <button
                           key={price}
                           onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handlePriceChange(price);
-                            setOpenDropdown(null);
-                          }}
-                          onTouchStart={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             handlePriceChange(price);

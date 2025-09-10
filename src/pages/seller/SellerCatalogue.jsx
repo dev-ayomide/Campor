@@ -181,7 +181,7 @@ export default function SellerCatalogue() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden -m-6 -mt-20">
       {/* Full-width Cover Photo Section - Breaks out of container */}
       <div className="relative w-screen h-80 md:h-96 -mx-4 md:-mx-8 lg:-mx-16 xl:-mx-32">
         {/* Cover Photo/Banner - Full Screen Width */}
@@ -195,21 +195,10 @@ export default function SellerCatalogue() {
           <div className="w-full h-full bg-gradient-to-r from-teal-400 to-teal-600"></div>
         )}
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        
-        {/* Back Button - Positioned over cover photo */}
-        <div className="absolute top-4 left-4 z-20">
-          <Link 
-            to="/marketplace" 
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-1" />
-            Back
-          </Link>
-        </div>
       </div>
         
       {/* Profile Info Card - Positioned higher */}
-      <div className="max-w-6xl mx-auto px-4 -mt-32 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 -mt-32 relative z-10 pt-6">
         {/* White Card Container with rounded corners */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
           {/* Main Content Row */}
@@ -264,7 +253,7 @@ export default function SellerCatalogue() {
               
               {/* Right Column - Action Buttons - Only show if user is not the seller */}
               {user?.seller?.id !== sellerId && (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 items-center">
                   <button 
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm"
                     onClick={() => {
@@ -308,11 +297,11 @@ export default function SellerCatalogue() {
               </div>
               <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Response Time</h3>
-                <p className="text-xl font-bold text-gray-900">&lt; 1 hour</p>
+                <p className="text-lg lg:text-xl font-bold text-gray-900">&lt; 1 hour</p>
               </div>
               <div>
                 <h3 className="text-xs font-medium text-gray-500 mb-1">Member Since</h3>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-sm lg:text-xl font-bold text-gray-900">
                   {sellerData?.createdAt ? new Date(sellerData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'January 2022'}
                 </p>
               </div>
@@ -322,7 +311,7 @@ export default function SellerCatalogue() {
       </div>
 
       {/* Products Section */}
-      <div className="max-w-6xl mx-auto px-4 mt-8">
+      <div className="max-w-6xl mx-auto px-4 mt-8 pb-6">
         <div className=" rounded-xl shadow-sm">
           {/* Mobile Filter Toolbar */}
           <div className="lg:hidden p-4 border-b border-gray-200">
@@ -584,16 +573,6 @@ export default function SellerCatalogue() {
                           Out of Stock
                         </div>
                       )}
-                      
-                      {/* Wishlist Button - Only show if user is not the seller */}
-                      {user?.seller?.id !== sellerId && (
-                        <div className="absolute top-2 right-2">
-                          <WishlistButton 
-                            productId={product.id}
-                            className="bg-white bg-opacity-80 hover:bg-opacity-100"
-                          />
-                        </div>
-                      )}
                     </div>
 
                     {/* Product Info */}
@@ -641,6 +620,12 @@ export default function SellerCatalogue() {
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
+                            {user?.seller?.id !== sellerId && (
+                              <WishlistButton 
+                                productId={product.id}
+                                className="flex-shrink-0"
+                              />
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -686,6 +671,11 @@ export default function SellerCatalogue() {
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
+                            {user?.seller?.id !== sellerId && (
+                              <WishlistButton 
+                                productId={product.id}
+                              />
+                            )}
                           </div>
                         </div>
                       )}
