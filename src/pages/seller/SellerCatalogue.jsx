@@ -159,7 +159,7 @@ export default function SellerCatalogue() {
     return (
       <div className="min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-20">
-          <div className=" rounded-xl shadow-sm p-8 text-center">
+          <div className=" p-8 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -532,14 +532,14 @@ export default function SellerCatalogue() {
 
           <div className="p-4 sm:p-6">
             {sortedProducts.length > 0 ? (
-              <div className={`overflow-hidden ${
-                viewMode === 'grid' 
-                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6' 
-                  : 'flex flex-col gap-3 sm:gap-4'
-              }`}>
+            <div className={`overflow-hidden ${
+              viewMode === 'grid' 
+                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6' 
+                : 'flex flex-col gap-4'
+            }`}>
                 {sortedProducts.map((product) => (
                   <Link key={product.id} to={`/product/${product.slug}`} className={`block bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden min-w-0 ${
-                    viewMode === 'list' ? 'flex flex-row items-center p-3 sm:p-4 gap-3 sm:gap-4' : ''
+                    viewMode === 'list' ? 'flex flex-row items-center p-4 gap-4' : ''
                   }`}>
                     {/* Product Image with Navigation */}
                     <div className={`block relative overflow-hidden flex-shrink-0 ${
@@ -571,14 +571,13 @@ export default function SellerCatalogue() {
                         <div className="flex flex-col justify-between h-full">
                           <div className="flex-1">
                             {/* Rating Stars - Smaller for list view */}
-                            {product.ratings && product.ratings.length > 0 && (
-                              <div className="flex items-center gap-0.5 mb-1">
-                                {renderStars(getAverageRating(product.ratings))}
-                                <span className="text-xs text-gray-500 ml-1">
-                                  ({product.ratings.length})
-                                </span>
-                              </div>
-                            )}
+                            <div className="flex items-center gap-0.5 mb-1">
+                              {[...Array(5)].map((_, i) => (
+                                <svg key={i} className="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                            </div>
 
                             {/* Product Name - Compact with highlighting */}
                             <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 leading-tight">
@@ -592,12 +591,20 @@ export default function SellerCatalogue() {
                             {/* Price - Prominent */}
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-                              {product.stockQuantity > 0 && (
-                                <span className="text-xs text-gray-500">
-                                  {product.stockQuantity} left
-                                </span>
-                              )}
+                              <span className="text-xs text-gray-500 line-through">{product.originalPrice}</span>
                             </div>
+
+                            {/* Seller Info - Compact */}
+                            <Link 
+                              to={`/seller/${product.seller?.id}/catalogue`}
+                              className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
+                              <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
+                            </Link>
                           </div>
 
                           {/* Action Buttons - Bottom aligned */}
@@ -609,28 +616,25 @@ export default function SellerCatalogue() {
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
-                        {user?.seller?.id !== sellerId && (
-                            <WishlistButton 
-                              productId={product.id}
+                            {user?.seller?.id !== sellerId && (
+                              <WishlistButton 
+                                productId={product.id}
                                 className="flex-shrink-0"
-                            />
-                        )}
-                      </div>
+                              />
+                            )}
+                          </div>
                         </div>
                       ) : (
                         // Grid View Layout
                         <div>
                           {/* Rating Stars */}
-                      {product.ratings && product.ratings.length > 0 && (
-                            <div className="flex items-center gap-0.5 mb-2">
-                          <div className="flex items-center">
-                            {renderStars(getAverageRating(product.ratings))}
+                          <div className="flex items-center gap-0.5 mb-2">
+                            {[...Array(5)].map((_, i) => (
+                              <svg key={i} className="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
                           </div>
-                          <span className="text-xs text-gray-500 ml-1">
-                            ({product.ratings.length})
-                          </span>
-                        </div>
-                      )}
 
                           {/* Product Name with highlighting */}
                           <h3 className="text-sm md:text-base font-medium text-gray-900 mb-1 line-clamp-2">
@@ -639,17 +643,25 @@ export default function SellerCatalogue() {
                               highlight={searchQuery} 
                               className="text-sm md:text-base font-medium text-gray-900"
                             />
-                        </h3>
+                          </h3>
 
-                      {/* Price */}
+                          {/* Price */}
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-lg md:text-xl font-bold text-gray-900">{formatPrice(product.price)}</span>
-                        {product.stockQuantity > 0 && (
-                          <span className="text-xs text-gray-500">
-                            {product.stockQuantity} left
-                          </span>
-                        )}
-                      </div>
+                            <span className="text-sm text-gray-500 line-through">{product.originalPrice}</span>
+                          </div>
+
+                          {/* Seller Info */}
+                          <Link 
+                            to={`/seller/${product.seller?.id}/catalogue`}
+                            className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
+                          </Link>
 
                           {/* Action Buttons */}
                           <div className="flex gap-2">
@@ -660,11 +672,11 @@ export default function SellerCatalogue() {
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
-                      {user?.seller?.id !== sellerId && (
+                            {user?.seller?.id !== sellerId && (
                               <WishlistButton 
-                              productId={product.id} 
-                            />
-                          )}
+                                productId={product.id}
+                              />
+                            )}
                           </div>
                         </div>
                       )}
