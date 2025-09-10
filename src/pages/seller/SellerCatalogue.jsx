@@ -199,8 +199,9 @@ export default function SellerCatalogue() {
         
       {/* Profile Info Card - Positioned higher */}
       <div className="max-w-6xl mx-auto px-4 -mt-32 relative z-10 pt-6">
-        {/* White Card Container with rounded corners */}
-        <div className="bg-white rounded-2xl shadow-xl p-6">
+        <div className="flex justify-center lg:justify-start">
+          {/* White Card Container with rounded corners */}
+          <div className="bg-white rounded-2xl shadow-xl p-4 lg:p-6 w-full max-w-sm lg:max-w-none">
           {/* Main Content Row */}
           <div className="flex items-start gap-4">
             {/* Profile Picture - Left side */}
@@ -253,7 +254,7 @@ export default function SellerCatalogue() {
               
               {/* Right Column - Action Buttons - Only show if user is not the seller */}
               {user?.seller?.id !== sellerId && (
-                <div className="flex flex-col gap-3 items-center">
+                <div className="flex flex-col gap-3 items-center lg:items-end">
                   <button 
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm"
                     onClick={() => {
@@ -307,6 +308,7 @@ export default function SellerCatalogue() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
