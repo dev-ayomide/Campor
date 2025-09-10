@@ -4,6 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { updateProductInCatalogue, getSellerCatalogue } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
+import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
 
 const EditProduct = ({ toggleMobileMenu }) => {
   const { productId } = useParams();
@@ -23,6 +24,7 @@ const EditProduct = ({ toggleMobileMenu }) => {
     categoryId: '',
     files: []
   });
+  const [formattedPrice, setFormattedPrice] = useState('');
   
   // Available categories
   const [categories, setCategories] = useState([]);
@@ -59,6 +61,8 @@ const EditProduct = ({ toggleMobileMenu }) => {
               categoryId: product.categoryId || '',
               files: []
             });
+            // Set formatted price for display
+            setFormattedPrice(formatPriceInput(product.price || ''));
             
             // Set current images as previews
             if (product.imageUrls && product.imageUrls.length > 0) {
@@ -81,10 +85,24 @@ const EditProduct = ({ toggleMobileMenu }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'price') {
+      // Format the input value with commas
+      const formatted = formatPriceInput(value);
+      setFormattedPrice(formatted);
+      
+      // Store the numeric value for form submission
+      const numericValue = parsePrice(formatted);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numericValue.toString()
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -389,15 +407,13 @@ const EditProduct = ({ toggleMobileMenu }) => {
                     <span className="text-gray-500 font-medium">₦</span>
                   </div>
                   <input
-                    type="number"
+                    type="text"
                     id="price"
                     name="price"
-                    value={formData.price}
+                    value={formattedPrice}
                     onChange={handleInputChange}
-                    min="0"
-                    step="0.01"
                     className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g. 25,000"
+                    placeholder="e.g. 25,000.00"
                     required
                   />
                 </div>

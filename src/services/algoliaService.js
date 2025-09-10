@@ -29,16 +29,18 @@ const buildAlgoliaFilters = (selectedCategory, selectedPrice) => {
   }
   
   // Price filter - handle numeric price values properly
-  if (selectedPrice && selectedPrice !== 'All') {
+  if (selectedPrice && selectedPrice !== 'All Price') {
     console.log('🔍 AlgoliaService: Processing price filter:', selectedPrice);
-    if (selectedPrice === '₦10,000.00 - ₦15,000.00') {
-      filters.push('price:10000 TO 15000');
-    } else if (selectedPrice === '₦15,000.00 - ₦25,000.00') {
-      filters.push('price:15000 TO 25000');
-    } else if (selectedPrice === '₦25,000.00 - ₦50,000.00') {
-      filters.push('price:25000 TO 50000');
-    } else if (selectedPrice === '₦50,000+') {
-      filters.push('price:50000 TO 999999');
+    if (selectedPrice === '₦0.00 - 9,999.99') {
+      filters.push('price:0 TO 9999.99');
+    } else if (selectedPrice === '₦10,000.00 - 19,999.99') {
+      filters.push('price:10000 TO 19999.99');
+    } else if (selectedPrice === '₦20,000.00 - 29,999.99') {
+      filters.push('price:20000 TO 29999.99');
+    } else if (selectedPrice === '₦30,000.00 - 39,999.99') {
+      filters.push('price:30000 TO 39999.99');
+    } else if (selectedPrice === '₦40,000.00+') {
+      filters.push('price >= 40000');
     }
     console.log('🔍 AlgoliaService: Added price filter:', filters[filters.length - 1]);
   }

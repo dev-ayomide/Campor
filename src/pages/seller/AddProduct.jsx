@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { addProductToCatalogue, getCategoriesOnly } from '../../services/authService';
+import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
 
 export default function AddProductPage({ toggleMobileMenu }) {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
     categoryId: '',
     files: []
   });
+  const [formattedPrice, setFormattedPrice] = useState('');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -45,10 +47,24 @@ export default function AddProductPage({ toggleMobileMenu }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'price') {
+      // Format the input value with commas
+      const formatted = formatPriceInput(value);
+      setFormattedPrice(formatted);
+      
+      // Store the numeric value for form submission
+      const numericValue = parsePrice(formatted);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numericValue.toString()
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -274,12 +290,11 @@ export default function AddProductPage({ toggleMobileMenu }) {
                 <label className="block text-lg font-medium text-gray-900 mb-2">Price</label>
                 <div className="relative">
                   <input
-                    type="number"
+                    type="text"
                     name="price"
-                    value={formData.price}
+                    value={formattedPrice}
                     onChange={handleInputChange}
-                    placeholder="e.g. 25,000"
-                    min="0"
+                    placeholder="e.g. 25,000.00"
                     className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pl-12"
                     required
                   />
@@ -352,7 +367,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
               {/* Product Details */}
               <div className="p-4">
                 <div className="text-lg font-semibold text-blue-600 mb-2">
-                  ₦ {parseInt(formData.price).toLocaleString()}
+                  {formatPrice(formData.price)}
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">{formData.name}</h3>
                 <p className="text-sm text-gray-600 mb-2">{formData.description}</p>

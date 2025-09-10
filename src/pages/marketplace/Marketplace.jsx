@@ -8,6 +8,7 @@ import {
   debouncedSearch 
 } from '../../services/algoliaService';
 import { AuthContext } from '../../context/AuthContext';
+import { formatPrice } from '../../utils/formatting';
 import { useCart } from '../../contexts/CartContext';
 import marketplaceImage from '../../assets/images/marketplace.png';
 import productImage from '../../assets/images/product.png';
@@ -28,7 +29,7 @@ export default function MarketplacePage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState('All');
-  const [selectedPrice, setSelectedPrice] = useState('All');
+  const [selectedPrice, setSelectedPrice] = useState('All Price');
 
   // Real data states
   const [products, setProducts] = useState([]);
@@ -51,11 +52,12 @@ export default function MarketplacePage() {
 
   const brands = ['All', 'Apple', 'Samsung', 'Sony', 'HP', 'Dell'];
   const priceRanges = [
-    'All',
-    '₦10,000.00 - ₦15,000.00',
-    '₦15,000.00 - ₦25,000.00',
-    '₦25,000.00 - ₦50,000.00',
-    '₦50,000+'
+    'All Price',
+    '₦0.00 - 9,999.99',
+    '₦10,000.00 - 19,999.99',
+    '₦20,000.00 - 29,999.99',
+    '₦30,000.00 - 39,999.99',
+    '₦40,000.00+'
   ];
 
   // Fetch products and categories on component mount
@@ -108,7 +110,7 @@ export default function MarketplacePage() {
     }
     
     // Price filter - pass the selected price string directly
-    if (selectedPrice && selectedPrice !== 'All') {
+    if (selectedPrice && selectedPrice !== 'All Price') {
       filters.price = selectedPrice;
     }
     
@@ -190,7 +192,7 @@ export default function MarketplacePage() {
   // Clear all filters
   const clearFilters = () => {
     setSelectedCategory('All');
-    setSelectedPrice('All');
+    setSelectedPrice('All Price');
     setSearchQuery('');
     // Reset pagination when clearing filters
     setPagination({
@@ -450,7 +452,7 @@ export default function MarketplacePage() {
               <div className="mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Sort by:</span>
-                  <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: 100 }}>
+                  <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: openDropdown === 'sort' ? 50 : 40 }}>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -479,7 +481,7 @@ export default function MarketplacePage() {
 
                     {/* Sort Options */}
                     {openDropdown === 'sort' && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-100">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
                         {[
                           { value: 'relevance', label: 'Relevance' },
                           { value: 'newest', label: 'Newest' },
@@ -518,7 +520,7 @@ export default function MarketplacePage() {
               {/* Filter Dropdowns */}
               <div className="flex gap-3">
                 {/* Clear Filters Button */}
-                {(selectedCategory !== 'All' || selectedPrice !== 'All' || searchQuery.trim()) && (
+                {(selectedCategory !== 'All' || selectedPrice !== 'All Price' || searchQuery.trim()) && (
                   <button
                     onClick={clearFilters}
                     className="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors flex-shrink-0"
@@ -684,16 +686,14 @@ export default function MarketplacePage() {
 
               {/* Filter Button */}
               <div className="p-4 border-b border-gray-100">
-                <button className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="w-full flex items-center justify-between p-3 rounded-lg transition-colors">
                   <div className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.586V4z" />
                     </svg>
                     <span className="font-medium text-gray-700">Filter</span>
                   </div>
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+                  
                 </button>
               </div>
 
@@ -740,7 +740,7 @@ export default function MarketplacePage() {
                 </div>
                 
                 {/* Clear Filters Button */}
-                {(selectedCategory !== 'All' || selectedPrice !== 'All' || searchQuery.trim()) && (
+                {(selectedCategory !== 'All' || selectedPrice !== 'All Price' || searchQuery.trim()) && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <button
                       onClick={clearFilters}
@@ -772,7 +772,7 @@ export default function MarketplacePage() {
               {/* Sort By Dropdown */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Sort by:</span>
-                <div className="relative min-w-0" data-dropdown style={{ zIndex: 100 }}>
+                <div className="relative min-w-0" data-dropdown style={{ zIndex: openDropdown === 'sort' ? 50 : 40 }}>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -796,7 +796,7 @@ export default function MarketplacePage() {
 
                   {/* Sort Options */}
                   {openDropdown === 'sort' && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-100">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
                       {[
                         { value: 'relevance', label: 'Relevance' },
                         { value: 'newest', label: 'Newest' },
@@ -905,7 +905,7 @@ export default function MarketplacePage() {
                     ? product.imageUrls 
                     : [productImage]; // Fallback to default image
                   
-                  const productPrice = product.price ? `₦${product.price}` : '₦0';
+                  const productPrice = formatPrice(product.price || 0);
                   const productName = product.name || 'Product Name Unavailable';
                   const productDescription = product.description || 'No description available';
                   const productStock = product.stockQuantity || 0;

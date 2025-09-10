@@ -4,11 +4,9 @@ import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../cart';
 import { WishlistButton } from '../wishlist';
 import { Star } from 'lucide-react';
+import { formatPrice } from '../../utils/formatting';
 
 export default function ProductCard({ product }) {
-  const formatPrice = (price) => {
-    return `₦${parseFloat(price).toLocaleString()}`;
-  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

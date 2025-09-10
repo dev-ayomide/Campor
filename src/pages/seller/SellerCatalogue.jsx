@@ -20,6 +20,19 @@ export default function SellerCatalogue() {
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdown && !event.target.closest('[data-dropdown]')) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openDropdown]);
 
   useEffect(() => {
     const fetchSellerCatalogue = async () => {
@@ -360,17 +373,66 @@ export default function SellerCatalogue() {
             {/* Sort By for Mobile */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
+              <div className="relative flex-1 min-w-0" data-dropdown style={{ zIndex: openDropdown === 'sort' ? 50 : 40 }}>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
+                >
+                  <span className="truncate">
+                    {sortBy === 'newest' ? 'Newest' :
+                     sortBy === 'oldest' ? 'Oldest' :
+                     sortBy === 'price-low' ? 'Price: Low to High' :
+                     sortBy === 'price-high' ? 'Price: High to Low' :
+                     sortBy === 'rating' ? 'Highest Rated' : 'Newest'}
+                  </span>
+                  <svg className={`w-4 h-4 transition-transform flex-shrink-0 ml-2 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Sort Options */}
+                {openDropdown === 'sort' && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+                    {[
+                      { value: 'newest', label: 'Newest' },
+                      { value: 'oldest', label: 'Oldest' },
+                      { value: 'price-low', label: 'Price: Low to High' },
+                      { value: 'price-high', label: 'Price: High to Low' },
+                      { value: 'rating', label: 'Highest Rated' }
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSortBy(option.value);
+                          setOpenDropdown(null);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSortBy(option.value);
+                          setOpenDropdown(null);
+                        }}
+                        className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 touch-manipulation ${
+                          sortBy === option.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -396,17 +458,55 @@ export default function SellerCatalogue() {
                   {/* Sort By */}
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">Sort by:</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="newest">Newest</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="price-low">Price: Low to High</option>
-                      <option value="price-high">Price: High to Low</option>
-                      <option value="rating">Highest Rated</option>
-                    </select>
+                    <div className="relative min-w-0" data-dropdown style={{ zIndex: openDropdown === 'sort' ? 50 : 40 }}>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenDropdown(openDropdown === 'sort' ? null : 'sort');
+                        }}
+                        className="flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors min-w-[200px]"
+                      >
+                        <span className="truncate">
+                          {sortBy === 'newest' ? 'Newest' :
+                           sortBy === 'oldest' ? 'Oldest' :
+                           sortBy === 'price-low' ? 'Price: Low to High' :
+                           sortBy === 'price-high' ? 'Price: High to Low' :
+                           sortBy === 'rating' ? 'Highest Rated' : 'Newest'}
+                        </span>
+                        <svg className={`w-4 h-4 transition-transform flex-shrink-0 ml-2 ${openDropdown === 'sort' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Sort Options */}
+                      {openDropdown === 'sort' && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+                          {[
+                            { value: 'newest', label: 'Newest' },
+                            { value: 'oldest', label: 'Oldest' },
+                            { value: 'price-low', label: 'Price: Low to High' },
+                            { value: 'price-high', label: 'Price: High to Low' },
+                            { value: 'rating', label: 'Highest Rated' }
+                          ].map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSortBy(option.value);
+                                setOpenDropdown(null);
+                              }}
+                              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                sortBy === option.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   {/* View Mode Toggle */}
