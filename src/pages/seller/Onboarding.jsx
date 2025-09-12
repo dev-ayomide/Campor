@@ -77,9 +77,50 @@ export default function SellerOnboardingPage() {
     }
   };
 
+  const validateForm = () => {
+    const errors = [];
+    
+    // Store Info validation
+    if (!storeInfo.catalogueName.trim()) {
+      errors.push('Store name is required');
+    }
+    if (!storeInfo.storeDescription.trim()) {
+      errors.push('Store description is required');
+    }
+    
+    // Bank Details validation
+    if (!bankDetails.bankName) {
+      errors.push('Bank name is required');
+    }
+    if (!bankDetails.accountNumber.trim()) {
+      errors.push('Account number is required');
+    }
+    if (!bankDetails.accountName.trim()) {
+      errors.push('Account name is required');
+    }
+    
+    // Contact Info validation
+    if (!contactInfo.phoneNumber.trim()) {
+      errors.push('Phone number is required');
+    }
+    if (!contactInfo.location.trim()) {
+      errors.push('Location is required');
+    }
+    
+    return errors;
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
+    
+    // Client-side validation
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(`Please complete the following fields:\n• ${validationErrors.join('\n• ')}`);
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Prepare seller data according to API requirements
@@ -108,7 +149,35 @@ export default function SellerOnboardingPage() {
       navigate('/seller/dashboard');
     } catch (error) {
       console.error('Seller registration failed:', error);
-      setError(error.message);
+      
+      // Parse and format API error messages to be user-friendly
+      let userFriendlyError = 'Registration failed. Please try again.';
+      
+      if (error.message) {
+        // Check if it's a validation error with field names
+        if (error.message.includes('"catalogueName"')) {
+          userFriendlyError = 'Please enter your store name';
+        } else if (error.message.includes('"storeDescription"')) {
+          userFriendlyError = 'Please enter a store description';
+        } else if (error.message.includes('"bankName"')) {
+          userFriendlyError = 'Please select your bank';
+        } else if (error.message.includes('"accountNumber"')) {
+          userFriendlyError = 'Please enter your account number';
+        } else if (error.message.includes('"accountName"')) {
+          userFriendlyError = 'Please enter your account name';
+        } else if (error.message.includes('"phoneNumber"')) {
+          userFriendlyError = 'Please enter your phone number';
+        } else if (error.message.includes('"location"')) {
+          userFriendlyError = 'Please enter your location';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          userFriendlyError = 'Network error. Please check your connection and try again.';
+        } else {
+          // For other errors, try to make them more user-friendly
+          userFriendlyError = error.message.replace(/"/g, '').replace(/is not allowed to be empty/g, 'is required');
+        }
+      }
+      
+      setError(userFriendlyError);
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +187,7 @@ export default function SellerOnboardingPage() {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Catalogue
@@ -134,7 +203,7 @@ export default function SellerOnboardingPage() {
                   value={storeInfo.catalogueName}
                   onChange={(e) => setStoreInfo(prev => ({ ...prev, catalogueName: e.target.value }))}
                   placeholder="e.g Chidi's Phone Accessories"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-12 pr-4 py-3 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -149,7 +218,7 @@ export default function SellerOnboardingPage() {
                 onChange={(e) => setStoreInfo(prev => ({ ...prev, storeDescription: e.target.value }))}
                 placeholder="Tell Buyers About your store and what you sell"
                 rows="4"
-                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                className="w-full p-4 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors resize-none"
                 required
               />
             </div>
@@ -158,7 +227,7 @@ export default function SellerOnboardingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Cover Image
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center hover:border-blue-400 transition-colors">
                 <input
                   type="file"
                   id="coverImage"
@@ -168,11 +237,11 @@ export default function SellerOnboardingPage() {
                 />
                 <label htmlFor="coverImage" className="cursor-pointer">
                   <div className="flex flex-col items-center">
-                    <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="text-gray-600 mb-2">Click to upload cover image</p>
-                    <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
+                    <p className="text-gray-600 mb-1 sm:mb-2 text-sm sm:text-base">Click to upload cover image</p>
+                    <p className="text-xs sm:text-sm text-gray-500">PNG, JPG up to 5MB</p>
                   </div>
                 </label>
                 {storeInfo.cataloguePicture && (
@@ -187,7 +256,7 @@ export default function SellerOnboardingPage() {
 
       case 2:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Bank Name <span className="text-red-500">*</span>
@@ -201,7 +270,7 @@ export default function SellerOnboardingPage() {
                 <select
                   value={bankDetails.bankName}
                   onChange={(e) => setBankDetails(prev => ({ ...prev, bankName: e.target.value }))}
-                  className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
+                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors appearance-none"
                   required
                 >
                   <option value="">Select</option>
@@ -242,7 +311,7 @@ export default function SellerOnboardingPage() {
                   value={bankDetails.accountNumber}
                   onChange={(e) => setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
                   placeholder="9077249922"
-                  className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
@@ -263,14 +332,14 @@ export default function SellerOnboardingPage() {
                   value={bankDetails.accountName}
                   onChange={(e) => setBankDetails(prev => ({ ...prev, accountName: e.target.value }))}
                   placeholder="Jonny Sun"
-                  className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 />
               </div>
             </div>
 
             {/* Security Note */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <div className="flex items-start">
                 <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -288,9 +357,9 @@ export default function SellerOnboardingPage() {
 
       case 3:
         return (
-          <div className="space-y-6">
-            {/* All Contact Fields in One Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Contact Fields - Stacked on mobile, grid on larger screens */}
+            <div className="space-y-4 sm:space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phone number
@@ -306,7 +375,7 @@ export default function SellerOnboardingPage() {
                     value={contactInfo.phoneNumber}
                     onChange={(e) => setContactInfo(prev => ({ ...prev, phoneNumber: e.target.value }))}
                     placeholder="eg. 09012345678"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full pl-12 pr-4 py-3 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -330,7 +399,7 @@ export default function SellerOnboardingPage() {
                       whatsappNumber: e.target.value
                     }))}
                     placeholder="eg. 09012345678"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full pl-12 pr-4 py-3 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors"
                   />
                 </div>
               </div>
@@ -351,7 +420,7 @@ export default function SellerOnboardingPage() {
                     value={contactInfo.location}
                     onChange={(e) => setContactInfo(prev => ({ ...prev, location: e.target.value }))}
                     placeholder="eg. RUN Campus, Ogun State"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full pl-12 pr-4 py-3 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors"
                     required
                   />
                 </div>
@@ -383,7 +452,7 @@ export default function SellerOnboardingPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Breadcrumb */}
-      <div className="px-6 py-3 border-b border-gray-100" style={{ backgroundColor: '#F7F5F0' }}>
+      <div className="px-4 sm:px-6 py-3 border-b border-gray-100" style={{ backgroundColor: '#F7F5F0' }}>
         <div className="flex items-center text-sm text-gray-600">
           <Link to="/" className="hover:text-blue-600">Home</Link>
           <svg className="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -398,20 +467,20 @@ export default function SellerOnboardingPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex items-center justify-center px-6 py-8">
-        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8">
+      <div className="px-4 sm:px-6 py-6 sm:py-8">
+        <div className="w-full max-w-2xl mx-auto">
           {/* Header */}
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Become a seller</h2>
-            <p className="text-gray-500">Set up your seller profile to start selling on Campor</p>
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Become a seller</h2>
+            <p className="text-gray-500 text-sm sm:text-base">Set up your seller profile to start selling on Campor</p>
           </div>
 
-          {/* Progress Steps */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center">
+          {/* Progress Steps - Mobile Responsive */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-center space-x-2 sm:space-x-4">
               {steps.map((step, index) => (
                 <div key={step.number} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold transition-colors ${
+                  <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-semibold transition-colors ${
                     step.number === currentStep 
                       ? 'bg-blue-600 text-white' 
                       : step.isCompleted
@@ -419,20 +488,20 @@ export default function SellerOnboardingPage() {
                       : 'bg-gray-200 text-gray-600'
                   }`}>
                     {step.isCompleted ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                       </svg>
                     ) : (
                       step.number
                     )}
                   </div>
-                  <span className={`ml-2 text-sm font-medium ${
+                  <span className={`ml-1 sm:ml-2 text-xs sm:text-sm font-medium ${
                     step.number === currentStep ? 'text-blue-600' : 'text-gray-500'
                   }`}>
                     {step.title}
                   </span>
                   {index < steps.length - 1 && (
-                    <div className={`w-8 h-0.5 mx-4 ${
+                    <div className={`w-4 sm:w-8 h-0.5 mx-2 sm:mx-4 ${
                       step.isCompleted ? 'bg-blue-500' : 'bg-gray-200'
                     }`} />
                   )}
@@ -442,45 +511,34 @@ export default function SellerOnboardingPage() {
           </div>
 
           {/* Form Content */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {renderStepContent()}
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="mt-4 sm:mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
               <div className="flex items-start">
                 <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-red-800">Error:</p>
-                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <p className="text-sm font-medium text-red-800">Please fix the following:</p>
+                  <div className="text-sm text-red-700 mt-1 whitespace-pre-line">
+                    {error}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Debug Section - Only show in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-              <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Tools</h3>
-              <button
-                onClick={handleTestConnection}
-                disabled={isLoading}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors"
-              >
-                Test Backend Connection
-              </button>
-            </div>
-          )}
 
           {/* Navigation Buttons */}
-          <div className="mt-8 flex gap-4">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
             {currentStep > 1 && (
               <button
                 onClick={handlePrevStep}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors"
+                className="w-full sm:flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors"
               >
                 Previous
               </button>
@@ -489,7 +547,7 @@ export default function SellerOnboardingPage() {
             {currentStep < 3 ? (
               <button
                 onClick={handleNextStep}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
               >
                 Continue to {steps[currentStep].title}
               </button>
@@ -497,7 +555,7 @@ export default function SellerOnboardingPage() {
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className={`flex-1 font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center ${
+                className={`w-full sm:flex-1 font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center ${
                   isLoading 
                     ? 'bg-blue-400 text-white cursor-not-allowed' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
