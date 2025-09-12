@@ -6,5 +6,6 @@ export { default as Customers } from './Customers';
 export { default as Analytics } from './Analytics';
 export { default as AddProduct } from './AddProduct';
 export { default as EditProduct } from './EditProduct';
+export { default as ViewProduct } from './ViewProduct';
 export { default as Settings } from './Settings';
 export { default as SellerCatalogue } from './SellerCatalogue';

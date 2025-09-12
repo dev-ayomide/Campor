@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { updateProductInCatalogue, getSellerCatalogue } from '../../services/authService';
+import { updateProductInCatalogue, getSellerProducts } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
 
@@ -46,10 +46,10 @@ const EditProduct = ({ toggleMobileMenu }) => {
         const categoriesList = categoriesData.data || categoriesData || [];
         setCategories(Array.isArray(categoriesList) ? categoriesList : []);
         
-        // Fetch seller catalogue to get current product data
+        // Fetch seller products to get current product data
         if (user?.seller?.id) {
-          const catalogueData = await getSellerCatalogue(user.seller.id);
-          const product = catalogueData.products?.find(p => p.id === productId);
+          const productsData = await getSellerProducts(user.seller.id);
+          const product = productsData.find(p => p.id === productId);
           
           if (product) {
             setCurrentProduct(product);

@@ -255,15 +255,6 @@ export function AuthProvider({ children }) {
     fetchUserProfile
   };
   
-  // Debug logging (remove in production)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 AuthProvider: Providing context value:', {
-      user: user ? 'User object present' : 'No user',
-      token: token ? 'Token present' : 'No token',
-      loading,
-      error: error || 'No error'
-    });
-  }
 
   return (
     <AuthContext.Provider value={contextValue}>
@@ -274,12 +265,6 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  
-  // Debug logging (remove in production)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 useAuth: Context value:', context);
-    console.log('🔍 useAuth: Context type:', typeof context);
-  }
   
   if (context === undefined || context === null) {
     console.error('❌ useAuth: Context is null/undefined. Make sure component is wrapped in AuthProvider.');

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
+import ChatLayout from './layouts/ChatLayout';
 import AuthLayout from './layouts/AuthLayout';
 import { AuthenticatedRedirect, RequireAuth } from './components/ProtectedRoute';
 import { CartProvider } from './contexts/CartContext';
@@ -23,10 +24,12 @@ import {
   Analytics, 
   AddProduct,
   EditProduct,
+  ViewProduct,
   Settings
 } from './pages/seller';
 import SellerCatalogue from './pages/seller/SellerCatalogue';
 import { AuthLanding, Login, Register, Verify, ForgotPassword, ResetPassword } from './pages/auth';
+import { Chat } from './pages/chat';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -63,6 +66,13 @@ export default function App() {
         <Route path="/profile" element={
           <RequireAuth>
             <MainLayout><Profile /></MainLayout>
+          </RequireAuth>
+        } />
+        
+        {/* Chat Route */}
+        <Route path="/chat" element={
+          <RequireAuth>
+            <ChatLayout><Chat /></ChatLayout>
           </RequireAuth>
         } />
         
@@ -119,6 +129,11 @@ export default function App() {
         <Route path="/seller/products/edit/:productId" element={
           <RequireAuth>
             <EditProduct />
+          </RequireAuth>
+        } />
+        <Route path="/seller/products/:productId" element={
+          <RequireAuth>
+            <ViewProduct />
           </RequireAuth>
         } />
         <Route path="/seller/settings" element={

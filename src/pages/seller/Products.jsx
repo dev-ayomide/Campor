@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { getSellerCatalogue, deleteProduct } from '../../services/authService';
+import { getSellerProducts, deleteProduct, updateProductStatus } from '../../services/authService';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -10,6 +10,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
@@ -19,9 +20,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         setLoading(true);
         
         if (user?.seller?.id) {
-          const catalogueData = await getSellerCatalogue(user.seller.id);
-          setProducts(catalogueData.products || []);
-          console.log('✅ Products: Fetched seller products:', catalogueData.products);
+          const productsData = await getSellerProducts(user.seller.id);
+          setProducts(productsData || []);
+          console.log('✅ Products: Fetched seller products:', productsData);
         }
         
       } catch (err) {
@@ -35,18 +36,26 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     fetchProducts();
   }, [user]);
 
-  // Filter products based on search term
+  // Filter products based on search term and status
   useEffect(() => {
+    let filtered = products;
+
     if (searchTerm) {
-      const filtered = products.filter(product =>
+      filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts(products);
     }
-  }, [products, searchTerm]);
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(product => {
+        const status = getProductStatus(product);
+        return status === statusFilter;
+      });
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, searchTerm, statusFilter]);
 
   const handleDeleteProduct = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -62,29 +71,57 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   };
 
   const getProductStatus = (product) => {
-    // Based on stock quantity for now - will be replaced with real status field
-    if (product.stockQuantity === 0) return 'Out of Stock';
-    if (product.stockQuantity < 10) return 'Draft';
-    return 'Active';
+    // Use the status field from the API, with fallback logic
+    if (product.status) {
+      return product.status;
+    }
+    // Fallback logic for products without status field
+    if (product.stockQuantity === 0) return 'OUT_OF_STOCK';
+    return 'DRAFT';
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active':
+      case 'ACTIVE':
         return 'bg-green-100 text-green-800';
-      case 'Out of Stock':
+      case 'OUT_OF_STOCK':
         return 'bg-red-100 text-red-800';
-      case 'Draft':
+      case 'DRAFT':
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const getStatusDisplayName = (status) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'Active';
+      case 'OUT_OF_STOCK':
+        return 'Out of Stock';
+      case 'DRAFT':
+        return 'Draft';
+      default:
+        return status;
+    }
+  };
+
   const getSalesCount = (product) => {
-    // TODO: Replace with real sales data from API
-    // For now, return 0 until backend provides sales endpoint
-    return 0;
+    // Use the sales count from the API
+    return product._count?.orderItems || 0;
+  };
+
+  const handleStatusUpdate = async (productId, newStatus) => {
+    try {
+      await updateProductStatus(productId, newStatus);
+      setProducts(prev => prev.map(product => 
+        product.id === productId ? { ...product, status: newStatus } : product
+      ));
+      console.log('✅ Product status updated successfully');
+    } catch (err) {
+      console.error('❌ Failed to update product status:', err);
+      setError(err.message);
+    }
   };
 
   return (
@@ -109,12 +146,17 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
             </svg>
           </div>
           
-          {/* Filter Button */}
-          <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value="DRAFT">Draft</option>
+            <option value="ACTIVE">Active</option>
+            <option value="OUT_OF_STOCK">Out of Stock</option>
+          </select>
           
           {/* Download Button */}
           <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
@@ -235,10 +277,30 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                 <td className="py-4 px-4 text-gray-900">₦{parseFloat(product.price).toLocaleString()}</td>
                                 <td className="py-4 px-4 text-gray-900">{product.stockQuantity}</td>
                                 <td className="py-4 px-4">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                                    {status}
-                      </span>
-                    </td>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                                      {getStatusDisplayName(status)}
+                                    </span>
+                                    {status === 'DRAFT' && (
+                                      <button 
+                                        onClick={() => handleStatusUpdate(product.id, 'ACTIVE')}
+                                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                                        title="Publish Product"
+                                      >
+                                        Publish
+                                      </button>
+                                    )}
+                                    {status === 'ACTIVE' && (
+                                      <button 
+                                        onClick={() => handleStatusUpdate(product.id, 'DRAFT')}
+                                        className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+                                        title="Unpublish Product"
+                                      >
+                                        Unpublish
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
                                 <td className="py-4 px-4 text-gray-900">{sales.toLocaleString()}</td>
                                 <td className="py-4 px-4">
                                   <div className="flex items-center space-x-2">
@@ -328,9 +390,29 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
                                 {/* Status Badge */}
                                 <div className="flex items-center justify-between">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                                    Status: {status}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                                      Status: {getStatusDisplayName(status)}
+                                    </span>
+                                    {status === 'DRAFT' && (
+                                      <button 
+                                        onClick={() => handleStatusUpdate(product.id, 'ACTIVE')}
+                                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                                        title="Publish Product"
+                                      >
+                                        Publish
+                                      </button>
+                                    )}
+                                    {status === 'ACTIVE' && (
+                                      <button 
+                                        onClick={() => handleStatusUpdate(product.id, 'DRAFT')}
+                                        className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+                                        title="Unpublish Product"
+                                      >
+                                        Unpublish
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
 
                                 {/* Action Buttons */}
@@ -404,10 +486,30 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
                                 {/* Status Badge */}
                                 <div className="flex items-center justify-between">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                                    Status: {status}
-                                  </span>
-        </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                                      Status: {getStatusDisplayName(status)}
+                                    </span>
+                                    {status === 'DRAFT' && (
+                                      <button 
+                                        onClick={() => handleStatusUpdate(product.id, 'ACTIVE')}
+                                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+                                        title="Publish Product"
+                                      >
+                                        Publish
+                                      </button>
+                                    )}
+                                    {status === 'ACTIVE' && (
+                                      <button 
+                                        onClick={() => handleStatusUpdate(product.id, 'DRAFT')}
+                                        className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+                                        title="Unpublish Product"
+                                      >
+                                        Unpublish
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
 
                                 {/* Action Buttons */}
                                 <div className="flex items-center gap-2 pt-2">

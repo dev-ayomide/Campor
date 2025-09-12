@@ -417,6 +417,36 @@ export async function getSellerCatalogue(sellerId) {
   }
 }
 
+// New function to get seller products with status information
+export async function getSellerProducts(sellerId) {
+  try {
+    console.log('🔍 SellerService: Fetching seller products for ID:', sellerId);
+    
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
+    console.log('✅ SellerService: Seller products fetched successfully:', response.data);
+    
+    // The API returns products with status and sales count
+    return response.data || [];
+  } catch (error) {
+    console.error('❌ SellerService: Failed to fetch seller products:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch seller products.');
+  }
+}
+
+// Function to update product status
+export async function updateProductStatus(productId, status) {
+  try {
+    console.log('🔍 SellerService: Updating product status:', { productId, status });
+    
+    const response = await api.put(`${API_ENDPOINTS.SELLER.UPDATE}/${productId}/status`, { status });
+    console.log('✅ SellerService: Product status updated successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to update product status:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update product status.');
+  }
+}
+
 // Public seller catalogue - can be used for public viewing (if needed without auth)
 export async function getPublicSellerCatalogue(sellerId) {
   try {

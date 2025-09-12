@@ -61,14 +61,15 @@ export default function SellerCatalogue() {
   // Get unique categories from products
   const categories = ['All', ...new Set(products.map(product => product.category?.name).filter(Boolean))];
 
-  // Filter products by category and search query
+  // Filter products by category, search query, and status (only show ACTIVE products)
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category?.name === selectedCategory;
     const matchesSearch = !searchQuery.trim() || 
       product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const isActive = product.status === 'ACTIVE' || (!product.status && product.stockQuantity > 0);
+    return matchesCategory && matchesSearch && isActive;
   });
 
   // Sort products

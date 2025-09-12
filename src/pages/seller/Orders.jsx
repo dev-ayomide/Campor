@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { getSellerOrders, updateOrderStatus, getOrderDetails } from '../../services/authService';
+import { getSellerOrders, updateOrderStatus, getOrderDetails } from '../../services/ordersService';
 
 export default function SellerOrdersPage() {
   const { user } = useAuth();
@@ -20,7 +20,7 @@ export default function SellerOrdersPage() {
         
         if (user?.seller?.id) {
           const ordersData = await getSellerOrders(user.seller.id);
-          setOrders(ordersData.data || []);
+          setOrders(ordersData || []);
           console.log('✅ Orders: Fetched seller orders:', ordersData);
         }
         
@@ -67,6 +67,18 @@ export default function SellerOrdersPage() {
     }
   };
 
+  const handleViewOrderDetails = async (orderId) => {
+    try {
+      const orderDetails = await getOrderDetails(orderId);
+      console.log('✅ Order details fetched:', orderDetails);
+      // You can implement a modal or navigate to a details page here
+      alert(`Order Details:\n\nOrder ID: ${orderDetails.id}\nStatus: ${orderDetails.orderStatus}\nTotal: ₦${parseFloat(orderDetails.totalPrice).toLocaleString()}\nItems: ${orderDetails.items?.length || 0}`);
+    } catch (err) {
+      console.error('❌ Failed to fetch order details:', err);
+      setError(err.message);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'CONFIRMED':
@@ -106,12 +118,18 @@ export default function SellerOrdersPage() {
             </svg>
           </div>
           
-          {/* Filter Button */}
-          <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
           
           {/* Export Button */}
           <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
@@ -171,11 +189,13 @@ export default function SellerOrdersPage() {
                     </td>
                           <td className="py-4 px-6">
                             <div>
-                              <div className="text-gray-900 font-medium">User ID: {order.userId}</div>
+                              <div className="text-gray-900 font-medium">Order #{order.id.slice(-8)}</div>
                               <div className="text-sm text-gray-500">{order.hostelName} - Block {order.blockNumber}, Room {order.roomNo}</div>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-gray-900">-</td>
+                          <td className="py-4 px-6 text-gray-900">
+                            <span className="text-sm text-gray-600">Items: {order.items?.length || 'N/A'}</span>
+                          </td>
                     <td className="py-4 px-6">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
                               {order.orderStatus}
@@ -205,7 +225,11 @@ export default function SellerOrdersPage() {
                                   Process
                                 </button>
                               )}
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="View Order">
+                        <button 
+                          onClick={() => handleViewOrderDetails(order.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
+                          title="View Order Details"
+                        >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
