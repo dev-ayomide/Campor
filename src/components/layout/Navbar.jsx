@@ -47,7 +47,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 pl-0 pr-6 py-4 bg-white">
+    <nav className="fixed top-0 left-0 right-0 z-50 pl-0 pr-6 py-4" style={{ backgroundColor: '#F7F5F0' }}>
       <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center pl-6">
             <Link to="/marketplace" className="flex items-center">
@@ -312,10 +312,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
           {/* Mobile Menu */}
           <div
             className={`
-              fixed inset-0 z-50 bg-white flex flex-col
+              fixed inset-0 z-50 flex flex-col
               transition-transform duration-300 ease-in-out
               ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}
             `}
+            style={{ backgroundColor: '#F7F5F0' }}
           >
             {/* Header */}
             <div className="w-full flex items-center justify-between px-4 pt-4 pb-0">

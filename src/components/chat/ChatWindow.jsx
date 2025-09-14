@@ -284,7 +284,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   if (!conversationId) {
     return (
-      <div className="flex flex-col h-full bg-gray-50">
+      <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
         {/* Mobile Back Button */}
         {onBackToList && (
           <div className="lg:hidden p-4 border-b border-gray-200 bg-white">
@@ -335,9 +335,21 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || sending}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2"
                   >
-                    {sending ? 'Sending...' : 'Send'}
+                    {sending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                        <span>Send</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </>
@@ -358,7 +370,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Chat Header */}
       <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between">
@@ -443,14 +455,11 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                     }`}
                   >
                     <p className="text-sm">{message.content}</p>
-                    <div className={`flex items-center justify-between mt-1 ${
+                    <div className={`flex items-center justify-end mt-1 ${
                       message.isFromCurrentUser ? 'text-blue-100' : 'text-gray-500'
                     }`}>
-                      <p className="text-xs">
-                        {formatTime(message.timestamp)}
-                      </p>
                       {message.isFromCurrentUser && (
-                        <div className="ml-2">
+                        <div className="mr-2">
                           {message.deliveryStatus === 'sent' && (
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -468,6 +477,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                           )}
                         </div>
                       )}
+                      <p className="text-xs">
+                        {formatTime(message.timestamp)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -532,8 +544,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             {sending ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
               </svg>
             )}
           </button>

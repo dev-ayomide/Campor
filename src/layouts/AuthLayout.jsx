@@ -34,7 +34,7 @@ export default function AuthLayout({ children, heroImage }) {
       </div>
 
       {/* Right: Clean background with centered content */}
-      <div className="w-full lg:w-1/2 h-full flex items-center justify-center bg-gray-50">
+      <div className="w-full lg:w-1/2 h-full flex items-center justify-center" style={{ backgroundColor: '#F7F5F0' }}>
         <div className="w-full max-w-xl px-8 flex flex-col items-center justify-center">
           {children}
         </div>
