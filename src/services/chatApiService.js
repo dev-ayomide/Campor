@@ -1,0 +1,231 @@
+// Real chat API service using the provided endpoints
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+
+class ChatApiService {
+  // Helper method to get auth headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('campor_token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  }
+
+  // Helper method to handle API responses
+  async handleResponse(response) {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  // Validate UUID format
+  isValidUUID(uuid) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  }
+
+  // Send a message to a user (matches working demo exactly)
+  async sendMessage(receiverId, content) {
+    try {
+      // Get current user info for debugging
+      const currentUser = localStorage.getItem('campor_user') 
+        ? JSON.parse(localStorage.getItem('campor_user')) 
+        : null;
+      
+      console.log('=== CHAT DEBUG INFO ===');
+      console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('Full URL:', `${API_BASE_URL}/chat/send`);
+      console.log('Current user:', currentUser?.id, 'Current user type:', typeof currentUser?.id);
+      console.log('Receiver ID:', receiverId, 'Receiver ID type:', typeof receiverId);
+      console.log('Auth token exists:', !!localStorage.getItem('campor_token'));
+      console.log('Auth token (first 50 chars):', localStorage.getItem('campor_token')?.substring(0, 50) + '...');
+      console.log('Full auth token:', localStorage.getItem('campor_token'));
+      console.log('Auth headers:', this.getAuthHeaders());
+      console.log('========================');
+      
+      // Validate receiverId format
+      if (!this.isValidUUID(receiverId)) {
+        throw new Error(`Invalid receiverId format: ${receiverId}. Expected UUID format.`);
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/chat/send`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          receiverId,
+          content
+        })
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      const result = await this.handleResponse(response);
+      return result.data;
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      
+      // Provide more specific error handling for foreign key constraint
+      if (error.message.includes('Foreign key constraint violated')) {
+        throw new Error(`Unable to start conversation with this seller. The seller ID may not exist in the system or there may be a data inconsistency. Please try contacting a different seller.`);
+      }
+      
+      throw error;
+    }
+  }
+
+  // Check if a user exists by trying to get chat with them
+  async checkUserExists(userId) {
+    try {
+      // Try to get chat with user - if it works, the user exists
+      const response = await fetch(`${API_BASE_URL}/chat/user/${userId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        return true;
+      } else if (response.status === 404) {
+        return false;
+      } else {
+        // Other errors - assume user doesn't exist
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to check if user exists:', error);
+      return false;
+    }
+  }
+
+  // Get chat with a specific user
+  async getChatWithUser(userId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/user/${userId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const result = await this.handleResponse(response);
+      return result.data;
+    } catch (error) {
+      console.error('Failed to get chat with user:', error);
+      throw error;
+    }
+  }
+
+  // Get all chats for the authenticated user
+  async getChats() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/list`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const result = await this.handleResponse(response);
+      return result.data || [];
+    } catch (error) {
+      console.error('Failed to get chats:', error);
+      throw error;
+    }
+  }
+
+  // Get messages for a specific chat
+  async getChatMessages(chatId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/messages/${chatId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      const result = await this.handleResponse(response);
+      return result.data || [];
+    } catch (error) {
+      console.error('Failed to get chat messages:', error);
+      throw error;
+    }
+  }
+
+  // Transform API chat data to match our component structure
+  transformChatData(apiChat, currentUserId) {
+    const otherUser = apiChat.senderId === currentUserId ? apiChat.receiver : apiChat.sender;
+    const lastMessage = apiChat.messages && apiChat.messages.length > 0 
+      ? apiChat.messages[apiChat.messages.length - 1] 
+      : null;
+
+    return {
+      id: apiChat.id,
+      participant: {
+        id: otherUser.id,
+        name: otherUser.name,
+        initials: this.getInitials(otherUser.name),
+        role: this.determineUserRole(otherUser, currentUserId),
+        avatar: null,
+        isOnline: false // Will be updated via socket
+      },
+      product: {
+        id: 'unknown', // Not provided in API, might need to be added
+        name: 'Product Discussion',
+        image: null,
+        price: 0
+      },
+      lastMessage: lastMessage ? {
+        id: lastMessage.id,
+        content: lastMessage.content,
+        timestamp: lastMessage.sentAt,
+        senderId: lastMessage.senderId,
+        senderName: lastMessage.senderId === currentUserId ? 'You' : otherUser.name
+      } : null,
+      unreadCount: 0, // Not provided in API, might need to be added
+      updatedAt: apiChat.updatedAt,
+      conversationType: 'general' // Will be determined based on context
+    };
+  }
+
+  // Transform API message data to match our component structure
+  transformMessageData(apiMessage, currentUserId) {
+    return {
+      id: apiMessage.id,
+      content: apiMessage.content,
+      timestamp: apiMessage.sentAt,
+      senderId: apiMessage.senderId,
+      senderName: apiMessage.senderId === currentUserId ? 'You' : 'Other User',
+      isFromCurrentUser: apiMessage.senderId === currentUserId
+    };
+  }
+
+  // Helper method to get initials from name
+  getInitials(name) {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  // Determine if a user is a buyer or seller based on context
+  determineUserRole(otherUser, currentUserId) {
+    // Get current user info to determine perspective
+    const currentUser = localStorage.getItem('campor_user') 
+      ? JSON.parse(localStorage.getItem('campor_user')) 
+      : null;
+    
+    // If current user is a seller, then the other user is a buyer
+    // If current user is a buyer, then the other user is a seller
+    const currentUserIsSeller = currentUser?.seller || currentUser?.isSeller || currentUser?.sellerCompleted;
+    
+    if (currentUserIsSeller) {
+      // Current user is seller, so other user is buyer
+      return 'Buyer';
+    } else {
+      // Current user is buyer, so other user is seller
+      return 'Seller';
+    }
+  }
+}
+
+export const chatApiService = new ChatApiService();
+export default chatApiService;

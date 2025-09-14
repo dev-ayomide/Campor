@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { registerSeller, testSellerEndpoint } from '../../services/authService';
+import { verifyBankAccount, getBanksList, getBankCode, validateAccountNumber } from '../../services/bankVerificationService';
 
 export default function SellerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -30,12 +31,109 @@ export default function SellerOnboardingPage() {
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Bank verification states
+  const [isVerifyingBank, setIsVerifyingBank] = useState(false);
+  const [bankVerificationError, setBankVerificationError] = useState(null);
+  const [banksList, setBanksList] = useState([]);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
+  const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+  const [bankSearchTerm, setBankSearchTerm] = useState('');
 
   const steps = [
     { number: 1, title: 'Store Info', isCompleted: currentStep > 1 },
     { number: 2, title: 'Bank Details', isCompleted: currentStep > 2 },
     { number: 3, title: 'Contact Info', isCompleted: currentStep > 3 }
   ];
+
+  // Fetch banks list on component mount
+  useEffect(() => {
+    const fetchBanks = async () => {
+      setIsLoadingBanks(true);
+      try {
+        const result = await getBanksList();
+        if (result.success) {
+          setBanksList(result.data);
+        } else {
+          console.error('Failed to fetch banks:', result.error);
+        }
+      } catch (error) {
+        console.error('Error fetching banks:', error);
+      } finally {
+        setIsLoadingBanks(false);
+      }
+    };
+
+    fetchBanks();
+  }, []);
+
+  // Close bank dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isBankDropdownOpen && !event.target.closest('[data-bank-dropdown]')) {
+        setIsBankDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isBankDropdownOpen]);
+
+  // Auto-verify account when both bank and account number are entered
+  useEffect(() => {
+    const autoVerifyAccount = async () => {
+      if (
+        bankDetails.bankName && 
+        bankDetails.accountNumber && 
+        validateAccountNumber(bankDetails.accountNumber) &&
+        !isVerifyingBank
+      ) {
+        setIsVerifyingBank(true);
+        setBankVerificationError(null);
+
+        try {
+          const bankCode = getBankCode(bankDetails.bankName, banksList);
+          const result = await verifyBankAccount(bankDetails.accountNumber, bankCode);
+
+          if (result.success) {
+            setBankDetails(prev => ({
+              ...prev,
+              accountName: result.data.account_name
+            }));
+            setBankVerificationError(null);
+          } else {
+            setBankDetails(prev => ({
+              ...prev,
+              accountName: '' // Clear account name on verification failure
+            }));
+            setBankVerificationError(result.error);
+          }
+        } catch (error) {
+          console.error('Auto bank verification error:', error);
+          setBankDetails(prev => ({
+            ...prev,
+            accountName: '' // Clear account name on error
+          }));
+          setBankVerificationError('Failed to verify account. Please try again.');
+        } finally {
+          setIsVerifyingBank(false);
+        }
+      } else if (!bankDetails.accountNumber || !validateAccountNumber(bankDetails.accountNumber)) {
+        // Clear account name if account number is invalid or empty
+        setBankDetails(prev => ({
+          ...prev,
+          accountName: ''
+        }));
+        setBankVerificationError(null);
+      }
+    };
+
+    // Add a small delay to avoid too many API calls while typing
+    const timeoutId = setTimeout(autoVerifyAccount, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [bankDetails.bankName, bankDetails.accountNumber, banksList, isVerifyingBank]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -44,7 +142,60 @@ export default function SellerOnboardingPage() {
     }
   };
 
+  // Filter banks based on search term
+  const filteredBanks = banksList.filter(bank => 
+    bank.name.toLowerCase().includes(bankSearchTerm.toLowerCase())
+  );
+
+  // Form validation functions
+  const validateCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return storeInfo.catalogueName.trim() && storeInfo.storeDescription.trim();
+      case 2:
+        return bankDetails.bankName && 
+               bankDetails.accountNumber && 
+               bankDetails.accountName && 
+               validateAccountNumber(bankDetails.accountNumber);
+      case 3:
+        return contactInfo.phoneNumber.trim() && contactInfo.location.trim();
+      default:
+        return false;
+    }
+  };
+
+  const canProceedToNext = () => {
+    return validateCurrentStep();
+  };
+
   const handleNextStep = () => {
+    if (!canProceedToNext()) {
+      // Show validation error for current step
+      let errorMessage = '';
+      switch (currentStep) {
+        case 1:
+          errorMessage = 'Please complete all required fields: Store name and Store description';
+          break;
+        case 2:
+          if (!bankDetails.bankName) {
+            errorMessage = 'Please select a bank';
+          } else if (!bankDetails.accountNumber) {
+            errorMessage = 'Please enter your account number';
+          } else if (!validateAccountNumber(bankDetails.accountNumber)) {
+            errorMessage = 'Please enter a valid 10-digit account number';
+          } else if (!bankDetails.accountName) {
+            errorMessage = 'Please wait for account verification to complete';
+          }
+          break;
+        case 3:
+          errorMessage = 'Please complete all required fields: Phone number and Location';
+          break;
+      }
+      setError(errorMessage);
+      return;
+    }
+    
+    setError(null); // Clear any previous errors
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
@@ -129,6 +280,7 @@ export default function SellerOnboardingPage() {
         storeDescription: storeInfo.storeDescription,
         cataloguePicture: storeInfo.cataloguePicture,
         bankName: bankDetails.bankName,
+        bankCode: getBankCode(bankDetails.bankName, banksList),
         accountNumber: bankDetails.accountNumber,
         accountName: bankDetails.accountName,
         phoneNumber: contactInfo.phoneNumber,
@@ -171,6 +323,8 @@ export default function SellerOnboardingPage() {
           userFriendlyError = 'Please enter your location';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
           userFriendlyError = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('Server error')) {
+          userFriendlyError = 'Server is temporarily unavailable. Please try again in a few minutes.';
         } else {
           // For other errors, try to make them more user-friendly
           userFriendlyError = error.message.replace(/"/g, '').replace(/is not allowed to be empty/g, 'is required');
@@ -261,44 +415,93 @@ export default function SellerOnboardingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Bank Name <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                </div>
-                <select
-                  value={bankDetails.bankName}
-                  onChange={(e) => setBankDetails(prev => ({ ...prev, bankName: e.target.value }))}
-                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors appearance-none"
-                  required
+              <div className="relative" data-bank-dropdown style={{ zIndex: isBankDropdownOpen ? 50 : 40 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBankDropdownOpen(!isBankDropdownOpen);
+                    if (!isBankDropdownOpen) {
+                      setBankSearchTerm('');
+                    }
+                  }}
+                  disabled={isLoadingBanks}
+                  className="w-full pl-12 pr-10 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors text-left disabled:opacity-50 flex items-center justify-between"
                 >
-                  <option value="">Select</option>
-                  <option value="Access Bank">Access Bank</option>
-                  <option value="GTBank">GTBank</option>
-                  <option value="First Bank">First Bank</option>
-                  <option value="UBA">UBA</option>
-                  <option value="Zenith Bank">Zenith Bank</option>
-                  <option value="Fidelity Bank">Fidelity Bank</option>
-                  <option value="Sterling Bank">Sterling Bank</option>
-                  <option value="Stanbic IBTC">Stanbic IBTC</option>
-                  <option value="Union Bank">Union Bank</option>
-                  <option value="Wema Bank">Wema Bank</option>
-                  <option value="Kuda Bank">Kuda Bank</option>
-                  <option value="Opay">Opay</option>
-                  <option value="PalmPay">PalmPay</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <span className={bankDetails.bankName ? 'text-gray-900' : 'text-gray-500'}>
+                      {isLoadingBanks ? 'Loading banks...' : bankDetails.bankName || 'Select Bank'}
+                    </span>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform ${isBankDropdownOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
-                </div>
+                </button>
+                
+                {/* Bank Options Dropdown */}
+                {isBankDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden z-50">
+                    {/* Search Input */}
+                    <div className="p-3 border-b border-gray-200">
+                      <div className="relative">
+                        <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input
+                          type="text"
+                          placeholder="Search banks..."
+                          value={bankSearchTerm}
+                          onChange={(e) => setBankSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Bank Options */}
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredBanks.length > 0 ? (
+                        filteredBanks.map((bank) => (
+                          <button
+                            key={bank.id}
+                            type="button"
+                            onClick={() => {
+                              setBankDetails(prev => ({ ...prev, bankName: bank.name }));
+                              setBankVerificationError(null);
+                              setIsBankDropdownOpen(false);
+                              setBankSearchTerm('');
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none flex items-center"
+                          >
+                            <span className="text-gray-900">{bank.name}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-gray-500 text-sm">
+                          No banks found matching "{bankSearchTerm}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Account Number <span className="text-red-500">*</span>
+                {isVerifyingBank && (
+                  <span className="ml-2 text-xs text-blue-600 font-medium">
+                    Verifying...
+                  </span>
+                )}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -309,17 +512,40 @@ export default function SellerOnboardingPage() {
                 <input
                   type="text"
                   value={bankDetails.accountNumber}
-                  onChange={(e) => setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
+                  onChange={(e) => {
+                    setBankDetails(prev => ({ ...prev, accountNumber: e.target.value }));
+                    setBankVerificationError(null); // Clear error when user types
+                  }}
                   placeholder="9077249922"
-                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors"
                   required
                 />
+                {isVerifyingBank && (
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                    <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                )}
               </div>
+              
+              {/* Bank Verification Error */}
+              {bankVerificationError && (
+                <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
+                  {bankVerificationError}
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Account Name <span className="text-red-500">*</span>
+                {bankDetails.accountName && (
+                  <span className="ml-2 text-xs text-green-600 font-medium">
+                    ✓ Verified
+                  </span>
+                )}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -331,11 +557,20 @@ export default function SellerOnboardingPage() {
                   type="text"
                   value={bankDetails.accountName}
                   onChange={(e) => setBankDetails(prev => ({ ...prev, accountName: e.target.value }))}
-                  placeholder="Jonny Sun"
-                  className="w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="Account name will be auto-filled after verification"
+                  className={`w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border rounded-xl focus:border-blue-500 transition-colors ${
+                    bankDetails.accountName 
+                      ? 'border-green-300 bg-green-50' 
+                      : 'border-gray-300'
+                  }`}
                   required
                 />
               </div>
+              {bankDetails.accountName && (
+                <p className="mt-1 text-xs text-green-600">
+                  Account name verified successfully
+                </p>
+              )}
             </div>
 
             {/* Security Note */}
@@ -532,7 +767,6 @@ export default function SellerOnboardingPage() {
             </div>
           )}
 
-
           {/* Navigation Buttons */}
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
             {currentStep > 1 && (
@@ -547,17 +781,22 @@ export default function SellerOnboardingPage() {
             {currentStep < 3 ? (
               <button
                 onClick={handleNextStep}
-                className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+                disabled={!canProceedToNext()}
+                className={`w-full sm:flex-1 font-semibold py-3 px-6 rounded-xl transition-colors ${
+                  canProceedToNext()
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 Continue to {steps[currentStep].title}
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
-                disabled={isLoading}
+                disabled={isLoading || !canProceedToNext()}
                 className={`w-full sm:flex-1 font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center ${
-                  isLoading 
-                    ? 'bg-blue-400 text-white cursor-not-allowed' 
+                  isLoading || !canProceedToNext()
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >

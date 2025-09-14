@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ChatProvider, useChat } from '../../contexts/ChatContext';
 import { ChatList, ChatWindow } from '../../components/chat';
+import { useSearchParams } from 'react-router-dom';
 
 const ChatContent = () => {
   const { user } = useAuth();
-  const { selectedConversationId, setSelectedConversationId } = useChat();
+  const { selectedConversationId, setSelectedConversationId, conversations } = useChat();
   const [showChatWindow, setShowChatWindow] = useState(false);
+  const [searchParams] = useSearchParams();
+  const sellerId = searchParams.get('sellerId');
 
   const handleConversationSelect = (conversationId) => {
     setSelectedConversationId(conversationId);
@@ -16,6 +19,25 @@ const ChatContent = () => {
   const handleBackToList = () => {
     setShowChatWindow(false);
   };
+
+  // Auto-select conversation with seller if sellerId is provided
+  useEffect(() => {
+    if (sellerId) {
+      // Look for existing conversation with this seller
+      const existingConversation = conversations.find(conv => 
+        conv.participant.id === sellerId
+      );
+      
+      if (existingConversation) {
+        setSelectedConversationId(existingConversation.id);
+        setShowChatWindow(true);
+      } else if (conversations.length === 0) {
+        // If no conversations exist yet, we'll create one when user sends first message
+        // For now, just show the chat window
+        setShowChatWindow(true);
+      }
+    }
+  }, [sellerId, conversations]);
 
   return (
     <div className="h-[calc(100vh-5rem)] bg-white">

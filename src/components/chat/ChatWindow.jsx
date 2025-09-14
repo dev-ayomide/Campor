@@ -1,28 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { chatService } from '../../services/chatService';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
+import { socketService } from '../../services/socketService';
 
 const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
-  const { sendMessage, markAsRead } = useChat();
+  const { sendMessage, markAsRead, joinChatRoom, leaveChatRoom, startTyping, stopTyping, typingUsers, onlineUsers } = useChat();
   const { isSeller } = useAuth();
+  const [searchParams] = useSearchParams();
+  const sellerId = searchParams.get('sellerId');
   const [messages, setMessages] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  // No loading state needed - seamless like demo
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    if (conversationId) {
-      loadConversation();
-      loadMessages();
-    }
-  }, [conversationId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,62 +31,242 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     }
   };
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await chatService.getMessages(conversationId);
+      console.log('📋 Loaded messages from API:', data);
       setMessages(data);
       
-      // Mark messages as read
-      await markAsRead(conversationId);
+      // Mark messages as read (silent, no loading state)
+      markAsRead(conversationId);
     } catch (error) {
       console.error('Failed to load messages:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [conversationId, markAsRead]);
+
+  useEffect(() => {
+    console.log('🔄 ChatWindow: useEffect triggered for conversationId:', conversationId);
+    if (conversationId) {
+      loadConversation();
+      loadMessages();
+      joinChatRoom(conversationId);
+      
+      // No periodic refresh needed - real-time updates handle everything
+      
+      // Set up real-time message listeners (simplified like demo)
+      const handleNewMessage = (messageData) => {
+        console.log('📨 New message received:', messageData);
+        
+        // Update delivery status for pending messages and reload messages
+        setMessages(prev => {
+          const updatedMessages = prev.map(msg => {
+            if (msg.deliveryStatus === 'sent' && msg.senderId === currentUser.id) {
+              return { ...msg, deliveryStatus: 'delivered' };
+            }
+            return msg;
+          });
+          return updatedMessages;
+        });
+        
+        // Reload messages to get the complete message data (like demo)
+        setTimeout(() => {
+          loadMessages();
+        }, 100);
+      };
+
+      const handleMessageNotification = (notificationData) => {
+        console.log('🔔 Message notification received:', notificationData);
+        // Only handle notifications for the current chat
+        if (notificationData.chatId === conversationId && notificationData.senderId !== currentUser.id) {
+          // Reload messages to get the new message (like demo)
+          loadMessages();
+        }
+      };
+
+      // Listen for socket events
+      socketService.on('new_message', handleNewMessage);
+      socketService.on('message_notification', handleMessageNotification);
+    }
+
+    return () => {
+      if (conversationId) {
+        leaveChatRoom(conversationId);
+        // Remove socket listeners
+        socketService.off('new_message');
+        socketService.off('message_notification');
+      }
+    };
+  }, [conversationId, joinChatRoom, leaveChatRoom, currentUser.id]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || sending) return;
 
+    const messageContent = newMessage.trim();
+    const tempId = `temp_${Date.now()}_${Math.random()}`;
+    setNewMessage('');
+
     try {
       setSending(true);
-      const sentMessage = await sendMessage(conversationId, newMessage.trim());
-      setMessages(prev => [...prev, sentMessage]);
-      setNewMessage('');
+      
+      if (sellerId && !conversationId) {
+        // Creating new conversation with seller - Optimistic update
+        console.log('Creating conversation with sellerId:', sellerId);
+        
+        // Optimistically add the message immediately
+        const optimisticMessage = {
+          tempId,
+          content: messageContent,
+          senderId: currentUser.id,
+          sentAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(), // Ensure timestamp is set
+          sender: {
+            id: currentUser.id,
+            name: currentUser.name || 'You'
+          },
+          isFromCurrentUser: true,
+          deliveryStatus: 'sent' // Start as 'sent' for instant feel
+        };
+        
+        console.log('🚀 Adding optimistic message:', optimisticMessage);
+        setMessages([optimisticMessage]);
+        
+        const sentMessage = await sendMessage(null, messageContent, sellerId);
+        console.log('📤 Sent message response:', sentMessage);
+        // Update the optimistic message with real data
+        setMessages(prev => {
+          console.log('🔄 Current messages before replacement:', prev);
+          const updated = prev.map(msg => {
+            if (msg.tempId === tempId && !msg.id) { // Only replace if it still has tempId and no real id
+              console.log('🔄 Replacing optimistic message with real data:', sentMessage);
+              return { ...sentMessage, tempId };
+            }
+            return msg;
+          });
+          console.log('🔄 Messages after replacement:', updated);
+          return updated;
+        });
+        
+        // Instead of refreshing, trigger a conversation list reload
+        // This will be handled by the parent component
+        setTimeout(() => {
+          // Trigger conversation list reload in parent
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('conversationCreated'));
+          }
+        }, 1000);
+        
+      } else if (conversation) {
+        // Existing conversation - Optimistic update
+        const optimisticMessage = {
+          tempId,
+          content: messageContent,
+          senderId: currentUser.id,
+          sentAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(), // Ensure timestamp is set
+          sender: {
+            id: currentUser.id,
+            name: currentUser.name || 'You'
+          },
+          isFromCurrentUser: true,
+          deliveryStatus: 'sent' // Start as 'sent' for instant feel
+        };
+        
+        // Add message immediately for smooth UX
+        console.log('🚀 Adding optimistic message to existing conversation:', optimisticMessage);
+        setMessages(prev => [...prev, optimisticMessage]);
+        
+        const receiverId = conversation.participant.id;
+        const sentMessage = await sendMessage(conversationId, messageContent, receiverId);
+        console.log('📤 Sent message response (existing conversation):', sentMessage);
+        
+        // Update the optimistic message with real data
+        setMessages(prev => {
+          console.log('🔄 Current messages before replacement (existing):', prev);
+          const updated = prev.map(msg => {
+            if (msg.tempId === tempId && !msg.id) { // Only replace if it still has tempId and no real id
+              console.log('🔄 Replacing optimistic message with real data:', sentMessage);
+              return { ...sentMessage, tempId };
+            }
+            return msg;
+          });
+          console.log('🔄 Messages after replacement (existing):', updated);
+          return updated;
+        });
+        
+        stopTyping(receiverId);
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
+      
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(msg => msg.tempId !== tempId));
+      
+      // Provide more specific error messages
+      if (error.message.includes('Foreign key constraint violated') || error.message.includes('Unable to start conversation')) {
+        setError('Unable to start conversation with this seller. This may be due to a data inconsistency. Please try contacting a different seller or refresh the page.');
+      } else if (error.message.includes('does not exist')) {
+        setError('This seller is no longer available. Please try contacting a different seller.');
+      } else if (error.message.includes('Invalid receiverId format')) {
+        setError('Invalid seller information. Please refresh the page and try again.');
+      } else {
+        setError(error.message || 'Failed to send message. Please try again.');
+      }
     } finally {
       setSending(false);
     }
   };
 
   const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
+    if (!timestamp) return 'Just now';
+    
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return 'Just now';
+      }
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    } catch (error) {
+      console.error('Error formatting time:', error, 'timestamp:', timestamp);
+      return 'Just now';
+    }
   };
 
   const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    if (!timestamp) return 'Today';
+    
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return 'Today';
+      }
+      
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) {
+      if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      } else {
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error, 'timestamp:', timestamp);
       return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric'
-      });
     }
   };
 
@@ -110,27 +284,76 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   if (!conversationId) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
+      <div className="flex flex-col h-full bg-gray-50">
+        {/* Mobile Back Button */}
+        {onBackToList && (
+          <div className="lg:hidden p-4 border-b border-gray-200 bg-white">
+            <button
+              onClick={onBackToList}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Back to conversations</span>
+            </button>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-          <p className="text-gray-500">Choose a conversation from the list to start messaging</p>
+        )}
+        
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            
+            {sellerId ? (
+              <>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
+                <p className="text-gray-500 mb-6">Send a message to start chatting with this seller</p>
+                
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                    {error}
+                  </div>
+                )}
+                
+                {/* Message Input */}
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      setError(null); // Clear error when typing
+                    }}
+                    placeholder="Type your message..."
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || sending}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    {sending ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
+                <p className="text-gray-500">Choose a conversation from the list to start messaging</p>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // No loading spinner - seamless like demo
 
   const messageGroups = groupMessagesByDate(messages);
 
@@ -156,7 +379,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                 {conversation?.participant.initials}
               </div>
-              {conversation?.participant.isOnline && (
+              {conversation && onlineUsers.has(conversation.participant.id) && (
                 <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               )}
             </div>
@@ -165,7 +388,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 {conversation?.participant.name}
               </h3>
               <p className="text-sm text-gray-600">
-                {conversation?.participant.isOnline ? 'Online' : 'Offline'} . You are the {isSeller ? 'seller' : 'buyer'}
+                {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Offline'} . You are the {isSeller ? 'seller' : 'buyer'}
               </p>
             </div>
           </div>
@@ -220,17 +443,48 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                     }`}
                   >
                     <p className="text-sm">{message.content}</p>
-                    <p className={`text-xs mt-1 ${
+                    <div className={`flex items-center justify-between mt-1 ${
                       message.isFromCurrentUser ? 'text-blue-100' : 'text-gray-500'
                     }`}>
-                      {formatTime(message.timestamp)}
-                    </p>
+                      <p className="text-xs">
+                        {formatTime(message.timestamp)}
+                      </p>
+                      {message.isFromCurrentUser && (
+                        <div className="ml-2">
+                          {message.deliveryStatus === 'sent' && (
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          {message.deliveryStatus === 'delivered' && (
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          {message.deliveryStatus === 'read' && (
+                            <svg className="w-3 h-3 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         ))}
+
+        {/* Typing Indicator */}
+        {conversation && typingUsers.has(conversation.participant.id) && (
+          <div className="flex justify-start">
+            <div className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm">
+              {conversation.participant.name} is typing...
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -249,7 +503,22 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              if (conversation) {
+                const receiverId = conversation.participant.id;
+                if (e.target.value.trim()) {
+                  startTyping(receiverId);
+                } else {
+                  stopTyping(receiverId);
+                }
+              }
+            }}
+            onBlur={() => {
+              if (conversation) {
+                stopTyping(conversation.participant.id);
+              }
+            }}
             placeholder="Message"
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={sending}

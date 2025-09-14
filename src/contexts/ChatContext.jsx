@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { chatService } from '../services/chatService';
+import { socketService } from '../services/socketService';
 import { useAuth } from '../context/AuthContext';
 
 const ChatContext = createContext(null);
@@ -7,11 +8,13 @@ const ChatContext = createContext(null);
 export { ChatContext };
 
 export function ChatProvider({ children }) {
-  const { user, isSeller } = useAuth();
+  const { user, isSeller, token } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [typingUsers, setTypingUsers] = useState(new Set());
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
 
   // Determine current user role
   const currentUserRole = isSeller ? 'seller' : 'buyer';
@@ -19,8 +22,10 @@ export function ChatProvider({ children }) {
   // Load conversations with useCallback to prevent infinite re-renders
   const loadConversations = useCallback(async () => {
     try {
+      console.log('🔄 Loading conversations for role:', currentUserRole);
       setLoading(true);
       const data = await chatService.getConversations(currentUserRole);
+      console.log('📋 Loaded conversations:', data.length);
       setConversations(data);
       
       // Calculate total unread count
@@ -33,15 +38,99 @@ export function ChatProvider({ children }) {
     }
   }, [currentUserRole]);
 
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (token && user) {
+      socketService.connect(token);
+      
+      // Set up real-time event listeners
+      socketService.on('new_message', (messageData) => {
+        console.log('📨 New message received in ChatContext:', messageData);
+        // Only update conversation list, don't handle individual messages
+        // Individual messages are handled in ChatWindow component
+        setConversations(prev => 
+          prev.map(conv => {
+            if (conv.id === messageData.chatId) {
+              console.log('🔄 Updating conversation:', conv.id, 'with new message');
+              return {
+                ...conv,
+                lastMessage: {
+                  id: messageData.id,
+                  content: messageData.content,
+                  timestamp: messageData.sentAt,
+                  senderId: messageData.senderId,
+                  senderName: messageData.senderId === user.id ? 'You' : 'Other User'
+                },
+                updatedAt: messageData.sentAt
+              };
+            }
+            return conv;
+          })
+        );
+      });
+
+      socketService.on('user_typing', (typingData) => {
+        if (typingData.isTyping) {
+          setTypingUsers(prev => new Set([...prev, typingData.userId]));
+        } else {
+          setTypingUsers(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(typingData.userId);
+            return newSet;
+          });
+        }
+      });
+
+      socketService.on('user_status_change', (statusData) => {
+        if (statusData.status === 'online') {
+          setOnlineUsers(prev => new Set([...prev, statusData.userId]));
+        } else {
+          setOnlineUsers(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(statusData.userId);
+            return newSet;
+          });
+        }
+      });
+
+      socketService.on('message_notification', (notificationData) => {
+        // Handle message notification
+        console.log('🔔 New message notification:', notificationData);
+        // Don't reload conversations here - let the new_message event handle updates
+        // This prevents duplication and unnecessary API calls
+      });
+
+      return () => {
+        socketService.cleanup();
+        socketService.disconnect();
+      };
+    }
+  }, [token, user]);
+
   // Load conversations on mount and when user role changes
   useEffect(() => {
+    console.log('🚀 ChatContext: useEffect triggered, loading conversations');
     loadConversations();
   }, [loadConversations]);
 
+  // Listen for conversation creation events
+  useEffect(() => {
+    const handleConversationCreated = () => {
+      console.log('🔄 Conversation created, reloading conversations');
+      loadConversations();
+    };
+
+    window.addEventListener('conversationCreated', handleConversationCreated);
+    
+    return () => {
+      window.removeEventListener('conversationCreated', handleConversationCreated);
+    };
+  }, [loadConversations]);
+
   // Send message
-  const sendMessage = async (conversationId, content) => {
+  const sendMessage = async (conversationId, content, receiverId) => {
     try {
-      const message = await chatService.sendMessage(conversationId, content);
+      const message = await chatService.sendMessage(conversationId, content, receiverId);
       
       // Update conversation's last message
       setConversations(prev => 
@@ -105,16 +194,50 @@ export function ChatProvider({ children }) {
     }
   }, [currentUserRole]);
 
+  // Join chat room for real-time updates
+  const joinChatRoom = useCallback((chatId) => {
+    if (chatId) {
+      socketService.joinChat(chatId);
+    }
+  }, []);
+
+  // Leave chat room
+  const leaveChatRoom = useCallback((chatId) => {
+    if (chatId) {
+      socketService.leaveChat(chatId);
+    }
+  }, []);
+
+  // Start typing indicator
+  const startTyping = useCallback((receiverId) => {
+    if (receiverId) {
+      socketService.startTyping(receiverId);
+    }
+  }, []);
+
+  // Stop typing indicator
+  const stopTyping = useCallback((receiverId) => {
+    if (receiverId) {
+      socketService.stopTyping(receiverId);
+    }
+  }, []);
+
   const contextValue = {
     conversations,
     selectedConversationId,
     unreadCount,
     loading,
+    typingUsers,
+    onlineUsers,
     setSelectedConversationId,
     loadConversations,
     sendMessage,
     markAsRead,
-    searchConversations
+    searchConversations,
+    joinChatRoom,
+    leaveChatRoom,
+    startTyping,
+    stopTyping
   };
 
   return (

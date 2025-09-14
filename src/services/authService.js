@@ -317,6 +317,9 @@ export async function testSellerEndpoint() {
   }
 }
 
+// Import bank verification service for bank code mapping
+import { getBankCode } from './bankVerificationService';
+
 export async function registerSeller(sellerData) {
   try {
     console.log('🔍 SellerService: Registering seller...');
@@ -328,6 +331,7 @@ export async function registerSeller(sellerData) {
     // Add required fields
     formData.append('catalogueName', sellerData.catalogueName);
     formData.append('bankName', sellerData.bankName);
+    formData.append('bankCode', sellerData.bankCode || '');
     formData.append('accountNumber', sellerData.accountNumber);
     formData.append('accountName', sellerData.accountName);
     formData.append('phoneNumber', sellerData.phoneNumber);
@@ -381,6 +385,13 @@ export async function registerSeller(sellerData) {
     } else if (error.response?.status === 409) {
       throw new Error('You are already registered as a seller.');
     } else if (error.response?.status >= 500) {
+      // Log more details for 500 errors to help with debugging
+      console.error('🔍 Server Error Details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.response?.data?.message,
+        url: error.config?.url
+      });
       throw new Error('Server error. Please try again later.');
     } else {
       throw new Error(error.response?.data?.message || error.message || 'Failed to register as seller.');

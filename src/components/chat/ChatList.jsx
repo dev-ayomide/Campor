@@ -3,7 +3,7 @@ import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../context/AuthContext';
 
 const ChatList = ({ onConversationSelect, selectedConversationId }) => {
-  const { conversations, loading, loadConversations, searchConversations } = useChat();
+  const { conversations, loadConversations, searchConversations } = useChat();
   const { isSeller } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -41,13 +41,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
     return message.substring(0, maxLength) + '...';
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // No loading spinner - seamless like demo
 
   return (
     <div className="flex flex-col h-full bg-white">

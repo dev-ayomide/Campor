@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Phone, MessageCircle, Copy, Check, Star, Clock, Award, Package, Search } from 'lucide-react';
 import { getSellerCatalogue } from '../../services/authService';
 import { AddToCartButton } from '../../components/cart';
@@ -11,6 +11,7 @@ import SearchHighlight from '../../components/search/SearchHighlight';
 export default function SellerCatalogue() {
   const { sellerId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [sellerData, setSellerData] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -259,8 +260,8 @@ export default function SellerCatalogue() {
                       <button 
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
                         onClick={() => {
-                          // TODO: Implement messaging functionality
-                          alert('Messaging feature coming soon!');
+                          // Navigate to chat with this seller
+                          navigate(`/chat?sellerId=${sellerId}`);
                         }}
                       >
                     <MessageCircle className="w-4 h-4" />
