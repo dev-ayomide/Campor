@@ -118,3 +118,39 @@
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: #9ca3af;
 }
+
+/* Chat-specific scrollbar styles */
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7f5f0;
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: #f7f5f0;
+  border-radius: 4px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+  border: 1px solid #f7f5f0;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Mobile scrollbar styles */
+@media (max-width: 1024px) {
+  .chat-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .chat-scrollbar::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+  }
+}

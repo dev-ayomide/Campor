@@ -40,11 +40,11 @@ const ChatContent = () => {
   }, [sellerId, conversations]);
 
   return (
-    <div className="h-[calc(100vh-5rem)] bg-white">
+    <div className="h-[calc(100vh-5rem)] overflow-hidden" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Desktop Layout */}
       <div className="hidden lg:flex h-full">
         {/* Chat List Sidebar */}
-        <div className="w-80 flex-shrink-0 border-r border-gray-200">
+        <div className="w-80 flex-shrink-0 border-r border-gray-200 h-full" style={{ backgroundColor: '#F7F5F0' }}>
           <ChatList 
             onConversationSelect={handleConversationSelect}
             selectedConversationId={selectedConversationId}
@@ -52,7 +52,7 @@ const ChatContent = () => {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1">
+        <div className="flex-1 h-full" style={{ backgroundColor: '#F7F5F0' }}>
           <ChatWindow 
             conversationId={selectedConversationId}
             currentUser={user}

@@ -9,9 +9,17 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
 
 
   const handleSearch = async (query) => {
+    console.log('🔍 ChatList: Search input changed to:', query);
     setSearchQuery(query);
     try {
-      await searchConversations(query);
+      if (query.trim()) {
+        console.log('🔍 ChatList: Calling searchConversations with:', query);
+        await searchConversations(query);
+      } else {
+        console.log('🔍 ChatList: Empty query, reloading all conversations');
+        // If search is empty, reload all conversations
+        await loadConversations();
+      }
     } catch (error) {
       console.error('Search failed:', error);
     }
@@ -42,40 +50,28 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   };
 
   // No loading spinner - seamless like demo
+  console.log('🔍 ChatList: Current conversations:', conversations.length);
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
-      {/* Header */}
-      <div className="p-5 border-b border-gray-200 bg-white">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 p-5 border-b border-gray-200" style={{ backgroundColor: '#F7F5F0' }}>
         <h2 className="text-xl font-bold text-gray-900 mb-4">Messages</h2>
         
         {/* Search Bar */}
         <div className="relative">
           <input
             type="text"
-            placeholder="Search conversations..."
+            placeholder="Search...."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-colors"
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-colors text-gray-700 placeholder-gray-500"
           />
-          <svg
-            className="absolute left-3 top-3.5 h-5 w-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
         </div>
       </div>
 
-      {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversations List - Scrollable */}
+      <div className="flex-1 overflow-y-auto chat-scrollbar">
         {conversations.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p>No conversations found</p>

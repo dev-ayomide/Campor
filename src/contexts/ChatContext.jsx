@@ -187,7 +187,9 @@ export function ChatProvider({ children }) {
   // Search conversations with useCallback
   const searchConversations = useCallback(async (query) => {
     try {
+      console.log('🔍 Searching conversations with query:', query);
       const results = await chatService.searchConversations(query, currentUserRole);
+      console.log('🔍 Search results:', results);
       setConversations(results);
     } catch (error) {
       console.error('Search failed:', error);

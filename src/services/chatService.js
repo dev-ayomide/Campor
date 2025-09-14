@@ -74,16 +74,25 @@ export const chatService = {
   // Search conversations
   searchConversations: async (query, currentUserRole = 'buyer') => {
     try {
+      console.log('🔍 ChatService: Searching with query:', query, 'role:', currentUserRole);
       const conversations = await this.getConversations(currentUserRole);
+      console.log('🔍 ChatService: Total conversations:', conversations.length);
       
       if (!query.trim()) {
+        console.log('🔍 ChatService: Empty query, returning all conversations');
         return conversations;
       }
 
-      return conversations.filter(conv => 
-        conv.participant.name.toLowerCase().includes(query.toLowerCase()) ||
-        (conv.lastMessage && conv.lastMessage.content.toLowerCase().includes(query.toLowerCase()))
-      );
+      const filtered = conversations.filter(conv => {
+        const nameMatch = conv.participant.name.toLowerCase().includes(query.toLowerCase());
+        const messageMatch = conv.lastMessage && conv.lastMessage.content.toLowerCase().includes(query.toLowerCase());
+        const productMatch = conv.product && conv.product.name.toLowerCase().includes(query.toLowerCase());
+        
+        return nameMatch || messageMatch || productMatch;
+      });
+      
+      console.log('🔍 ChatService: Filtered results:', filtered.length);
+      return filtered;
     } catch (error) {
       console.error('Failed to search conversations:', error);
       return [];
