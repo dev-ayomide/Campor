@@ -5,6 +5,8 @@ import { useWishlist } from '../../contexts/WishlistContext';
 import { useState } from 'react';
 import MobileSellerMenu from './MobileSellerMenu';
 import CompleteOrderModal from '../common/CompleteOrderModal';
+import { deductInventoryOnOrderCompletion } from '../../services/inventoryService';
+import { updateOrderStatus } from '../../services/ordersService';
 
 export default function Navbar({ variant = 'default', onSellerMenuToggle, isSellerMenuOpen, setIsSellerMenuOpen }) {
   const { user, logout, isSeller } = useAuth();
@@ -29,32 +31,53 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
     location.pathname !== '/seller/onboarding' && 
     !location.pathname.includes('/catalogue');
 
-  // Handle complete order
+  // Handle complete order with inventory deduction
   const handleCompleteOrder = async (completionCode) => {
     try {
-      // TODO: Implement API call to complete order with completion code
-      console.log('Completing order with code:', completionCode);
+      console.log('🔍 Navbar: Completing order with code:', completionCode);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // TODO: Get the actual order ID and items from the current order context
+      // For now, we'll need to implement this based on the seller's current orders
+      // This is a placeholder implementation - the actual order data should come from the seller's order management
+      
+      // Simulate getting order data (this should be replaced with actual order fetching)
+      const orderData = {
+        orderId: 'temp-order-id', // This should be the actual order ID
+        items: [
+          // This should be the actual order items
+          // { productId: 'product-id', quantity: 2 }
+        ]
+      };
+      
+      if (orderData.items.length === 0) {
+        throw new Error('No order items found to complete');
+      }
+      
+      // Update order status to completed
+      await updateOrderStatus(orderData.orderId, 'COMPLETED');
+      
+      // Deduct inventory for all items in the order
+      await deductInventoryOnOrderCompletion(orderData.orderId, orderData.items);
+      
+      console.log('✅ Navbar: Order completed and inventory deducted successfully');
       
       // Show success message
-      alert('Order completed successfully!');
+      alert('Order completed successfully! Inventory has been updated.');
     } catch (error) {
-      console.error('Error completing order:', error);
+      console.error('❌ Navbar: Error completing order:', error);
       throw error;
     }
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 pl-0 pr-6 py-4" style={{ backgroundColor: '#F7F5F0' }}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 pl-0 pr-6 py-4 ${!isSignedIn ? 'font-montserrat' : ''}`} style={{ backgroundColor: '#F7F5F0' }}>
       <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center pl-6">
             <Link to="/marketplace" className="flex items-center">
               <img 
                 src="/logo.svg" 
                 alt="Campor Logo" 
-                className="w-8 h-8 mr-3 object-contain"
+                className="w-6 h-6 mr-3 object-contain"
               />
               <span className="text-xl font-bold text-gray-900 mr-12">Campor</span>
             </Link>
@@ -223,6 +246,16 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
 
         {/* Mobile Actions - Wishlist, Cart and Menu Button */}
         <div className="lg:hidden flex items-center gap-3">
+          {/* Get Started Button for Mobile (only show when NOT signed in) */}
+          {!isSignedIn && (
+            <Link 
+              to="/auth" 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-medium transition-colors text-sm"
+            >
+              Get Started
+            </Link>
+          )}
+          
           {/* Wishlist Button for Mobile (only show when signed in and NOT on seller pages) */}
           {isSignedIn && !isSellerPage && (
             <Link 
@@ -289,9 +322,9 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               className="flex items-center justify-center w-10 h-10"
             >
               <div className="space-y-1">
-                <div className={`w-6 h-0.5 bg-gray-900 transition-all ${isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-                <div className={`w-6 h-0.5 bg-gray-900 transition-all ${isMenuOpen ? 'opacity-0' : ''}`}></div>
-                <div className={`w-6 h-0.5 bg-gray-900 transition-all ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
+                <div className={`w-6 h-0.5 bg-gray-900 rounded-full transition-all ${isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
+                <div className={`w-4 h-0.5 bg-gray-900 rounded-full transition-all ${isMenuOpen ? 'opacity-0' : ''}`}></div>
+                <div className={`w-6 h-0.5 bg-gray-900 rounded-full transition-all ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
               </div>
             </button>
           )}
@@ -324,7 +357,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 <img 
                   src="/logo.svg" 
                   alt="Campor Logo" 
-                  className="w-8 h-8 mr-3 object-contain"
+                  className="w-6 h-6 mr-3 object-contain"
                 />
                 <span className="text-xl font-bold text-gray-900">Campor</span>
               </div>

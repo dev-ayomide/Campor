@@ -105,4 +105,7 @@ export async function updateOrderStatus(orderId, orderStatus) {
   }
 }
 
+// Note: Order creation is handled by backend webhook after successful payment
+// Frontend only needs to verify payment and clear cart
+
 

@@ -139,9 +139,60 @@ export function validatePaymentAmount(amount) {
   return amount && amount > 0 && !isNaN(amount);
 }
 
+/**
+ * Handle payment success callback
+ * @param {string} reference - Payment reference from Paystack
+ * @returns {Promise<Object>} Payment verification response
+ */
+export async function handlePaymentSuccess(reference) {
+  try {
+    console.log('🔍 PaymentService: Handling payment success:', { reference });
+    
+    if (!reference) {
+      throw new Error('Payment reference is required');
+    }
+    
+    // Verify payment with backend (which calls Paystack API)
+    const verificationResult = await verifyPayment(reference);
+    
+    console.log('✅ PaymentService: Payment verified successfully:', verificationResult);
+    
+    return verificationResult;
+  } catch (error) {
+    console.error('❌ PaymentService: Failed to handle payment success:', error);
+    throw new Error(error.response?.data?.message || error.message || 'Failed to process payment success.');
+  }
+}
+
+/**
+ * Verify payment status with Paystack
+ * @param {string} reference - Payment reference
+ * @returns {Promise<Object>} Payment verification response
+ */
+export async function verifyPayment(reference) {
+  try {
+    console.log('🔍 PaymentService: Verifying payment:', reference);
+    
+    if (!reference) {
+      throw new Error('Payment reference is required');
+    }
+    
+    const response = await api.get(`/payments/verify/${reference}`);
+    
+    console.log('✅ PaymentService: Payment verified successfully:', response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ PaymentService: Failed to verify payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to verify payment.');
+  }
+}
+
 export default {
   initiatePayment,
   redirectToPayment,
   formatPaymentAmount,
-  validatePaymentAmount
+  validatePaymentAmount,
+  handlePaymentSuccess,
+  verifyPayment
 };

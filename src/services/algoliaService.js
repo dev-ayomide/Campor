@@ -61,7 +61,10 @@ const transformHit = (hit) => ({
   imageUrls: hit.imageUrls || [],
   createdAt: hit.createdAt,
   updatedAt: hit.updatedAt,
-  category: { name: hit.categoryName },
+  category: { 
+    id: hit.categoryId, 
+    name: hit.categoryName 
+  },
   seller: { 
     id: hit.sellerId, 
     catalogueName: hit.sellerName 

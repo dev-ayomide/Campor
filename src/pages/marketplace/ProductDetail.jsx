@@ -4,7 +4,7 @@ import { getProductBySlug } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
-import { Star, ChevronLeft, ChevronRight, Share2, Truck, Shield, RotateCcw } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
@@ -34,6 +34,35 @@ export default function ProductDetailPage() {
         if (response?.data) {
           setProduct(response.data);
           console.log('✅ ProductDetail: Product fetched successfully:', response.data);
+          console.log('🔍 ProductDetail: Category data:', response.data.category);
+          console.log('🔍 ProductDetail: Full product structure:', JSON.stringify(response.data, null, 2));
+          
+          // Check if category exists and has required fields
+          if (response.data.category) {
+            console.log('🔍 ProductDetail: Category ID:', response.data.category.id);
+            console.log('🔍 ProductDetail: Category name:', response.data.category.name);
+            console.log('🔍 ProductDetail: Category ID type:', typeof response.data.category.id);
+          } else if (response.data.categoryId) {
+            console.log('🔍 ProductDetail: Found categoryId field:', response.data.categoryId);
+            console.log('🔍 ProductDetail: Attempting to fetch category details...');
+            
+            // Try to fetch category details if only categoryId is available
+            try {
+              const { getCategoryWithProducts } = await import('../../services/categoryService');
+              const categoryResponse = await getCategoryWithProducts(response.data.categoryId);
+              if (categoryResponse?.data) {
+                response.data.category = {
+                  id: categoryResponse.data.id,
+                  name: categoryResponse.data.name
+                };
+                console.log('✅ ProductDetail: Category details fetched and added:', response.data.category);
+              }
+            } catch (categoryError) {
+              console.warn('⚠️ ProductDetail: Failed to fetch category details:', categoryError);
+            }
+          } else {
+            console.warn('⚠️ ProductDetail: No category data found in product');
+          }
         } else {
           throw new Error('Product not found');
         }
@@ -91,7 +120,7 @@ export default function ProductDetailPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -105,7 +134,7 @@ export default function ProductDetailPage() {
   // Error state
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <div className="text-red-600 text-lg font-medium mb-4">
@@ -126,25 +155,31 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen">
       {/* Breadcrumb Navigation */}
-      <div className="bg-gray-50 border-b">
+      <div className="border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 overflow-hidden">
             <Link to="/marketplace" className="hover:text-blue-600 transition-colors">
               Marketplace
             </Link>
             <span>/</span>
-            {product.category && (
+            {(product.category?.id || product.categoryId) && (
               <>
                 <Link 
-                  to={`/category/${product.category.id}`} 
-                  className="hover:text-blue-600 transition-colors"
+                  to={`/category/${product.category?.id || product.categoryId}`} 
+                  className="hover:text-blue-600 transition-colors truncate max-w-[120px] sm:max-w-none"
+                  onClick={() => {
+                    console.log('🔍 ProductDetail: Breadcrumb clicked, category data:', product.category);
+                    console.log('🔍 ProductDetail: Category ID:', product.category?.id || product.categoryId);
+                    console.log('🔍 ProductDetail: Category name:', product.category?.name);
+                    console.log('🔍 ProductDetail: Product categoryId field:', product.categoryId);
+                  }}
                 >
-                  {product.category.name}
+                  {product.category?.name || 'Category'}
                 </Link>
                 <span>/</span>
               </>
             )}
-            <span className="text-gray-900 font-medium">{product.name}</span>
+            <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-none">{product.name}</span>
           </nav>
         </div>
       </div>
@@ -232,7 +267,7 @@ export default function ProductDetailPage() {
 
             {/* Seller Info */}
             {product.seller && (
-              <div className="rounded-lg p-4 border border-gray-200">
+              <div className="rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-900 mb-3">About Seller</h3>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -270,32 +305,23 @@ export default function ProductDetailPage() {
             {/* Quantity and Actions */}
             <div className="space-y-4">
               {/* Unified quantity-aware cart control */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <WishlistButton 
                   productId={product.id} 
+                  showText={true}
                   className="flex-1 py-3 px-6"
                 />
                 <div className="flex-1">
-                  <AddToCartButton productId={product.id} className="w-full" />
+                  <AddToCartButton 
+                    productId={product.id} 
+                    sellerId={product.seller?.id}
+                    className="w-full"
+                    roundedStyle="lg"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Product Features */}
-            <div className="grid grid-cols-1 gap-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center gap-3">
-                <Truck className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">Free shipping on orders over ₦50,000</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">Secure payment</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <RotateCcw className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">30-day return policy</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -303,7 +329,7 @@ export default function ProductDetailPage() {
         <div className="mt-16">
           <div className="border-b border-gray-200">
             <nav className="flex gap-8">
-              {['Additional Info', 'Questions', 'Reviews'].map((tab) => (
+              {['Reviews'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -375,65 +401,6 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Additional Info Content */}
-          {activeTab === 'Additional Info' && (
-            <div className="py-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Product Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Product Details</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Product ID:</span>
-                      <span className="font-medium">{product.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Category:</span>
-                      <span className="font-medium">{product.category?.name || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Stock Quantity:</span>
-                      <span className="font-medium">{product.stockQuantity}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Price:</span>
-                      <span className="font-medium">{formatPrice(product.price)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Created:</span>
-                      <span className="font-medium">{formatDate(product.createdAt)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Last Updated:</span>
-                      <span className="font-medium">{formatDate(product.updatedAt)}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Seller Information</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Seller ID:</span>
-                      <span className="font-medium">{product.seller?.id || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Catalogue Name:</span>
-                      <span className="font-medium">{product.seller?.catalogueName || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Questions Content */}
-          {activeTab === 'Questions' && (
-            <div className="py-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Questions</h2>
-              <p className="text-gray-600">Product questions and answers would go here...</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

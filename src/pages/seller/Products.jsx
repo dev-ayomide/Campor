@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts, deleteProduct, updateProductStatus } from '../../services/authService';
+import { getLowStockAlerts } from '../../services/inventoryService';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [lowStockAlerts, setLowStockAlerts] = useState([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -20,9 +22,15 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         setLoading(true);
         
         if (user?.seller?.id) {
-          const productsData = await getSellerProducts(user.seller.id);
+          const [productsData, alertsData] = await Promise.all([
+            getSellerProducts(user.seller.id),
+            getLowStockAlerts(user.seller.id, 5) // Alert when stock is 5 or below
+          ]);
+          
           setProducts(productsData || []);
+          setLowStockAlerts(alertsData || []);
           console.log('✅ Products: Fetched seller products:', productsData);
+          console.log('✅ Products: Low stock alerts:', alertsData);
         }
         
       } catch (err) {
@@ -124,11 +132,81 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     }
   };
 
+  // Refresh inventory data
+  const refreshInventory = async () => {
+    try {
+      setLoading(true);
+      if (user?.seller?.id) {
+        const [productsData, alertsData] = await Promise.all([
+          getSellerProducts(user.seller.id),
+          getLowStockAlerts(user.seller.id, 5)
+        ]);
+        
+        setProducts(productsData || []);
+        setLowStockAlerts(alertsData || []);
+        console.log('✅ Inventory refreshed successfully');
+      }
+    } catch (err) {
+      console.error('❌ Failed to refresh inventory:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SellerLayout>
       <div className="max-w-full overflow-hidden">
         {/* Descriptive Text */}
         <p className="text-gray-600 mb-4">Manage your product inventory and listings.</p>
+        
+        {/* Low Stock Alerts */}
+        {lowStockAlerts.length > 0 && (
+          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-orange-800">Low Stock Alert</h3>
+            </div>
+            <p className="text-orange-700 text-sm mb-3">
+              The following products are running low on stock:
+            </p>
+            <div className="space-y-2">
+              {lowStockAlerts.map((product) => (
+                <div key={product.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden">
+                      {product.imageUrls && product.imageUrls.length > 0 ? (
+                        <img 
+                          src={product.imageUrls[0]} 
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{product.name}</p>
+                      <p className="text-sm text-gray-600">Only {product.stockQuantity} left in stock</p>
+                    </div>
+                  </div>
+                  <Link 
+                    to={`/seller/products/edit/${product.id}`}
+                    className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                  >
+                    Restock
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Mobile Design - Search, Filter, Download, Add */}
         <div className="flex items-center space-x-3 mb-6">
@@ -158,10 +236,15 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
             <option value="OUT_OF_STOCK">Out of Stock</option>
           </select>
           
-          {/* Download Button */}
-          <button className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          {/* Refresh Button */}
+          <button 
+            onClick={refreshInventory}
+            disabled={loading}
+            className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center disabled:opacity-50"
+            title="Refresh inventory"
+          >
+            <svg className={`w-5 h-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
           

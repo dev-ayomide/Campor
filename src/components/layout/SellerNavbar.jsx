@@ -10,7 +10,7 @@ export default function SellerNavbar() {
             <img 
               src="/logo.svg" 
               alt="Campor Logo" 
-              className="w-8 h-8 mr-3 object-contain"
+              className="w-6 h-6 mr-3 object-contain"
             />
             <span className="text-xl font-bold text-gray-900">Campor</span>
           </Link>

@@ -132,7 +132,7 @@ export default function MobileSellerMenu({ isOpen, onClose }) {
             <img 
               src="/logo.svg" 
               alt="Campor Logo" 
-              className="w-8 h-8 mr-3 object-contain"
+              className="w-6 h-6 mr-3 object-contain"
             />
             <div>
               <div className="text-sm font-semibold text-gray-900">Seller Dashboard</div>

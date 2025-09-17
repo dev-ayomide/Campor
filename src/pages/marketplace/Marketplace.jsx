@@ -7,6 +7,7 @@ import {
   getCategoriesAlgolia, 
   debouncedSearch 
 } from '../../services/algoliaService';
+import { getCategories } from '../../services/categoryService';
 import { AuthContext } from '../../context/AuthContext';
 import { formatPrice } from '../../utils/formatting';
 import { useCart } from '../../contexts/CartContext';
@@ -22,7 +23,7 @@ export default function MarketplacePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState({ id: 'all', name: 'All' });
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState('grid');
   const [productImageIndexes, setProductImageIndexes] = useState({});
@@ -48,7 +49,7 @@ export default function MarketplacePage() {
   const [cartMessage, setCartMessage] = useState('');
 
   // Categories state - will be fetched from backend
-  const [categories, setCategories] = useState(['All']); // Start with 'All' option
+  const [categories, setCategories] = useState([{ id: 'all', name: 'All' }]); // Start with 'All' option
 
   const brands = ['All', 'Apple', 'Samsung', 'Sony', 'HP', 'Dell'];
   const priceRanges = [
@@ -77,24 +78,24 @@ export default function MarketplacePage() {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      console.log('🔍 Marketplace: Fetching categories from Algolia...');
-      const response = await getCategoriesAlgolia();
+      console.log('🔍 Marketplace: Fetching categories from backend API...');
+      const response = await getCategories();
       
       console.log('🔍 Marketplace: Raw categories response:', response);
       
       if (response.data && Array.isArray(response.data)) {
-        // Add 'All' option at the beginning and extract category names
-        const categoryNames = ['All', ...response.data.map(cat => cat.name)];
-        setCategories(categoryNames);
-        console.log('✅ Marketplace: Categories loaded successfully from Algolia:', categoryNames);
+        // Add 'All' option at the beginning and keep full category objects
+        const categoriesWithAll = [{ id: 'all', name: 'All' }, ...response.data];
+        setCategories(categoriesWithAll);
+        console.log('✅ Marketplace: Categories loaded successfully from backend:', categoriesWithAll);
       } else {
         console.warn('⚠️ Marketplace: No categories found in response, using default');
-        setCategories(['All', 'Electronics', 'Clothing', 'Books', 'Accessories']);
+        setCategories([{ id: 'all', name: 'All' }, { id: 'electronics', name: 'Electronics' }, { id: 'clothing', name: 'Clothing' }, { id: 'books', name: 'Books' }, { id: 'accessories', name: 'Accessories' }]);
       }
     } catch (err) {
-      console.error('❌ Marketplace: Failed to fetch categories from Algolia:', err);
+      console.error('❌ Marketplace: Failed to fetch categories from backend:', err);
       // Keep 'All' option even if categories fail to load
-      setCategories(['All', 'Electronics', 'Clothing', 'Books', 'Accessories']);
+      setCategories([{ id: 'all', name: 'All' }, { id: 'electronics', name: 'Electronics' }, { id: 'clothing', name: 'Clothing' }, { id: 'books', name: 'Books' }, { id: 'accessories', name: 'Accessories' }]);
     } finally {
       setCategoriesLoading(false);
     }
@@ -105,8 +106,8 @@ export default function MarketplacePage() {
     const filters = {};
     
     // Category filter
-    if (selectedCategory && selectedCategory !== 'All') {
-      filters.category = selectedCategory;
+    if (selectedCategory && selectedCategory.id !== 'all') {
+      filters.category = selectedCategory.name;
     }
     
     // Price filter - pass the selected price string directly
@@ -191,8 +192,9 @@ export default function MarketplacePage() {
 
   // Clear all filters
   const clearFilters = () => {
-    setSelectedCategory('All');
+    setSelectedCategory({ id: 'all', name: 'All' });
     setSelectedPrice('All Price');
+    setSelectedBrand('All');
     setSearchQuery('');
     // Reset pagination when clearing filters
     setPagination({
@@ -513,7 +515,7 @@ export default function MarketplacePage() {
               {/* Filter Dropdowns */}
               <div className="flex gap-3">
                 {/* Clear Filters Button */}
-                {(selectedCategory !== 'All' || selectedPrice !== 'All Price' || searchQuery.trim()) && (
+                {(selectedCategory.id !== 'all' || selectedPrice !== 'All Price' || selectedBrand !== 'All' || searchQuery.trim()) && (
                   <button
                     onClick={clearFilters}
                     className="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors flex-shrink-0"
@@ -534,7 +536,7 @@ export default function MarketplacePage() {
                     }}
                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors touch-manipulation"
                   >
-                    <span className="truncate">{selectedCategory === 'All' ? 'All Category' : selectedCategory}</span>
+                    <span className="truncate">{selectedCategory.id === 'all' ? 'All Category' : selectedCategory.name}</span>
                     <svg className={`w-4 h-4 transition-transform flex-shrink-0 ml-2 ${openDropdown === 'category' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -549,7 +551,7 @@ export default function MarketplacePage() {
                       ) : (
                         categories.map((category) => (
                           <button
-                            key={category}
+                            key={category.id}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -557,10 +559,10 @@ export default function MarketplacePage() {
                               setOpenDropdown(null);
                             }}
                             className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 touch-manipulation ${
-                              selectedCategory === category ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                              selectedCategory.id === category.id ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
                             }`}
                           >
-                            {category}
+                            {category.name}
                           </button>
                         ))
                       )}
@@ -673,15 +675,15 @@ export default function MarketplacePage() {
                   ) : (
                     categories.map((category) => (
                                               <button
-                          key={category}
+                          key={category.id}
                           onClick={() => handleCategoryChange(category)}
                           className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                            selectedCategory === category
+                            selectedCategory.id === category.id
                               ? 'bg-blue-50 text-blue-600 font-medium border-l-2 border-blue-600'
                               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                           }`}
                         >
-                          {category}
+                          {category.name}
                         </button>
                     ))
                   )}
@@ -707,7 +709,7 @@ export default function MarketplacePage() {
                 </div>
                 
                 {/* Clear Filters Button */}
-                {(selectedCategory !== 'All' || selectedPrice !== 'All Price' || searchQuery.trim()) && (
+                {(selectedCategory.id !== 'all' || selectedPrice !== 'All Price' || selectedBrand !== 'All' || searchQuery.trim()) && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <button
                       onClick={clearFilters}
@@ -969,7 +971,7 @@ export default function MarketplacePage() {
 
                               {/* Price - Prominent */}
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg font-bold text-gray-900">{productPrice}</span>
+                                <span className="text-base font-bold text-gray-900">{productPrice}</span>
                                 <span className="text-xs text-gray-500 line-through">{product.originalPrice}</span>
                               </div>
 
@@ -979,21 +981,21 @@ export default function MarketplacePage() {
                                 className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 16 16">
+                                  <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0zM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5z"/>
                                 </svg>
                                 <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
                               </Link>
                             </div>
 
                             {/* Action Buttons - Bottom aligned */}
-                            <div className="flex gap-2 items-center">
+                            <div className="flex gap-3 items-center">
                               {productStock === 0 ? (
                                 <button disabled className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
                               ) : (
                                 <div className="flex-1">
                                   {/* Reusable quantity-aware button */}
-                                  <AddToCartButton productId={product.id} className="w-full" />
+                                  <AddToCartButton productId={product.id} className="w-3/4" />
                                 </div>
                               )}
                               <WishlistButton 
@@ -1025,7 +1027,7 @@ export default function MarketplacePage() {
 
                             {/* Price */}
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-lg md:text-xl font-bold text-gray-900">{productPrice}</span>
+                              <span className="text-base md:text-lg font-bold text-gray-900">{productPrice}</span>
                               <span className="text-sm text-gray-500 line-through">{product.originalPrice}</span>
                             </div>
 
@@ -1035,14 +1037,14 @@ export default function MarketplacePage() {
                               className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0zM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5z"/>
                               </svg>
                               <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
                             </Link>
 
                             {/* Action Buttons */}
-                            <div className="flex gap-2">
+                            <div className="flex gap-3">
                               {productStock === 0 ? (
                                 <button disabled className="flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
                               ) : (

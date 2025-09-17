@@ -11,18 +11,18 @@ export async function getCategories(useCache = true) {
     // Check cache first
     if (useCache && categoriesCache && categoriesCacheTime && (Date.now() - categoriesCacheTime < CACHE_DURATION)) {
       console.log('🔍 CategoryService: Using cached categories');
-      return categoriesCache;
+      return { data: categoriesCache };
     }
 
     console.log('🔍 CategoryService: Fetching fresh categories...');
     const response = await getCategoriesOnly();
     
     // Update cache
-    categoriesCache = response.data;
+    categoriesCache = response;
     categoriesCacheTime = Date.now();
     
     console.log('✅ CategoryService: Categories fetched and cached:', categoriesCache);
-    return response;
+    return { data: response };
   } catch (error) {
     console.error('❌ CategoryService: Failed to fetch categories:', error);
     
@@ -54,7 +54,7 @@ export async function getCategoryWithProducts(categoryId) {
   try {
     console.log('🔍 CategoryService: Fetching category with products:', categoryId);
     const response = await getCategoryById(categoryId);
-    console.log('✅ CategoryService: Category with products fetched:', response.data);
+    console.log('✅ CategoryService: Category with products fetched:', response);
     return response;
   } catch (error) {
     console.error('❌ CategoryService: Failed to fetch category with products:', error);

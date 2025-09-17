@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://campor-aa1452bb8116.herokuapp.com/api/v1';
 export const RUN_EMAIL_REGEX = /^[^\s@]+@run\.edu\.ng$/i;
 
 // API Endpoints
@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
     ALL: '/categories/all',
     ONLY: '/categories/only',
     BY_ID: '/categories',
+    CREATE: '/categories/create',
   },
   CART: {
     GET: '/cart',

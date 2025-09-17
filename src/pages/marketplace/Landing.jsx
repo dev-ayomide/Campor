@@ -1,10 +1,48 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import heroImage from '../../assets/images/heroimage.png';
 import facilitateImage from '../../assets/images/image-fac.png';
 
 export default function LandingPage() {
+  const [openFAQ, setOpenFAQ] = useState(null);
+
+  const toggleFAQ = (index) => {
+    setOpenFAQ(openFAQ === index ? null : index);
+  };
+
+  const faqs = [
+    {
+      question: "How do I verify my student account?",
+      answer: "Simply sign up using your official RUN email address (@run.edu.ng). Our system automatically verifies your student status through your institutional email, ensuring only verified students can access the platform."
+    },
+    {
+      question: "Is Campor safe for transactions?",
+      answer: "Yes! Campor is designed with student safety in mind. All users are verified students, and we provide secure in-app payment options. You can also chat directly with sellers before making any transactions to build trust."
+    },
+    {
+      question: "What payment methods do you accept?",
+      answer: "We accept multiple secure payment methods including debit/credit cards, bank transfers, and mobile money options. All payments are processed securely within the app to protect your financial information."
+    },
+    {
+      question: "How do I start selling on Campor?",
+      answer: "After creating your account, simply click 'Sell' to complete our quick seller onboarding process. You'll be able to upload photos, set prices, and manage your listings through our easy-to-use seller dashboard."
+    },
+    {
+      question: "What can I buy and sell on Campor?",
+      answer: "You can buy and sell textbooks, electronics, clothing, personal items, services, and more. We encourage student entrepreneurship while maintaining a safe, campus-focused marketplace. Prohibited items include illegal goods and non-student services."
+    },
+    {
+      question: "How do I meet up with buyers or sellers?",
+      answer: "Once you've agreed on a purchase, you can arrange to meet on campus at convenient locations like the library, student center, or other safe campus areas. Our chat feature helps coordinate pickup times and locations."
+    },
+    {
+      question: "What if I have a problem with a transaction?",
+      answer: "Our support team is here to help! You can report issues through the app, and we'll work to resolve disputes between students. Since everyone is verified, we can easily connect with both parties to find fair solutions."
+    }
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen font-montserrat">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-12 lg:py-20">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -20,30 +58,26 @@ export default function LandingPage() {
             </p>
             
             {/* CTA Buttons */}
-            <div className="flex flex-row gap-3 mb-8">
+            <div className="flex flex-row gap-2 mb-8">
               <Link
                 to="/auth"
-                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-transparent"
+                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-transparent"
                 style={{ minWidth: '0', minHeight: '0' }}
               >
                 <svg
-                  className="w-4 h-4 mr-2"
+                  className="w-5 h-5 mr-2"
+                  viewBox="0 0 85 60"
                   fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path
-                    d="M7 10h6m0 0l-2.5-2.5M13 10l-2.5 2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <rect width="85" height="60" rx="8" fill="#2563eb"/>
+                  <path d="M34 15L54 30L34 45" stroke="white" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Create Account
               </Link>
               <Link
                 to="/marketplace"
-                className="flex items-center justify-center bg-white border-2 border-gray-900 hover:border-gray-700 text-gray-900 rounded-full font-bold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                className="flex items-center justify-center bg-white border-2 border-gray-900 hover:border-gray-700 text-gray-900 rounded-full font-bold text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                 style={{ minWidth: '0', minHeight: '0' }}
               >
                 Explore Listings
@@ -262,8 +296,8 @@ export default function LandingPage() {
 
             {/* Seamless Listing Tools */}
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -275,8 +309,8 @@ export default function LandingPage() {
 
             {/* Smart Search & Categories */}
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -288,8 +322,8 @@ export default function LandingPage() {
 
             {/* Secure In-App Payments */}
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
                   <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
                 </svg>
@@ -302,8 +336,8 @@ export default function LandingPage() {
 
             {/* Seller Dashboard & Stats */}
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                   <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                 </svg>
@@ -316,8 +350,8 @@ export default function LandingPage() {
 
             {/* Direct Peer Messaging */}
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-              <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -329,6 +363,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
 
       {/* Facilitate Convenient Campus Commerce Section */}
       <section className="py-16 lg:py-24 relative overflow-hidden">
@@ -384,6 +419,60 @@ export default function LandingPage() {
                   className="w-full h-auto"
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs Section */}
+      <section className="py-16 lg:py-24">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-16">
+            Frequently Asked Questions
+          </h2>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                  <button
+                    onClick={() => toggleFAQ(index)}
+                    className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-900 pr-4">
+                      {faq.question}
+                    </h3>
+                    <div className="flex-shrink-0">
+                      <svg
+                        className={`w-5 h-5 text-gray-500 transition-transform ${
+                          openFAQ === index ? 'rotate-45' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      openFAQ === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="px-6 pb-4">
+                      <p className="text-gray-600 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

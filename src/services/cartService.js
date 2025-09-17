@@ -82,10 +82,13 @@ export async function getCart(force = false) {
   }
 }
 
-// Add items to cart
+// Add items to cart (inventory validation handled by backend webhook)
 export async function addToCart(cartId, items) {
   try {
     console.log('🔍 CartService: Adding items to cart:', { cartId, items });
+    
+    // Note: Inventory validation is handled by backend webhook after payment
+    // Frontend allows adding to cart, backend will handle stock validation
     
     // Only include cartId if it's not null/undefined and not a temp ID
     const payload = {
@@ -110,10 +113,13 @@ export async function addToCart(cartId, items) {
   }
 }
 
-// Update cart item quantity
+// Update cart item quantity (inventory validation handled by backend webhook)
 export async function updateCartItemQuantity(itemId, quantity) {
   try {
     console.log('🔍 CartService: Updating cart item quantity:', { itemId, quantity });
+    
+    // Note: Inventory validation is handled by backend webhook after payment
+    // Frontend allows quantity updates, backend will handle stock validation
     
     const response = await api.patch(`${API_ENDPOINTS.CART.UPDATE_ITEM}/${itemId}`, {
       quantity
@@ -249,5 +255,163 @@ export function clearCartCache() {
   cartCache = null;
   cartCacheTime = null;
   console.log('🔍 CartService: Cart cache cleared');
+}
+
+// ===== INVENTORY VALIDATION FUNCTIONS =====
+
+/**
+ * Validate inventory for items being added to cart
+ * @param {Array} items - Array of items with productId and quantity
+ */
+export async function validateInventory(items) {
+  try {
+    console.log('🔍 CartService: Validating inventory for items:', items);
+    
+    for (const item of items) {
+      const { productId, quantity } = item;
+      
+      if (!productId || !quantity || quantity <= 0) {
+        throw new Error('Invalid item data provided');
+      }
+      
+      // Fetch current product inventory
+      const productResponse = await api.get(`${API_ENDPOINTS.PRODUCTS.BY_SLUG}/${productId}`);
+      const product = productResponse.data;
+      
+      if (!product) {
+        throw new Error('Product not found');
+      }
+      
+      // Check if product is out of stock
+      if (product.stockQuantity <= 0) {
+        throw new Error(`Product "${product.name}" is currently out of stock`);
+      }
+      
+      // Check if requested quantity exceeds available stock
+      if (quantity > product.stockQuantity) {
+        throw new Error(`Only ${product.stockQuantity} units of "${product.name}" are available. You requested ${quantity} units.`);
+      }
+      
+      console.log(`✅ CartService: Inventory validation passed for product ${productId}: ${quantity}/${product.stockQuantity}`);
+    }
+    
+    console.log('✅ CartService: All inventory validations passed');
+  } catch (error) {
+    console.error('❌ CartService: Inventory validation failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Validate inventory for cart item quantity update
+ * @param {string} itemId - Cart item ID
+ * @param {number} quantity - New quantity
+ */
+export async function validateCartItemInventory(itemId, quantity) {
+  try {
+    console.log('🔍 CartService: Validating inventory for cart item update:', { itemId, quantity });
+    
+    if (!quantity || quantity <= 0) {
+      throw new Error('Invalid quantity provided');
+    }
+    
+    // Get cart item details to find product ID
+    const cartResponse = await api.get(API_ENDPOINTS.CART.GET);
+    const cart = cartResponse.data;
+    
+    let productId = null;
+    let currentQuantity = 0;
+    
+    // Find the cart item and get product ID
+    for (const sellerGroup of cart) {
+      if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
+        const item = sellerGroup.items.find(item => item.id === itemId);
+        if (item) {
+          productId = item.productId || item.product?.id;
+          currentQuantity = item.quantity || 0;
+          break;
+        }
+      }
+    }
+    
+    if (!productId) {
+      throw new Error('Cart item not found');
+    }
+    
+    // Fetch current product inventory
+    const productResponse = await api.get(`${API_ENDPOINTS.PRODUCTS.BY_SLUG}/${productId}`);
+    const product = productResponse.data;
+    
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    
+    // Check if product is out of stock
+    if (product.stockQuantity <= 0) {
+      throw new Error(`Product "${product.name}" is currently out of stock`);
+    }
+    
+    // Check if requested quantity exceeds available stock
+    if (quantity > product.stockQuantity) {
+      throw new Error(`Only ${product.stockQuantity} units of "${product.name}" are available. You requested ${quantity} units.`);
+    }
+    
+    console.log(`✅ CartService: Cart item inventory validation passed: ${quantity}/${product.stockQuantity}`);
+  } catch (error) {
+    console.error('❌ CartService: Cart item inventory validation failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if product is available for purchase
+ * @param {string} productId - Product ID
+ * @param {number} quantity - Desired quantity
+ * @returns {Promise<{available: boolean, stockQuantity: number, message?: string}>}
+ */
+export async function checkProductAvailability(productId, quantity = 1) {
+  try {
+    console.log('🔍 CartService: Checking product availability:', { productId, quantity });
+    
+    const productResponse = await api.get(`${API_ENDPOINTS.PRODUCTS.BY_SLUG}/${productId}`);
+    const product = productResponse.data;
+    
+    if (!product) {
+      return {
+        available: false,
+        stockQuantity: 0,
+        message: 'Product not found'
+      };
+    }
+    
+    if (product.stockQuantity <= 0) {
+      return {
+        available: false,
+        stockQuantity: 0,
+        message: 'Product is out of stock'
+      };
+    }
+    
+    if (quantity > product.stockQuantity) {
+      return {
+        available: false,
+        stockQuantity: product.stockQuantity,
+        message: `Only ${product.stockQuantity} units available`
+      };
+    }
+    
+    return {
+      available: true,
+      stockQuantity: product.stockQuantity,
+      message: `${product.stockQuantity} units available`
+    };
+  } catch (error) {
+    console.error('❌ CartService: Failed to check product availability:', error);
+    return {
+      available: false,
+      stockQuantity: 0,
+      message: 'Failed to check availability'
+    };
+  }
 }
 
