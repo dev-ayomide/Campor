@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { registerSeller, testSellerEndpoint } from '../../services/authService';
-import { verifyBankAccount, getBanksList, getBankCode, validateAccountNumber } from '../../services/bankVerificationService';
+import { bankResolutionService } from '../../services/bankResolutionService';
 
 export default function SellerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -19,7 +19,8 @@ export default function SellerOnboardingPage() {
   const [bankDetails, setBankDetails] = useState({
     accountNumber: '',
     accountName: '',
-    bankName: ''
+    bankName: '',
+    bankCode: ''
   });
 
   const [contactInfo, setContactInfo] = useState({
@@ -39,6 +40,7 @@ export default function SellerOnboardingPage() {
   const [isLoadingBanks, setIsLoadingBanks] = useState(false);
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
+  const [lastVerificationAttempt, setLastVerificationAttempt] = useState(0);
 
   const steps = [
     { number: 1, title: 'Store Info', isCompleted: currentStep > 1 },
@@ -51,14 +53,12 @@ export default function SellerOnboardingPage() {
     const fetchBanks = async () => {
       setIsLoadingBanks(true);
       try {
-        const result = await getBanksList();
-        if (result.success) {
-          setBanksList(result.data);
-        } else {
-          console.error('Failed to fetch banks:', result.error);
-        }
+        const response = await bankResolutionService.getBanksList();
+        setBanksList(response.data || []);
+        console.log('✅ Banks list fetched successfully:', response.data?.length || 0, 'banks');
       } catch (error) {
-        console.error('Error fetching banks:', error);
+        console.error('❌ Failed to fetch banks list:', error);
+        setError('Failed to load banks list. Please refresh the page.');
       } finally {
         setIsLoadingBanks(false);
       }
@@ -84,31 +84,46 @@ export default function SellerOnboardingPage() {
   // Auto-verify account when both bank and account number are entered
   useEffect(() => {
     const autoVerifyAccount = async () => {
+      const now = Date.now();
+      const timeSinceLastAttempt = now - lastVerificationAttempt;
+      
       if (
         bankDetails.bankName && 
         bankDetails.accountNumber && 
-        validateAccountNumber(bankDetails.accountNumber) &&
-        !isVerifyingBank
+        bankDetails.accountNumber.length >= 10 &&
+        !isVerifyingBank &&
+        timeSinceLastAttempt >= 5000 // 5 seconds minimum between attempts
       ) {
         setIsVerifyingBank(true);
         setBankVerificationError(null);
+        setLastVerificationAttempt(now);
 
         try {
-          const bankCode = getBankCode(bankDetails.bankName, banksList);
-          const result = await verifyBankAccount(bankDetails.accountNumber, bankCode);
+          const selectedBank = banksList.find(bank => bank.name === bankDetails.bankName);
+          if (!selectedBank) {
+            setBankVerificationError('Please select a valid bank.');
+            return;
+          }
 
-          if (result.success) {
+          const result = await bankResolutionService.resolveAccount(
+            bankDetails.accountNumber,
+            selectedBank.code
+          );
+
+          if (result.data && result.data.account_name) {
             setBankDetails(prev => ({
               ...prev,
-              accountName: result.data.account_name
+              accountName: result.data.account_name,
+              bankCode: selectedBank.code
             }));
             setBankVerificationError(null);
+            console.log('✅ Account resolved successfully:', result.data);
           } else {
             setBankDetails(prev => ({
               ...prev,
               accountName: '' // Clear account name on verification failure
             }));
-            setBankVerificationError(result.error);
+            setBankVerificationError('Account verification failed. Please check your details.');
           }
         } catch (error) {
           console.error('Auto bank verification error:', error);
@@ -116,24 +131,40 @@ export default function SellerOnboardingPage() {
             ...prev,
             accountName: '' // Clear account name on error
           }));
-          setBankVerificationError('Failed to verify account. Please try again.');
+          
+          // Provide specific guidance based on error type
+          if (error.message.includes('Server error')) {
+            setBankVerificationError(
+              'Bank verification service is temporarily unavailable. You can continue with manual entry.'
+            );
+          } else if (error.message.includes('Rate limit')) {
+            setBankVerificationError(
+              'Too many verification attempts. Please wait before trying again.'
+            );
+          } else if (error.message.includes('Invalid account')) {
+            setBankVerificationError(
+              'Account number or bank code is invalid. Please check your details.'
+            );
+          } else {
+            setBankVerificationError(error.message || 'Failed to verify account. Please try again.');
+          }
         } finally {
           setIsVerifyingBank(false);
         }
-      } else if (!bankDetails.accountNumber || !validateAccountNumber(bankDetails.accountNumber)) {
+      } else if (!bankDetails.accountNumber || bankDetails.accountNumber.length < 10) {
         // Clear account name if account number is invalid or empty
         setBankDetails(prev => ({
           ...prev,
           accountName: ''
         }));
-        setBankVerificationError(null);
+        setBankVerificationError('Please enter a valid account number (minimum 10 digits).');
       }
     };
 
-    // Add a small delay to avoid too many API calls while typing
-    const timeoutId = setTimeout(autoVerifyAccount, 1000);
+    // Add a longer delay to avoid too many API calls while typing
+    const timeoutId = setTimeout(autoVerifyAccount, 3000);
     return () => clearTimeout(timeoutId);
-  }, [bankDetails.bankName, bankDetails.accountNumber, banksList, isVerifyingBank]);
+  }, [bankDetails.bankName, bankDetails.accountNumber, banksList, isVerifyingBank, lastVerificationAttempt]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -156,7 +187,7 @@ export default function SellerOnboardingPage() {
         return bankDetails.bankName && 
                bankDetails.accountNumber && 
                bankDetails.accountName && 
-               validateAccountNumber(bankDetails.accountNumber);
+               bankDetails.accountNumber.length >= 10;
       case 3:
         return contactInfo.phoneNumber.trim() && contactInfo.location.trim();
       default:
@@ -181,7 +212,7 @@ export default function SellerOnboardingPage() {
             errorMessage = 'Please select a bank';
           } else if (!bankDetails.accountNumber) {
             errorMessage = 'Please enter your account number';
-          } else if (!validateAccountNumber(bankDetails.accountNumber)) {
+          } else if (bankDetails.accountNumber.length < 10) {
             errorMessage = 'Please enter a valid 10-digit account number';
           } else if (!bankDetails.accountName) {
             errorMessage = 'Please wait for account verification to complete';
@@ -274,25 +305,40 @@ export default function SellerOnboardingPage() {
     }
     
     try {
-      // Prepare seller data according to API requirements
-      const sellerData = {
+      // Prepare basic seller data (store info + contact info)
+      const basicSellerData = {
         catalogueName: storeInfo.catalogueName,
         storeDescription: storeInfo.storeDescription,
         cataloguePicture: storeInfo.cataloguePicture,
-        bankName: bankDetails.bankName,
-        bankCode: getBankCode(bankDetails.bankName, banksList),
-        accountNumber: bankDetails.accountNumber,
-        accountName: bankDetails.accountName,
         phoneNumber: contactInfo.phoneNumber,
         whatsappNumber: contactInfo.whatsappNumber || contactInfo.phoneNumber, // Use phone number if WhatsApp is empty
         location: contactInfo.location
       };
       
-      console.log('Seller registration data:', sellerData);
+      // Prepare bank details separately
+      const bankDetailsData = {
+        bankName: bankDetails.bankName,
+        bankCode: bankDetails.bankCode,
+        accountNumber: bankDetails.accountNumber,
+        accountName: bankDetails.accountName
+      };
       
-      // Call the API to register seller
-      const response = await registerSeller(sellerData);
+      console.log('Seller registration data:', { basicSellerData, bankDetailsData });
+      
+      // Call the API to register seller (basic info first)
+      const response = await registerSeller(basicSellerData);
       console.log('Seller registration successful:', response);
+      
+      // Update bank details separately if seller was created successfully
+      if (response.seller?.id) {
+        try {
+          await bankResolutionService.updateSellerBankDetails(response.seller.id, bankDetailsData);
+          console.log('Bank details updated successfully');
+        } catch (bankError) {
+          console.error('Failed to update bank details:', bankError);
+          // Don't fail the entire registration if bank details fail
+        }
+      }
       
       // Update user's seller status in context
       completeSellersOnboarding(response);
@@ -530,10 +576,113 @@ export default function SellerOnboardingPage() {
                 )}
               </div>
               
+              {/* Manual Resolve Button */}
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const now = Date.now();
+                    const timeSinceLastAttempt = now - lastVerificationAttempt;
+                    
+                    if (timeSinceLastAttempt < 5000) {
+                      setBankVerificationError('Please wait 5 seconds between resolution attempts.');
+                      return;
+                    }
+                    
+                    if (!bankDetails.bankName || !bankDetails.accountNumber || bankDetails.accountNumber.length < 10) {
+                      setBankVerificationError('Please select a bank and enter a valid account number.');
+                      return;
+                    }
+                    
+                    setIsVerifyingBank(true);
+                    setBankVerificationError(null);
+                    setLastVerificationAttempt(now);
+                    
+                    try {
+                      const selectedBank = banksList.find(bank => bank.name === bankDetails.bankName);
+                      if (!selectedBank) {
+                        setBankVerificationError('Please select a valid bank.');
+                        return;
+                      }
+                      
+                      const result = await bankResolutionService.resolveAccount(
+                        bankDetails.accountNumber,
+                        selectedBank.code
+                      );
+                      
+                      if (result.data && result.data.account_name) {
+                        setBankDetails(prev => ({
+                          ...prev,
+                          accountName: result.data.account_name,
+                          bankCode: selectedBank.code
+                        }));
+                        setBankVerificationError(null);
+                        console.log('✅ Account resolved successfully:', result.data);
+                      } else {
+                        setBankVerificationError('Account verification failed. Please check your details.');
+                      }
+                    } catch (error) {
+                      console.error('Manual bank verification error:', error);
+                      
+                      // Provide specific guidance based on error type
+                      if (error.message.includes('Server error')) {
+                        setBankVerificationError(
+                          'Bank verification service is temporarily unavailable. You can continue with manual entry or try again later.'
+                        );
+                      } else if (error.message.includes('Rate limit')) {
+                        setBankVerificationError(
+                          'Too many verification attempts. Please wait 5 seconds before trying again.'
+                        );
+                      } else if (error.message.includes('Invalid account')) {
+                        setBankVerificationError(
+                          'Account number or bank code is invalid. Please check your details and try again.'
+                        );
+                      } else {
+                        setBankVerificationError(error.message || 'Failed to verify account. Please try again.');
+                      }
+                    } finally {
+                      setIsVerifyingBank(false);
+                    }
+                  }}
+                  disabled={isVerifyingBank || !bankDetails.bankName || !bankDetails.accountNumber || bankDetails.accountNumber.length < 10}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isVerifyingBank || !bankDetails.bankName || !bankDetails.accountNumber || bankDetails.accountNumber.length < 10
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {isVerifyingBank ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Resolving...
+                    </>
+                  ) : (
+                    'Resolve Account Name'
+                  )}
+                </button>
+              </div>
+              
               {/* Bank Verification Error */}
               {bankVerificationError && (
                 <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
                   {bankVerificationError}
+                  {bankVerificationError.includes('temporarily unavailable') && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBankVerificationError(null);
+                          // Allow manual entry by clearing the error
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Continue with manual entry
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -557,7 +706,7 @@ export default function SellerOnboardingPage() {
                   type="text"
                   value={bankDetails.accountName}
                   onChange={(e) => setBankDetails(prev => ({ ...prev, accountName: e.target.value }))}
-                  placeholder="Account name will be auto-filled after verification"
+                  placeholder="Account name (auto-filled after verification or enter manually)"
                   className={`w-full pl-12 pr-4 py-3 sm:py-4 bg-transparent border rounded-xl focus:border-blue-500 transition-colors ${
                     bankDetails.accountName 
                       ? 'border-green-300 bg-green-50' 

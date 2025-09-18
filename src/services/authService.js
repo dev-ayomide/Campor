@@ -483,8 +483,15 @@ export async function getSellerCatalogue(sellerId) {
         user: data.user, // Contains name and profilePicture
         catalogueName: data.catalogueName,
         catalogueCover: data.catalogueCover, // New cover photo field
+        cataloguePicture: data.catalogueCover, // Also map to cataloguePicture for backward compatibility
         storeDescription: data.storeDescription,
+        phoneNumber: data.phoneNumber,
+        whatsappNumber: data.whatsappNumber,
         location: data.location,
+        bankName: data.bankName,
+        bankCode: data.bankCode,
+        accountNumber: data.accountNumber,
+        accountName: data.accountName,
         createdAt: data.createdAt,
         averageRating: data.averageRating,
         productCount: data._count?.products || 0
@@ -544,8 +551,15 @@ export async function getPublicSellerCatalogue(sellerId) {
         user: data.user, // Contains name and profilePicture
         catalogueName: data.catalogueName,
         catalogueCover: data.catalogueCover, // New cover photo field
+        cataloguePicture: data.catalogueCover, // Also map to cataloguePicture for backward compatibility
         storeDescription: data.storeDescription,
+        phoneNumber: data.phoneNumber,
+        whatsappNumber: data.whatsappNumber,
         location: data.location,
+        bankName: data.bankName,
+        bankCode: data.bankCode,
+        accountNumber: data.accountNumber,
+        accountName: data.accountName,
         createdAt: data.createdAt,
         averageRating: data.averageRating,
         productCount: data._count?.products || 0
@@ -648,16 +662,17 @@ export async function updateProductInCatalogue(productId, productData) {
   }
 }
 
+// Update seller basic information (store details, contact info, location)
 export async function updateSellerInfo(sellerId, sellerData) {
   try {
-    console.log('🔍 SellerService: Updating seller information...');
+    console.log('🔍 SellerService: Updating seller basic information...');
     console.log('🔍 SellerService: Seller ID:', sellerId);
     console.log('🔍 SellerService: Seller data received:', sellerData);
     
     // Create FormData for multipart/form-data request
     const formData = new FormData();
     
-    // Add fields that are being updated
+    // Add fields that are being updated (only basic seller info, not bank details)
     if (sellerData.catalogueName) {
       formData.append('catalogueName', sellerData.catalogueName);
       console.log('🔍 SellerService: Added catalogueName:', sellerData.catalogueName);
@@ -665,18 +680,6 @@ export async function updateSellerInfo(sellerId, sellerData) {
     if (sellerData.storeDescription) {
       formData.append('storeDescription', sellerData.storeDescription);
       console.log('🔍 SellerService: Added storeDescription:', sellerData.storeDescription);
-    }
-    if (sellerData.bankName) {
-      formData.append('bankName', sellerData.bankName);
-      console.log('🔍 SellerService: Added bankName:', sellerData.bankName);
-    }
-    if (sellerData.accountNumber) {
-      formData.append('accountNumber', sellerData.accountNumber);
-      console.log('🔍 SellerService: Added accountNumber:', sellerData.accountNumber);
-    }
-    if (sellerData.accountName) {
-      formData.append('accountName', sellerData.accountName);
-      console.log('🔍 SellerService: Added accountName:', sellerData.accountName);
     }
     if (sellerData.phoneNumber) {
       formData.append('phoneNumber', sellerData.phoneNumber);
@@ -691,10 +694,10 @@ export async function updateSellerInfo(sellerId, sellerData) {
       console.log('🔍 SellerService: Added location:', sellerData.location);
     }
     
-    // Add catalogue picture if provided
+    // Add catalogue cover if provided (API expects 'catalogueCover' not 'cataloguePicture')
     if (sellerData.cataloguePicture) {
-      formData.append('cataloguePicture', sellerData.cataloguePicture);
-      console.log('🔍 SellerService: Added cataloguePicture:', sellerData.cataloguePicture);
+      formData.append('catalogueCover', sellerData.cataloguePicture);
+      console.log('🔍 SellerService: Added catalogueCover:', sellerData.cataloguePicture);
     }
     
     // Create a new axios instance for multipart/form-data
@@ -713,10 +716,10 @@ export async function updateSellerInfo(sellerId, sellerData) {
     }
     
     const response = await multipartApi.put(`${API_ENDPOINTS.SELLER.UPDATE}/${sellerId}`, formData);
-    console.log('✅ SellerService: Seller information updated successfully:', response.data);
+    console.log('✅ SellerService: Seller basic information updated successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ SellerService: Failed to update seller information:', error);
+    console.error('❌ SellerService: Failed to update seller basic information:', error);
     throw new Error(error.response?.data?.message || 'Failed to update seller information.');
   }
 }

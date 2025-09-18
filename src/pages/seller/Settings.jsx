@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { updateSellerInfo } from '../../services/authService';
+import { bankResolutionService } from '../../services/bankResolutionService';
 
 export default function SellerSettingsPage({ toggleMobileMenu }) {
   const { user, updateSellerData } = useAuth();
@@ -10,6 +11,9 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [banksList, setBanksList] = useState([]);
+  const [resolvingAccount, setResolvingAccount] = useState(false);
+  const [accountResolutionError, setAccountResolutionError] = useState(null);
 
   // Store Info Form Data
   const [storeInfo, setStoreInfo] = useState({
@@ -24,28 +28,57 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   // Payment Info Form Data
   const [paymentInfo, setPaymentInfo] = useState({
     bankName: '',
+    bankCode: '',
     accountNumber: '',
     accountName: ''
   });
 
   useEffect(() => {
     if (user?.seller) {
-      setStoreInfo({
+      // Update form state with the latest data from context
+      const newStoreInfo = {
         cataloguePicture: user.seller.cataloguePicture || null,
         catalogueName: user.seller.catalogueName || '',
         storeDescription: user.seller.storeDescription || '',
         phoneNumber: user.seller.phoneNumber || '',
         whatsappNumber: user.seller.whatsappNumber || '',
         location: user.seller.location || ''
-      });
+      };
 
-      setPaymentInfo({
+      const newPaymentInfo = {
         bankName: user.seller.bankName || '',
+        bankCode: user.seller.bankCode || '',
         accountNumber: user.seller.accountNumber || '',
         accountName: user.seller.accountName || ''
+      };
+
+      // Always update the form state to ensure it reflects the latest data
+      setStoreInfo(newStoreInfo);
+      setPaymentInfo(newPaymentInfo);
+      
+      console.log('🔄 Settings: Updated form state with latest seller data:', {
+        cataloguePicture: user.seller.cataloguePicture,
+        phoneNumber: user.seller.phoneNumber,
+        whatsappNumber: user.seller.whatsappNumber
       });
     }
-  }, [user]);
+  }, [user?.seller]);
+
+  // Fetch banks list on component mount
+  useEffect(() => {
+    const fetchBanksList = async () => {
+      try {
+        const response = await bankResolutionService.getBanksList();
+        setBanksList(response.data || []);
+        console.log('✅ Settings: Banks list fetched successfully');
+      } catch (error) {
+        console.error('❌ Settings: Failed to fetch banks list:', error);
+        setError('Failed to load banks list. Please refresh the page.');
+      }
+    };
+
+    fetchBanksList();
+  }, []);
 
   // Clear success/error messages after a delay
   useEffect(() => {
@@ -84,6 +117,38 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
     }
   };
 
+  // Resolve bank account details
+  const resolveAccountDetails = async () => {
+    if (!paymentInfo.bankCode || !paymentInfo.accountNumber) {
+      setAccountResolutionError('Please select a bank and enter account number first.');
+      return;
+    }
+
+    setResolvingAccount(true);
+    setAccountResolutionError(null);
+
+    try {
+      const response = await bankResolutionService.resolveAccount(
+        paymentInfo.accountNumber,
+        paymentInfo.bankCode
+      );
+
+      if (response.data && response.data.account_name) {
+        setPaymentInfo(prev => ({
+          ...prev,
+          accountName: response.data.account_name
+        }));
+        setSuccess('Account name resolved successfully!');
+        console.log('✅ Account resolved:', response.data);
+      }
+    } catch (error) {
+      setAccountResolutionError(error.message);
+      console.error('❌ Account resolution failed:', error);
+    } finally {
+      setResolvingAccount(false);
+    }
+  };
+
   const handleStoreInfoSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -95,7 +160,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
         throw new Error('Seller information not found');
       }
 
-      // Prepare seller data object (not FormData - the service function creates FormData)
+      // Prepare seller data object (only basic seller info, not bank details)
       const sellerData = {
         catalogueName: storeInfo.catalogueName,
         storeDescription: storeInfo.storeDescription,
@@ -112,6 +177,10 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       try {
         await updateSellerData(user.seller.id);
         console.log('✅ Seller data updated in context');
+        
+        // Keep the form state with the updated values to prevent clearing
+        // The form state already has the correct values from the user input
+        console.log('✅ Form state preserved with updated values');
       } catch (contextError) {
         console.log('ℹ️ Context update failed, but data was saved to backend');
       }
@@ -137,20 +206,25 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
         throw new Error('Seller information not found');
       }
 
-      // Prepare seller data object (not FormData - the service function creates FormData)
-      const sellerData = {
+      // Prepare bank details object for the separate bank details endpoint
+      const bankDetails = {
         bankName: paymentInfo.bankName,
+        bankCode: paymentInfo.bankCode,
         accountNumber: paymentInfo.accountNumber,
         accountName: paymentInfo.accountName
       };
 
-      await updateSellerInfo(user.seller.id, sellerData);
-      setSuccess('Payment information updated successfully!');
+      await bankResolutionService.updateSellerBankDetails(user.seller.id, bankDetails);
+      setSuccess('Bank details updated successfully!');
       
       // Update seller data in context with latest information
       try {
         await updateSellerData(user.seller.id);
         console.log('✅ Seller data updated in context');
+        
+        // Keep the form state with the updated values to prevent clearing
+        // The form state already has the correct values from the user input
+        console.log('✅ Form state preserved with updated values');
       } catch (contextError) {
         console.log('ℹ️ Context update failed, but data was saved to backend');
       }
@@ -412,35 +486,26 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                   <select
                     name="bankName"
                     value={paymentInfo.bankName}
-                    onChange={handlePaymentInfoChange}
+                    onChange={(e) => {
+                      handlePaymentInfoChange(e);
+                      // Auto-set bank code when bank is selected
+                      const selectedBank = banksList.find(bank => bank.name === e.target.value);
+                      if (selectedBank) {
+                        setPaymentInfo(prev => ({
+                          ...prev,
+                          bankCode: selectedBank.code
+                        }));
+                      }
+                    }}
                     className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
                     required
                   >
-                    <option value="">Select</option>
-                    <option value="Access Bank">Access Bank</option>
-                    <option value="Citibank">Citibank</option>
-                    <option value="Diamond Bank">Diamond Bank</option>
-                    <option value="Ecobank">Ecobank</option>
-                    <option value="Fidelity Bank">Fidelity Bank</option>
-                    <option value="First Bank">First Bank</option>
-                    <option value="First City Monument Bank">First City Monument Bank</option>
-                    <option value="Guaranty Trust Bank">Guaranty Trust Bank</option>
-                    <option value="Heritage Bank">Heritage Bank</option>
-                    <option value="Keystone Bank">Keystone Bank</option>
-                    <option value="Kuda Bank">Kuda Bank</option>
-                    <option value="Opay">Opay</option>
-                    <option value="PalmPay">PalmPay</option>
-                    <option value="Polaris Bank">Polaris Bank</option>
-                    <option value="Providus Bank">Providus Bank</option>
-                    <option value="Stanbic IBTC Bank">Stanbic IBTC Bank</option>
-                    <option value="Standard Chartered Bank">Standard Chartered Bank</option>
-                    <option value="Sterling Bank">Sterling Bank</option>
-                    <option value="Union Bank">Union Bank</option>
-                    <option value="United Bank For Africa">United Bank For Africa</option>
-                    <option value="Unity Bank">Unity Bank</option>
-                    <option value="VBank">VBank</option>
-                    <option value="Wema Bank">Wema Bank</option>
-                    <option value="Zenith Bank">Zenith Bank</option>
+                    <option value="">Select Bank</option>
+                    {banksList.map(bank => (
+                      <option key={bank.id} value={bank.name}>
+                        {bank.name}
+                      </option>
+                    ))}
                   </select>
                   <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -449,6 +514,25 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
+              </div>
+
+              {/* Bank Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bank Code</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="bankCode"
+                    value={paymentInfo.bankCode}
+                    readOnly
+                    placeholder="Auto-filled when bank is selected"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+                  />
+                  <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                  </svg>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Automatically set when you select a bank</p>
               </div>
 
               {/* Account Number */}
@@ -468,6 +552,39 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                 </div>
+                
+                {/* Resolve Account Button */}
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={resolveAccountDetails}
+                    disabled={resolvingAccount || !paymentInfo.bankCode || !paymentInfo.accountNumber}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      resolvingAccount || !paymentInfo.bankCode || !paymentInfo.accountNumber
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {resolvingAccount ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Resolving...
+                      </>
+                    ) : (
+                      'Resolve Account Name'
+                    )}
+                  </button>
+                </div>
+                
+                {/* Account Resolution Error */}
+                {accountResolutionError && (
+                  <div className="mt-2 text-sm text-red-600">
+                    {accountResolutionError}
+                  </div>
+                )}
               </div>
 
               {/* Account Name */}
@@ -479,14 +596,24 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     name="accountName"
                     value={paymentInfo.accountName}
                     onChange={handlePaymentInfoChange}
-                    placeholder="Jonny Sun"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="Account holder name (use 'Resolve Account Name' button)"
+                    className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                      paymentInfo.accountName ? 'border-green-300 bg-green-50' : 'border-gray-300'
+                    }`}
                     required
                   />
                   <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
+                  {paymentInfo.accountName && (
+                    <svg className="w-5 h-5 text-green-500 absolute right-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
                 </div>
+                {paymentInfo.accountName && (
+                  <p className="text-xs text-green-600 mt-1">✓ Account name resolved successfully</p>
+                )}
               </div>
 
               {/* Security Note */}

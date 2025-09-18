@@ -406,54 +406,53 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      {/* Hero Section */}
-      <section className="relative bg-blue-900 text-white overflow-hidden mx-4 mt-4 rounded-3xl">
+      {/* Full Width Hero Section */}
+      <section className="relative bg-blue-900 text-white overflow-hidden w-full">
         <div className="absolute inset-0">
           <img 
             src={marketplaceImage} 
             alt="Marketplace" 
-            className="w-full h-full object-cover opacity-80 rounded-3xl"
+            className="w-full h-full object-cover opacity-80"
           />
-          <div className="absolute inset-0 bg-blue-900 bg-opacity-40 rounded-3xl"></div>
+          <div className="absolute inset-0 bg-blue-900 bg-opacity-40"></div>
         </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-16 lg:py-24">
+        <div className="relative z-10 w-full px-4 py-16 lg:py-20">
           <div className="text-center">
-            {/* Breadcrumb */}
-            <div className="flex items-center justify-center gap-2 text-sm text-blue-100 mb-6">
-              <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              <span className="text-white">Market Place</span>
-            </div>
-            
-            <h1 className="text-4xl lg:text-6xl font-bold mb-4">
+            <h1 className="text-4xl lg:text-5xl font-bold mb-4">
               Market Place
             </h1>
             <p className="text-xl lg:text-2xl text-blue-100 mb-8">
               Your One Stop Shop for all School items
             </p>
             
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
+            {/* Full Width Search Bar */}
+            <div className="w-full mx-auto px-2 sm:max-w-5xl sm:px-6">
               <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => handleRealTimeSearch(e.target.value)}
-                  placeholder="Product, brand, category, seller..."
-                  className="w-full px-6 py-4 pr-16 text-gray-900 bg-white rounded-full text-lg focus:outline-none focus:ring-4 focus:ring-blue-300 shadow-lg"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
+                <div className="flex bg-white rounded-full shadow-lg overflow-hidden min-h-[58px] w-full">
+                  <div className="flex-1 flex items-center px-4 sm:px-6 py-4 min-w-0">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => handleRealTimeSearch(e.target.value)}
+                      placeholder="What are you looking for?"
+                      className="flex-1 text-gray-900 text-sm sm:text-base focus:outline-none bg-transparent placeholder-gray-400 min-w-0"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-2 sm:py-3 m-1 text-sm sm:text-base font-semibold transition-colors rounded-full flex-shrink-0"
+                  >
+                    Search
+                  </button>
+                </div>
               </form>
             </div>
           </div>

@@ -207,18 +207,20 @@ export function AuthProvider({ children }) {
       const catalogueData = await authService.getSellerCatalogue(sellerId);
       console.log('✅ AuthContext: Updated seller data from catalogue:', catalogueData);
       
-      // Extract seller info from catalogue data
+      // Extract seller info from catalogue data - note: catalogueData has { seller: {...}, products: [...] } structure
+      const sellerData = catalogueData.seller;
       const sellerProfile = {
         id: sellerId,
-        catalogueName: catalogueData.catalogueName,
-        storeDescription: catalogueData.storeDescription,
-        cataloguePicture: catalogueData.cataloguePicture,
-        phoneNumber: catalogueData.phoneNumber,
-        whatsappNumber: catalogueData.whatsappNumber,
-        location: catalogueData.location,
-        bankName: catalogueData.bankName,
-        accountNumber: catalogueData.accountNumber,
-        accountName: catalogueData.accountName
+        catalogueName: sellerData.catalogueName,
+        storeDescription: sellerData.storeDescription,
+        cataloguePicture: sellerData.cataloguePicture || sellerData.catalogueCover, // Use catalogueCover as fallback
+        phoneNumber: sellerData.phoneNumber,
+        whatsappNumber: sellerData.whatsappNumber,
+        location: sellerData.location,
+        bankName: sellerData.bankName,
+        bankCode: sellerData.bankCode,
+        accountNumber: sellerData.accountNumber,
+        accountName: sellerData.accountName
       };
       
       // Update the user context with the new seller data
