@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useCart } from '../../contexts/CartContext';
+import { WishlistSkeleton } from '../../components/common';
 import WishlistButton from '../../components/wishlist/WishlistButton';
 import AddToCartButton from '../../components/cart/AddToCartButton';
-import { Heart, Trash2, ShoppingBag } from 'lucide-react';
+import { Heart, Trash2 } from 'lucide-react';
+import { ShoppingBagIcon } from '../../components/common';
 import productImage from '../../assets/images/product.png';
 
 export default function WishlistPage() {
@@ -55,12 +57,7 @@ export default function WishlistPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <>
           {/* Loading State */}
-          {loading && (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
-              <span className="ml-3 text-gray-600">Loading wishlist...</span>
-            </div>
-          )}
+          {loading && <WishlistSkeleton />}
 
           {/* Error State */}
           {error && (
@@ -101,7 +98,7 @@ export default function WishlistPage() {
                   to="/marketplace"
                   className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition-colors"
                 >
-                  <ShoppingBag className="w-4 h-4" />
+                  <ShoppingBagIcon className="w-4 h-4" />
                   Continue Shopping
                 </Link>
               </div>

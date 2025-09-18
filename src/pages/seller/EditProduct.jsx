@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { updateProductInCatalogue, getSellerProducts } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
+import { Skeleton } from '../../components/common';
 
 const EditProduct = ({ toggleMobileMenu }) => {
   const { productId } = useParams();
@@ -171,10 +172,59 @@ const EditProduct = ({ toggleMobileMenu }) => {
   if (loading && !currentProduct) {
     return (
       <SellerLayout toggleMobileMenu={toggleMobileMenu}>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading product data...</p>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48 rounded" />
+                <Skeleton className="h-4 w-32 rounded" />
+              </div>
+              
+              {/* Form Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-24 rounded" />
+                  <Skeleton className="h-10 w-full rounded" />
+                </div>
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-20 rounded" />
+                  <Skeleton className="h-10 w-full rounded" />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-32 rounded" />
+                <Skeleton className="h-24 w-full rounded" />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-28 rounded" />
+                  <Skeleton className="h-10 w-full rounded" />
+                </div>
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-24 rounded" />
+                  <Skeleton className="h-10 w-full rounded" />
+                </div>
+              </div>
+              
+              {/* Image Upload */}
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-32 rounded" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-24 w-full rounded" />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Buttons */}
+              <div className="flex gap-4">
+                <Skeleton className="h-12 w-32 rounded" />
+                <Skeleton className="h-12 w-24 rounded" />
+              </div>
+            </div>
           </div>
         </div>
       </SellerLayout>

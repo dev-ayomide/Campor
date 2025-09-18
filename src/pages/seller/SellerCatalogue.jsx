@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, MessageCircle, Copy, Check, Star, Clock, Award, Package, Search } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Copy, Check, Star, Clock, Award, Package, Search } from 'lucide-react';
+import { ChatIcon } from '../../components/common';
 import { getSellerCatalogue } from '../../services/authService';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
+import { ProductGridSkeleton } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import { debouncedSearch } from '../../services/algoliaService';
 import SearchHighlight from '../../components/search/SearchHighlight';
@@ -146,11 +148,24 @@ export default function SellerCatalogue() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading seller catalogue...</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header Skeleton */}
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Products Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <ProductGridSkeleton count={9} />
           </div>
         </div>
       </div>
@@ -264,7 +279,7 @@ export default function SellerCatalogue() {
                           navigate(`/chat?sellerId=${sellerId}`);
                         }}
                       >
-                    <MessageCircle className="w-4 h-4" />
+                    <ChatIcon className="w-4 h-4" />
                         Message Seller
                       </button>
                       

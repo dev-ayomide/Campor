@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCart } from '../../contexts/CartContext';
-import { ShoppingBag, Plus, Minus, MessageCircle } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
+import { ShoppingBagIcon, ChatIcon } from '../common';
 import { checkProductAvailability } from '../../services/cartService';
 
 export default function AddToCartButton({ productId, className = '', sellerId = null, roundedStyle = 'full' }) {
@@ -129,7 +130,7 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       {loading ? (
         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/70 border-t-transparent mr-2"></div>
       ) : (
-        <ShoppingBag className="h-4 w-4 mr-2" />
+        <ShoppingBagIcon className="h-4 w-4 mr-2" />
       )}
       {loading ? 'Adding...' : 'Add to Cart'}
     </button>

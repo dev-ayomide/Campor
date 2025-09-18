@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../context/AuthContext';
+import { ChatListSkeleton } from '../common';
 
 const ChatList = ({ onConversationSelect, selectedConversationId }) => {
-  const { conversations, loadConversations, searchConversations } = useChat();
+  const { conversations, loadConversations, searchConversations, loading } = useChat();
   const { isSeller } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -72,7 +73,11 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
 
       {/* Conversations List - Scrollable */}
       <div className="flex-1 overflow-y-auto chat-scrollbar">
-        {conversations.length === 0 ? (
+        {loading ? (
+          <div className="p-3">
+            <ChatListSkeleton />
+          </div>
+        ) : conversations.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p>No conversations found</p>
           </div>

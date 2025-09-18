@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Skeleton } from './common';
 
 // Component to redirect signed-in users from landing page to marketplace
 export function AuthenticatedRedirect({ children }) {
@@ -9,7 +10,7 @@ export function AuthenticatedRedirect({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <Skeleton className="w-12 h-12 rounded-full" />
       </div>
     );
   }
@@ -31,7 +32,7 @@ export function RequireAuth({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <Skeleton className="w-12 h-12 rounded-full" />
       </div>
     );
   }

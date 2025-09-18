@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment } from '../../services/paymentsService';
 import { useCart } from '../../contexts/CartContext';
+import { CartSkeleton, ChatIcon } from '../../components/common';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
@@ -99,12 +100,7 @@ export default function CartPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <>
           {/* Loading State */}
-          {loading && (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading cart...</span>
-            </div>
-          )}
+          {loading && <CartSkeleton />}
 
           {/* Error State */}
           {error && (
@@ -146,26 +142,45 @@ export default function CartPage() {
               {groupedItems.map((group) => (
               <div key={group.sellerId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Seller Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">
-                        {group.sellerId?.charAt(0) || 'S'}
-                      </span>
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    {/* Seller Info */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg font-medium text-gray-600">
+                          {group.seller?.catalogueName?.charAt(0) || group.seller?.name?.charAt(0) || 'S'}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-gray-900 text-base truncate">
+                          {group.seller?.catalogueName || group.seller?.name || 'Unknown Seller'}
+                        </h3>
+                        <p className="text-sm text-gray-600 truncate">
+                          Seller ID: {group.sellerId?.slice(0, 8)}...
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      <span className="font-medium text-gray-900">Seller ID: {group.sellerId?.slice(0, 8)}...</span>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Link 
+                        to={`/seller/${group.sellerId}/catalogue`}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors border border-gray-300 text-center"
+                      >
+                        View Store
+                      </Link>
+                      <button 
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          // Navigate to chat with this seller
+                          window.location.href = `/chat?sellerId=${group.sellerId}`;
+                        }}
+                      >
+                        <ChatIcon className="w-4 h-4" />
+                        Message
+                      </button>
                     </div>
                   </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Message
-                  </button>
                 </div>
 
                 {/* Seller Items */}

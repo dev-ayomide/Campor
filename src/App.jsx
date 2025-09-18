@@ -5,6 +5,7 @@ import AuthLayout from './layouts/AuthLayout';
 import { AuthenticatedRedirect, RequireAuth } from './components/ProtectedRoute';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
+import { ScrollToTop } from './components/common';
 
 // Import the verify image
 import verifyImage from './assets/images/verifyscreen.png';
@@ -35,6 +36,7 @@ import NotFound from './pages/NotFound';
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <CartProvider>
         <WishlistProvider>
           <Routes>

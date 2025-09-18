@@ -72,11 +72,16 @@ export async function getWishlist(force = false) {
     console.log('🔍 WishlistService: Response data type:', typeof response.data);
     console.log('🔍 WishlistService: Response data is array:', Array.isArray(response.data));
     
-    // Cache the response
-    setCachedWishlist(response.data);
+    // Extract items array from API response structure
+    const wishlistData = response.data.items || [];
+    console.log('🔍 WishlistService: Extracted items:', wishlistData);
+    console.log('🔍 WishlistService: Items is array:', Array.isArray(wishlistData));
     
-    console.log('✅ WishlistService: Wishlist fetched successfully:', response.data);
-    return response.data;
+    // Cache the extracted data
+    setCachedWishlist(wishlistData);
+    
+    console.log('✅ WishlistService: Wishlist fetched successfully:', wishlistData);
+    return wishlistData;
   } catch (error) {
     console.error('❌ WishlistService: Failed to fetch wishlist:', error);
     console.error('❌ WishlistService: Error response:', error.response);

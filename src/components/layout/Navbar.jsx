@@ -5,6 +5,7 @@ import { useWishlist } from '../../contexts/WishlistContext';
 import { useState } from 'react';
 import MobileSellerMenu from './MobileSellerMenu';
 import CompleteOrderModal from '../common/CompleteOrderModal';
+import { ShoppingBagIcon, ChatIcon, ProfileIcon } from '../common';
 import { deductInventoryOnOrderCompletion } from '../../services/inventoryService';
 import { updateOrderStatus } from '../../services/ordersService';
 
@@ -170,9 +171,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 to="/chat" 
                 className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+                <ChatIcon className="w-5 h-5" />
                 Chat
               </Link>
 
@@ -194,9 +193,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 to="/profile" 
                 className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+                <ProfileIcon className="w-5 h-5" />
                 Me
               </Link>
 
@@ -210,7 +207,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                   </svg>
                   {getWishlistCount() > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                    <span className="absolute -top-2 -right-2 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
                       {getWishlistCount() > 99 ? '99+' : getWishlistCount()}
                     </span>
                   )}
@@ -223,11 +220,9 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   to="/cart" 
                   className="relative flex items-center text-gray-700 hover:text-gray-900 transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m0-6a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
-                  </svg>
+                  <ShoppingBagIcon className="w-6 h-6" />
                   {getItemCount() > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                    <span className="absolute -top-2 -right-2 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
                       {getItemCount() > 99 ? '99+' : getItemCount()}
                     </span>
                   )}
@@ -266,7 +261,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
               {getWishlistCount() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                <span className="absolute -top-2 -right-2 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
                   {getWishlistCount() > 99 ? '99+' : getWishlistCount()}
                 </span>
               )}
@@ -279,11 +274,9 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               to="/cart" 
               className="relative flex items-center text-gray-700 hover:text-gray-900 transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m0-6a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
-              </svg>
+              <ShoppingBagIcon className="w-6 h-6" />
               {getItemCount() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                <span className="absolute -top-2 -right-2 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
                   {getItemCount() > 99 ? '99+' : getItemCount()}
                 </span>
               )}
@@ -500,12 +493,21 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   {!isSellerPage && (
                     <Link 
                       to="/cart" 
-                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Cart
                     </Link>
                   )}
+                  
+                  {/* Orders - show for all signed-in users */}
+                  <Link 
+                    to="/orders" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Orders
+                  </Link>
                   
                   <div className="border-t border-gray-100 pt-4">
                     <button

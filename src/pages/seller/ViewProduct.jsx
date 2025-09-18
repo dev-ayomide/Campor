@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts } from '../../services/authService';
+import { ProductDetailSkeleton } from '../../components/common';
 
 const ViewProduct = ({ toggleMobileMenu }) => {
   const { productId } = useParams();
@@ -76,9 +77,7 @@ const ViewProduct = ({ toggleMobileMenu }) => {
   if (loading) {
     return (
       <SellerLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <ProductDetailSkeleton />
       </SellerLayout>
     );
   }

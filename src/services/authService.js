@@ -223,7 +223,12 @@ export async function getCurrentUser() {
       throw new Error('No authentication token found');
     }
     
-    const response = await api.get(API_ENDPOINTS.AUTH.ME);
+    // First get user ID from /auth/me endpoint
+    const authResponse = await api.get(API_ENDPOINTS.AUTH.ME);
+    const userId = authResponse.data.id;
+    
+    // Then get full user details from /users/{id} endpoint
+    const response = await api.get(`/users/${userId}`);
     console.log('✅ User profile fetched successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -269,10 +274,74 @@ export async function resetPassword(token, newPassword) {
 
 export async function updateProfile(userData) {
   try {
-    const response = await api.put(API_ENDPOINTS.USER.UPDATE_PROFILE, userData);
+    console.log('🔍 Updating user profile...');
+    console.log('🔍 Profile data:', { name: userData.name, hasProfilePicture: !!userData.profilePicture });
+    
+    // Create FormData for multipart/form-data request
+    const formData = new FormData();
+    
+    // Add name field
+    if (userData.name) {
+      formData.append('name', userData.name);
+    }
+    
+    // Add profile picture if provided
+    if (userData.profilePicture) {
+      console.log('🔍 Profile picture file:', {
+        name: userData.profilePicture.name,
+        size: userData.profilePicture.size,
+        type: userData.profilePicture.type
+      });
+      formData.append('profilePicture', userData.profilePicture);
+    }
+    
+    // Create a new axios instance for multipart/form-data
+    const multipartApi = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 60000, // Increased timeout to 60 seconds for file uploads
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // Add auth token
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (token) {
+      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // Log FormData contents for debugging
+    console.log('🔍 FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    }
+    
+    console.log('🔍 Making request to:', `${API_BASE_URL}/users/update`);
+    
+    const response = await multipartApi.put('/users/update', formData);
+    console.log('✅ User profile updated successfully:', response.data);
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to update profile.');
+    console.error('❌ Failed to update profile:', error);
+    
+    // Handle specific error types
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timed out. Please try again with a smaller image or check your internet connection.');
+    } else if (error.response?.status === 413) {
+      throw new Error('File too large. Please choose a smaller image.');
+    } else if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid data provided. Please check your information.');
+    } else if (error.response?.status === 401) {
+      throw new Error('Session expired. Please log in again.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || 'Failed to update profile. Please try again.');
+    }
   }
 }
 

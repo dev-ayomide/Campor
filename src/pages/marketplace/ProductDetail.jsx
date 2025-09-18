@@ -4,6 +4,7 @@ import { getProductBySlug } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
+import { ProductDetailSkeleton } from '../../components/common';
 import { Star, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
@@ -17,6 +18,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('Reviews');
   const [addingToCart, setAddingToCart] = useState(false);
@@ -104,13 +106,71 @@ export default function ProductDetailPage() {
   };
 
   const handlePrevImage = () => {
-    if (!product?.imageUrls) return;
+    if (!product?.imageUrls || product.imageUrls.length <= 1 || isTransitioning) return;
+    setIsTransitioning(true);
     setCurrentImageIndex(prev => prev > 0 ? prev - 1 : product.imageUrls.length - 1);
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const handleNextImage = () => {
-    if (!product?.imageUrls) return;
+    if (!product?.imageUrls || product.imageUrls.length <= 1 || isTransitioning) return;
+    setIsTransitioning(true);
     setCurrentImageIndex(prev => prev < product.imageUrls.length - 1 ? prev + 1 : 0);
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
+
+  const handleThumbnailClick = (index) => {
+    if (isTransitioning || index === currentImageIndex) return;
+    setIsTransitioning(true);
+    setCurrentImageIndex(index);
+    setTimeout(() => setIsTransitioning(false), 300);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!product?.imageUrls || product.imageUrls.length <= 1) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrevImage();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleNextImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [product?.imageUrls, isTransitioning]);
+
+  // Touch/swipe support
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNextImage();
+    } else if (isRightSwipe) {
+      handlePrevImage();
+    }
   };
 
   const handleQuantityChange = (change) => {
@@ -119,16 +179,7 @@ export default function ProductDetailPage() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Loading product details...</span>
-          </div>
-        </div>
-      </div>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   // Error state
@@ -188,51 +239,114 @@ export default function ProductDetailPage() {
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative aspect-square bg-white rounded-xl overflow-hidden shadow-sm">
-              <img 
-                src={product.imageUrls?.[currentImageIndex] || productImage} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Navigation Arrows - Only show if multiple images */}
-              {product.imageUrls && product.imageUrls.length > 1 && (
-                <>
-                  <button 
-                    onClick={handlePrevImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-2 rounded-full shadow-md transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button 
-                    onClick={handleNextImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-2 rounded-full shadow-md transition-all"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                  </button>
-                </>
-              )}
+            {/* Main Image Container */}
+            <div className="relative group">
+              <div 
+                className="relative aspect-square bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
+                <img 
+                  src={product.imageUrls?.[currentImageIndex] || productImage} 
+                  alt={product.name}
+                  className={`w-full h-full object-cover transition-all duration-300 ${
+                    isTransitioning ? 'opacity-70 scale-105' : 'opacity-100 scale-100'
+                  }`}
+                />
+                
+                {/* Image Counter - Only show if multiple images */}
+                {product.imageUrls && product.imageUrls.length > 1 && (
+                  <div className="absolute top-4 right-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    {currentImageIndex + 1} / {product.imageUrls.length}
+                  </div>
+                )}
+                
+                {/* Navigation Arrows - Only show if multiple images */}
+                {product.imageUrls && product.imageUrls.length > 1 && (
+                  <>
+                    <button 
+                      onClick={handlePrevImage}
+                      disabled={isTransitioning}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 p-3 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-700" />
+                    </button>
+                    <button 
+                      onClick={handleNextImage}
+                      disabled={isTransitioning}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 p-3 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-5 h-5 text-gray-700" />
+                    </button>
+                  </>
+                )}
+                
+                {/* Loading Overlay */}
+                {isTransitioning && (
+                  <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                  </div>
+                )}
+              </div>
             </div>
+
 
             {/* Thumbnail Images - Only show if multiple images */}
             {product.imageUrls && product.imageUrls.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {product.imageUrls.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all ${
-                      currentImageIndex === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <img 
-                      src={image} 
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-700">Product Images</h3>
+                  <span className="text-xs text-gray-500">
+                    {product.imageUrls.length} {product.imageUrls.length === 1 ? 'image' : 'images'}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3">
+                  {product.imageUrls.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleThumbnailClick(index)}
+                      disabled={isTransitioning}
+                      className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all duration-200 disabled:cursor-not-allowed ${
+                        currentImageIndex === index 
+                          ? 'border-blue-500 ring-2 ring-blue-200 shadow-md' 
+                          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                      }`}
+                      aria-label={`View image ${index + 1}`}
+                    >
+                      <img 
+                        src={image} 
+                        alt={`${product.name} ${index + 1}`}
+                        className={`w-full h-full object-cover transition-all duration-200 ${
+                          currentImageIndex === index ? 'scale-105' : 'scale-100'
+                        }`}
+                      />
+                      
+                      {/* Active indicator */}
+                      {currentImageIndex === index && (
+                        <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Navigation hints */}
+                <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <ChevronLeft className="w-3 h-3" />
+                    Swipe or click to navigate
+                  </span>
+                  <span className="hidden sm:flex items-center gap-1">
+                    <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">←</kbd>
+                    <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">→</kbd>
+                    Keyboard
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -267,29 +381,36 @@ export default function ProductDetailPage() {
 
             {/* Seller Info */}
             {product.seller && (
-              <div className="rounded-lg p-4">
-                <h3 className="text-sm font-medium text-gray-900 mb-3">About Seller</h3>
-                <div className="flex items-center justify-between">
+              <div className="rounded-lg ">
+                <h3 className="text-sm font-medium text-gray-900 mb-4">About Seller</h3>
+                <div className="space-y-4">
+                  {/* Seller Info */}
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-medium text-gray-600">
                         {product.seller.catalogueName?.charAt(0) || 'S'}
                       </span>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{product.seller.catalogueName || 'Unknown Seller'}</p>
-                      <p className="text-sm text-gray-600">Seller ID: {product.seller.id?.slice(0, 8)}...</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 text-base truncate">
+                        {product.seller.catalogueName || 'Unknown Seller'}
+                      </p>
+                      <p className="text-sm text-gray-600 truncate">
+                        Seller ID: {product.seller.id?.slice(0, 8)}...
+                      </p>
                     </div>
                   </div>
+                  
+                  {/* Action Buttons */}
                   <div className="flex gap-2">
                     <Link 
                       to={`/seller/${product.seller.id}/catalogue`}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      className="flex-1 bg-white hover:bg-gray-50 text-gray-700 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border border-gray-300 text-center"
                     >
                       View Store
                     </Link>
                     <button 
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
                       onClick={() => {
                         // Navigate to chat with this seller
                         navigate(`/chat?sellerId=${product.seller.id}`);

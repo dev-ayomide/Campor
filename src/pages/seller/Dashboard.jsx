@@ -4,6 +4,7 @@ import { Copy, Check, ExternalLink } from 'lucide-react';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerCatalogue, getSellerOrders } from '../../services/authService';
+import { SellerDashboardSkeleton } from '../../components/common';
 
 export default function SellerDashboardPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -102,11 +103,9 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   };
 
   if (loading) {
-  return (
-    <SellerLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+    return (
+      <SellerLayout>
+        <SellerDashboardSkeleton />
       </SellerLayout>
     );
   }

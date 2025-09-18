@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment, redirectToPayment } from '../../services/paymentService';
-import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
+import { X, Plus, Minus, Trash2 } from 'lucide-react';
+import { ShoppingBagIcon } from '../common';
 
 export default function CartDrawer({ isOpen, onClose }) {
   const { 
@@ -117,7 +118,7 @@ export default function CartDrawer({ isOpen, onClose }) {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center space-x-2">
-              <ShoppingBag className="h-6 w-6 text-blue-600" />
+              <ShoppingBagIcon className="h-6 w-6 text-blue-600" />
               <h2 className="text-lg font-semibold text-gray-900">
                 Shopping Cart ({getItemCount()})
               </h2>
@@ -150,7 +151,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               </div>
             ) : cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-gray-500">
-                <ShoppingBag className="h-12 w-12 mb-4 text-gray-300" />
+                <ShoppingBagIcon className="h-12 w-12 mb-4 text-gray-300" />
                 <p className="text-lg font-medium">Your cart is empty</p>
                 <p className="text-sm">Add some products to get started</p>
               </div>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerOrders, updateOrderStatus, getOrderDetails } from '../../services/ordersService';
+import { OrderItemSkeleton } from '../../components/common';
 
 export default function SellerOrdersPage() {
   const { user } = useAuth();
@@ -141,8 +142,10 @@ export default function SellerOrdersPage() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <OrderItemSkeleton key={i} />
+            ))}
           </div>
         )}
 

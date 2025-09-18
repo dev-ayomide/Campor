@@ -16,6 +16,7 @@ import productImage from '../../assets/images/product.png';
 import SearchHighlight from '../../components/search/SearchHighlight';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
+import { ProductGridSkeleton, CategoryListSkeleton } from '../../components/common';
 
 export default function MarketplacePage() {
   const { user, token } = useContext(AuthContext);
@@ -547,7 +548,9 @@ export default function MarketplacePage() {
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-40">
 
                       {categoriesLoading ? (
-                        <div className="px-4 py-3 text-sm text-gray-500">Loading categories...</div>
+                        <div className="px-4 py-3">
+                          <CategoryListSkeleton />
+                        </div>
                       ) : (
                         categories.map((category) => (
                           <button
@@ -671,7 +674,9 @@ export default function MarketplacePage() {
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">CATEGORIES</h3>
                 <div className="space-y-1">
                   {categoriesLoading ? (
-                    <div className="text-sm text-gray-500 py-2">Loading categories...</div>
+                    <div className="py-2">
+                      <CategoryListSkeleton />
+                    </div>
                   ) : (
                     categories.map((category) => (
                                               <button
@@ -822,12 +827,7 @@ export default function MarketplacePage() {
                 : 'flex flex-col gap-4'
             }`}>
               {loading ? (
-                <div className="text-center py-10">
-                  <div className="inline-flex items-center gap-2 text-gray-500">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span>{searchQuery.trim() ? 'Searching...' : 'Loading products...'}</span>
-                  </div>
-                </div>
+                <ProductGridSkeleton count={12} viewMode={viewMode} />
               ) : error ? (
                 <div className="text-center py-10">
                   <div className="text-red-500 mb-4">

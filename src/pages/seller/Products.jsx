@@ -4,6 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts, deleteProduct, updateProductStatus } from '../../services/authService';
 import { getLowStockAlerts } from '../../services/inventoryService';
+import { SellerDashboardSkeleton } from '../../components/common';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -260,11 +261,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         </div>
 
         {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        )}
+        {loading && <SellerDashboardSkeleton />}
 
         {/* Error State */}
         {error && (
