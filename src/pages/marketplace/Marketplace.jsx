@@ -7,6 +7,7 @@ import {
   getCategoriesAlgolia, 
   debouncedSearch 
 } from '../../services/algoliaService';
+import { getSellerCatalogue } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
 import { AuthContext } from '../../context/AuthContext';
 import { formatPrice } from '../../utils/formatting';
@@ -51,6 +52,30 @@ export default function MarketplacePage() {
 
   // Categories state - will be fetched from backend
   const [categories, setCategories] = useState([{ id: 'all', name: 'All' }]); // Start with 'All' option
+  
+  // Seller profile pictures cache
+  const [sellerProfilePictures, setSellerProfilePictures] = useState({});
+
+  // Function to fetch seller profile picture
+  const fetchSellerProfilePicture = async (sellerId) => {
+    if (sellerProfilePictures[sellerId]) {
+      return sellerProfilePictures[sellerId];
+    }
+    
+    try {
+      const catalogueData = await getSellerCatalogue(sellerId);
+      if (catalogueData.seller?.user?.profilePicture) {
+        setSellerProfilePictures(prev => ({
+          ...prev,
+          [sellerId]: catalogueData.seller.user.profilePicture
+        }));
+        return catalogueData.seller.user.profilePicture;
+      }
+    } catch (error) {
+      console.log('Failed to fetch seller profile picture:', error);
+    }
+    return null;
+  };
 
   const brands = ['All', 'Apple', 'Samsung', 'Sony', 'HP', 'Dell'];
   const priceRanges = [
@@ -75,6 +100,23 @@ export default function MarketplacePage() {
       fetchProducts(1);
     }
   }, [selectedCategory, selectedPrice, sortBy]);
+
+  // Fetch seller profile pictures when products change
+  useEffect(() => {
+    const fetchAllSellerProfilePictures = async () => {
+      if (products.length === 0) return;
+      
+      const uniqueSellerIds = [...new Set(products.map(product => product.seller?.id).filter(Boolean))];
+      
+      for (const sellerId of uniqueSellerIds) {
+        if (!sellerProfilePictures[sellerId] && !products.find(p => p.seller?.id === sellerId)?.seller?.user?.profilePicture) {
+          await fetchSellerProfilePicture(sellerId);
+        }
+      }
+    };
+
+    fetchAllSellerProfilePictures();
+  }, [products]);
 
   const fetchCategories = async () => {
     try {
@@ -419,7 +461,7 @@ export default function MarketplacePage() {
       </section>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex flex-col lg:flex-row gap-8 min-w-0">
           {/* Sidebar - Categories & Filters */}
           <aside className="lg:w-64 flex-shrink-0 min-w-0">
@@ -981,9 +1023,19 @@ export default function MarketplacePage() {
                                 className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 16 16">
-                                  <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0zM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5z"/>
-                                </svg>
+                                <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                  {(product.seller?.user?.profilePicture || sellerProfilePictures[product.seller?.id]) ? (
+                                    <img 
+                                      src={product.seller?.user?.profilePicture || sellerProfilePictures[product.seller?.id]} 
+                                      alt={product.seller.catalogueName || 'Seller'} 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {product.seller?.catalogueName?.charAt(0) || 'S'}
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
                               </Link>
                             </div>
@@ -1037,9 +1089,19 @@ export default function MarketplacePage() {
                               className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0zM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5z"/>
-                              </svg>
+                              <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                {(product.seller?.user?.profilePicture || sellerProfilePictures[product.seller?.id]) ? (
+                                  <img 
+                                    src={product.seller?.user?.profilePicture || sellerProfilePictures[product.seller?.id]} 
+                                    alt={product.seller.catalogueName || 'Seller'} 
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-xs font-medium text-gray-600">
+                                    {product.seller?.catalogueName?.charAt(0) || 'S'}
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
                             </Link>
 

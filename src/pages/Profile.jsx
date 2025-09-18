@@ -294,17 +294,17 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="rounded-lg shadow-sm">
-          <div className="px-6 py-8">
+          <div className="px-4 sm:px-6 py-6 sm:py-8">
             {/* Header */}
-            <div className="flex items-center gap-6 mb-8">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-8">
               <div className="relative">
-              <img 
+                <img 
                   src={profilePicturePreview || profileImage} 
-                alt="Profile" 
-                className="w-20 h-20 rounded-full object-cover"
-              />
+                  alt="Profile" 
+                  className="w-20 h-20 rounded-full object-cover"
+                />
                 <button
                   onClick={() => document.getElementById('profilePictureInput').click()}
                   className="absolute bottom-0 right-0 w-6 h-6 bg-white rounded-full border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
@@ -323,8 +323,8 @@ export default function ProfilePage() {
                   className="hidden"
                 />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+              <div className="text-center sm:text-left">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   {user?.name || accountData.name || 'User Profile'}
                 </h1>
                 <p className="text-gray-600">{user?.email || accountData.email}</p>
@@ -337,12 +337,12 @@ export default function ProfilePage() {
 
             {/* Tabs */}
             <div className="border-b border-gray-200 mb-8">
-              <nav className="flex space-x-8">
+              <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
                 {['Orders', 'Wishlist', 'Account'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                       activeTab === tab
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -373,72 +373,123 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Orders</h2>
                   
-                  {/* Orders Table */}
-                  <div className="overflow-x-auto">
-                    {ordersLoading ? (
-                      <div className="flex items-center gap-2 text-gray-600 p-6">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent"></div>
-                        <span>Loading orders...</span>
-                      </div>
-                    ) : ordersError ? (
-                      <div className="p-6 text-red-600">{ordersError}</div>
-                    ) : orders.length === 0 ? (
-                      <div className="p-6 text-gray-600">No orders yet.</div>
-                    ) : (
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-4 text-sm font-medium text-gray-600">Order Code</th>
-                            <th className="text-left py-4 text-sm font-medium text-gray-600">Date</th>
-                            <th className="text-left py-4 text-sm font-medium text-gray-600">Status</th>
-                            <th className="text-left py-4 text-sm font-medium text-gray-600">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {orders.map((order) => (
-                            <tr key={order.id} className="border-b border-gray-100 align-top">
-                              <td className="py-6">
-                                <div className="flex flex-col">
-                                  <span className="font-medium text-gray-900">{order.orderCode || order.id}</span>
-                                  {order.settlementCode && (
-                                    <span className="text-xs text-gray-500">Settlement: {order.settlementCode}</span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="py-6 text-gray-600">{new Date(order.createdAt).toLocaleString()}</td>
-                              <td className="py-6">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  order.orderStatus === 'DELIVERED'
-                                    ? 'bg-green-100 text-green-800'
-                                    : order.orderStatus === 'CANCELLED'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {order.orderStatus}
-                                </span>
-                              </td>
-                              <td className="py-6">
-                                <span className="font-medium text-gray-900">₦{Number(order.totalPrice || 0).toLocaleString()}</span>
-                                {Array.isArray(order.orderItems) && order.orderItems.length > 0 && (
-                                  <div className="mt-2 space-y-2">
-                                    {order.orderItems.map((item) => (
-                                      <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
-                                        <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
-                                        <div className="flex-1">
-                                          <div className="font-medium text-gray-900">{item.product?.name}</div>
-                                          <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </td>
+                  {/* Orders */}
+                  {ordersLoading ? (
+                    <div className="flex items-center gap-2 text-gray-600 p-6">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent"></div>
+                      <span>Loading orders...</span>
+                    </div>
+                  ) : ordersError ? (
+                    <div className="p-6 text-red-600">{ordersError}</div>
+                  ) : orders.length === 0 ? (
+                    <div className="p-6 text-gray-600">No orders yet.</div>
+                  ) : (
+                    <div>
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Order Code</th>
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Date</th>
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Status</th>
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Total</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
+                          </thead>
+                          <tbody>
+                            {orders.map((order) => (
+                              <tr key={order.id} className="border-b border-gray-100 align-top">
+                                <td className="py-6">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-gray-900">{order.orderCode || order.id}</span>
+                                    {order.settlementCode && (
+                                      <span className="text-xs text-gray-500">Settlement: {order.settlementCode}</span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-6 text-gray-600">{new Date(order.createdAt).toLocaleString()}</td>
+                                <td className="py-6">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    order.orderStatus === 'DELIVERED'
+                                      ? 'bg-green-100 text-green-800'
+                                      : order.orderStatus === 'CANCELLED'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {order.orderStatus}
+                                  </span>
+                                </td>
+                                <td className="py-6">
+                                  <span className="font-medium text-gray-900">₦{Number(order.totalPrice || 0).toLocaleString()}</span>
+                                  {Array.isArray(order.orderItems) && order.orderItems.length > 0 && (
+                                    <div className="mt-2 space-y-2">
+                                      {order.orderItems.map((item) => (
+                                        <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
+                                          <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
+                                          <div className="flex-1">
+                                            <div className="font-medium text-gray-900">{item.product?.name}</div>
+                                            <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {/* Mobile Card View */}
+                      <div className="md:hidden space-y-4">
+                        {orders.map((order) => (
+                          <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h3 className="font-medium text-gray-900">{order.orderCode || order.id}</h3>
+                                {order.settlementCode && (
+                                  <p className="text-xs text-gray-500">Settlement: {order.settlementCode}</p>
+                                )}
+                              </div>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                order.orderStatus === 'DELIVERED'
+                                  ? 'bg-green-100 text-green-800'
+                                  : order.orderStatus === 'CANCELLED'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {order.orderStatus}
+                              </span>
+                            </div>
+                            
+                            <div className="text-sm text-gray-600 mb-3">
+                              {new Date(order.createdAt).toLocaleString()}
+                            </div>
+                            
+                            <div className="font-medium text-gray-900 mb-3">
+                              Total: ₦{Number(order.totalPrice || 0).toLocaleString()}
+                            </div>
+                            
+                            {Array.isArray(order.orderItems) && order.orderItems.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-gray-700">Items:</h4>
+                                {order.orderItems.map((item) => (
+                                  <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
+                                    <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
+                                    <div className="flex-1">
+                                      <div className="font-medium text-gray-900">{item.product?.name}</div>
+                                      <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -447,71 +498,117 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-8">Your Wishlist</h2>
                   
-                  {/* Wishlist Table */}
-                  <div className="overflow-x-auto">
-                    {wishlistLoading ? (
-                      <div className="flex items-center gap-2 text-gray-600 p-6">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent"></div>
-                        <span>Loading wishlist...</span>
+                  {/* Wishlist */}
+                  {wishlistLoading ? (
+                    <div className="flex items-center gap-2 text-gray-600 p-6">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent"></div>
+                      <span>Loading wishlist...</span>
+                    </div>
+                  ) : wishlistError ? (
+                    <div className="p-6 text-red-600">{wishlistError}</div>
+                  ) : wishlistItems.length === 0 ? (
+                    <div className="p-6 text-gray-600">No items in your wishlist yet.</div>
+                  ) : (
+                    <div>
+                      {/* Desktop Table View */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Product</th>
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Price</th>
+                              <th className="text-left py-4 text-sm font-medium text-gray-600">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {wishlistItems.map((item) => {
+                              const product = item.product || item;
+                              const productId = product.id || item.productId;
+                              return (
+                                <tr key={item.id || productId} className="border-b border-gray-100">
+                                  <td className="py-6">
+                                    <div className="flex items-center gap-4">
+                                      <button 
+                                        onClick={() => handleRemoveFromWishlist(productId)}
+                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                      <img 
+                                        src={product.imageUrls?.[0] || productImage} 
+                                        alt={product.name}
+                                        className="w-16 h-16 object-cover rounded-lg bg-gray-100"
+                                      />
+                                      <div>
+                                        <h3 className="font-medium text-gray-900">{product.name}</h3>
+                                        <p className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="py-6">
+                                    <span className="font-medium text-gray-900">₦{Number(product.price || 0).toLocaleString()}</span>
+                                  </td>
+                                  <td className="py-6">
+                                    <button 
+                                      onClick={() => handleAddToCart(productId)}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                      Add to cart
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
-                    ) : wishlistError ? (
-                      <div className="p-6 text-red-600">{wishlistError}</div>
-                    ) : wishlistItems.length === 0 ? (
-                      <div className="p-6 text-gray-600">No items in your wishlist yet.</div>
-                    ) : (
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Product</th>
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Price</th>
-                          <th className="text-left py-4 text-sm font-medium text-gray-600">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                          {wishlistItems.map((item) => {
-                            const product = item.product || item;
-                            const productId = product.id || item.productId;
-                            return (
-                              <tr key={item.id || productId} className="border-b border-gray-100">
-                            <td className="py-6">
-                              <div className="flex items-center gap-4">
-                                <button 
-                                      onClick={() => handleRemoveFromWishlist(productId)}
-                                  className="text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </button>
+                      
+                      {/* Mobile Card View */}
+                      <div className="md:hidden space-y-4">
+                        {wishlistItems.map((item) => {
+                          const product = item.product || item;
+                          const productId = product.id || item.productId;
+                          return (
+                            <div key={item.id || productId} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                              <div className="flex items-start gap-4">
                                 <img 
-                                      src={product.imageUrls?.[0] || productImage} 
-                                      alt={product.name}
-                                  className="w-16 h-16 object-cover rounded-lg bg-gray-100"
+                                  src={product.imageUrls?.[0] || productImage} 
+                                  alt={product.name}
+                                  className="w-20 h-20 object-cover rounded-lg bg-gray-100 flex-shrink-0"
                                 />
-                                <div>
-                                      <h3 className="font-medium text-gray-900">{product.name}</h3>
-                                      <p className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</p>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-medium text-gray-900 mb-1">{product.name}</h3>
+                                  <p className="text-sm text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+                                  <div className="font-medium text-gray-900 mb-3">
+                                    ₦{Number(product.price || 0).toLocaleString()}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={() => handleAddToCart(productId)}
+                                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                      Add to cart
+                                    </button>
+                                    <button 
+                                      onClick={() => handleRemoveFromWishlist(productId)}
+                                      className="px-3 py-2 text-gray-400 hover:text-red-500 transition-colors border border-gray-300 rounded-lg"
+                                      title="Remove from wishlist"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </td>
-                            <td className="py-6">
-                                  <span className="font-medium text-gray-900">₦{Number(product.price || 0).toLocaleString()}</span>
-                            </td>
-                            <td className="py-6">
-                              <button 
-                                    onClick={() => handleAddToCart(productId)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                              >
-                                Add to cart
-                              </button>
-                            </td>
-                          </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                    )}
-                  </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

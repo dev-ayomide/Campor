@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { getProductBySlug } from '../../services/authService';
+import { getProductBySlug, getSellerCatalogue } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
@@ -22,6 +22,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('Reviews');
   const [addingToCart, setAddingToCart] = useState(false);
+  const [sellerProfilePicture, setSellerProfilePicture] = useState(null);
 
   // Fetch product data
   useEffect(() => {
@@ -80,6 +81,26 @@ export default function ProductDetailPage() {
       fetchProduct();
     }
   }, [slug]);
+
+  // Fetch seller profile picture if not available in product data
+  useEffect(() => {
+    const fetchSellerProfilePicture = async () => {
+      if (product?.seller?.id && !product.seller.user?.profilePicture) {
+        try {
+          const catalogueData = await getSellerCatalogue(product.seller.id);
+          if (catalogueData.seller?.user?.profilePicture) {
+            setSellerProfilePicture(catalogueData.seller.user.profilePicture);
+          }
+        } catch (error) {
+          console.log('Failed to fetch seller profile picture:', error);
+        }
+      }
+    };
+
+    if (product?.seller?.id) {
+      fetchSellerProfilePicture();
+    }
+  }, [product?.seller?.id]);
 
   // Handle add to cart (no longer needed; using AddToCartButton controls per item)
 
@@ -386,10 +407,18 @@ export default function ProductDetailPage() {
                 <div className="space-y-4">
                   {/* Seller Info */}
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-medium text-gray-600">
-                        {product.seller.catalogueName?.charAt(0) || 'S'}
-                      </span>
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {(product.seller.user?.profilePicture || sellerProfilePicture) ? (
+                        <img 
+                          src={product.seller.user?.profilePicture || sellerProfilePicture} 
+                          alt={product.seller.catalogueName || 'Seller'} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-medium text-gray-600">
+                          {product.seller.catalogueName?.charAt(0) || 'S'}
+                        </span>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 text-base truncate">

@@ -1,12 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../cart';
 import { WishlistButton } from '../wishlist';
 import { Star } from 'lucide-react';
 import { formatPrice } from '../../utils/formatting';
+import { getSellerCatalogue } from '../../services/authService';
 
 export default function ProductCard({ product }) {
+  const [sellerProfilePicture, setSellerProfilePicture] = useState(null);
+
+  // Fetch seller profile picture if not available in product data
+  useEffect(() => {
+    const fetchSellerProfilePicture = async () => {
+      if (product.seller?.id && !product.seller.user?.profilePicture) {
+        try {
+          const catalogueData = await getSellerCatalogue(product.seller.id);
+          if (catalogueData.seller?.user?.profilePicture) {
+            setSellerProfilePicture(catalogueData.seller.user.profilePicture);
+          }
+        } catch (error) {
+          console.log('Failed to fetch seller profile picture:', error);
+        }
+      }
+    };
+
+    fetchSellerProfilePicture();
+  }, [product.seller?.id]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -77,10 +97,18 @@ export default function ProductCard({ product }) {
             to={`/seller/${product.seller.id}/catalogue`}
             className="flex items-center gap-2 mb-3 hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors group"
           >
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <span className="text-xs font-medium text-gray-600 group-hover:text-blue-600">
-                {product.seller.catalogueName?.charAt(0) || 'S'}
-              </span>
+            <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors overflow-hidden">
+              {(product.seller.user?.profilePicture || sellerProfilePicture) ? (
+                <img 
+                  src={product.seller.user?.profilePicture || sellerProfilePicture} 
+                  alt={product.seller.catalogueName || 'Seller'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-xs font-medium text-gray-600 group-hover:text-blue-600">
+                  {product.seller.catalogueName?.charAt(0) || 'S'}
+                </span>
+              )}
             </div>
             <span className="text-sm text-gray-600 truncate group-hover:text-blue-600 transition-colors">
               {product.seller.catalogueName || 'Unknown Seller'}
