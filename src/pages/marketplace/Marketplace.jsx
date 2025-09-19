@@ -28,7 +28,6 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState({ id: 'all', name: 'All' });
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState('grid');
-  const [productImageIndexes, setProductImageIndexes] = useState({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState('All');
@@ -357,23 +356,6 @@ export default function MarketplacePage() {
     }
   };
 
-  const handlePrevImage = (productId, totalImages) => {
-    setProductImageIndexes(prev => ({
-      ...prev,
-      [productId]: prev[productId] > 0 ? prev[productId] - 1 : totalImages - 1
-    }));
-  };
-
-  const handleNextImage = (productId, totalImages) => {
-    setProductImageIndexes(prev => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) < totalImages - 1 ? (prev[productId] || 0) + 1 : 0
-    }));
-  };
-
-  const getCurrentImageIndex = (productId) => {
-    return productImageIndexes[productId] || 0;
-  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -908,8 +890,6 @@ export default function MarketplacePage() {
                 </div>
               ) : (
                 products.map((product) => {
-                  const currentImageIndex = getCurrentImageIndex(product.id);
-                  
                   // Handle real product data structure from API
                   const productImages = product.imageUrls && product.imageUrls.length > 0 
                     ? product.imageUrls 
@@ -931,7 +911,7 @@ export default function MarketplacePage() {
                           : 'aspect-square rounded-t-lg'
                       }`}>
                         <img 
-                          src={productImages[currentImageIndex] || productImage} 
+                          src={productImages[0] || productImage} 
                           alt={productName}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -941,49 +921,9 @@ export default function MarketplacePage() {
                         
                         {/* Stock Status Badge - Removed for now */}
                         
-                        {/* Image Navigation Arrows - Only for grid view */}
-                        {productImages.length > 1 && viewMode === 'grid' && (
-                          <>
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handlePrevImage(product.id, productImages.length);
-                              }}
-                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-1.5 md:p-1 rounded-full shadow-md transition-all"
-                            >
-                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                              </svg>
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleNextImage(product.id, productImages.length);
-                              }}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 p-1.5 md:p-1 rounded-full shadow-md transition-all"
-                            >
-                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                              </svg>
-                            </button>
-                          </>
-                        )}
 
 
 
-                        {/* Image indicator dots - Only for grid view */}
-                        {productImages.length > 1 && viewMode === 'grid' && (
-                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
-                            {productImages.map((_, index) => (
-                              <div 
-                                key={index}
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
                       </div>
 
                       {/* Product Info */}

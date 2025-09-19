@@ -276,34 +276,7 @@ export default function ProductDetailPage() {
                   }`}
                 />
                 
-                {/* Image Counter - Only show if multiple images */}
-                {product.imageUrls && product.imageUrls.length > 1 && (
-                  <div className="absolute top-4 right-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {currentImageIndex + 1} / {product.imageUrls.length}
-                  </div>
-                )}
                 
-                {/* Navigation Arrows - Only show if multiple images */}
-                {product.imageUrls && product.imageUrls.length > 1 && (
-                  <>
-                    <button 
-                      onClick={handlePrevImage}
-                      disabled={isTransitioning}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 p-3 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Previous image"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-gray-700" />
-                    </button>
-                    <button 
-                      onClick={handleNextImage}
-                      disabled={isTransitioning}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 p-3 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Next image"
-                    >
-                      <ChevronRight className="w-5 h-5 text-gray-700" />
-                    </button>
-                  </>
-                )}
                 
                 {/* Loading Overlay */}
                 {isTransitioning && (
@@ -315,23 +288,18 @@ export default function ProductDetailPage() {
             </div>
 
 
-            {/* Thumbnail Images - Only show if multiple images */}
+            {/* Thumbnail Images - Show if multiple images */}
             {product.imageUrls && product.imageUrls.length > 1 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-700">Product Images</h3>
-                  <span className="text-xs text-gray-500">
-                    {product.imageUrls.length} {product.imageUrls.length === 1 ? 'image' : 'images'}
-                  </span>
-                </div>
+               
                 
-                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {product.imageUrls.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => handleThumbnailClick(index)}
                       disabled={isTransitioning}
-                      className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all duration-200 disabled:cursor-not-allowed ${
+                      className={`relative aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all duration-200 disabled:cursor-not-allowed ${
                         currentImageIndex === index 
                           ? 'border-blue-500 ring-2 ring-blue-200 shadow-md' 
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
@@ -346,27 +314,14 @@ export default function ProductDetailPage() {
                         }`}
                       />
                       
-                      {/* Active indicator */}
+                      {/* Active indicator - simplified */}
                       {currentImageIndex === index && (
-                        <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-blue-500 bg-opacity-10 flex items-center justify-center">
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                         </div>
                       )}
                     </button>
                   ))}
-                </div>
-                
-                {/* Navigation hints */}
-                <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <ChevronLeft className="w-3 h-3" />
-                    Swipe or click to navigate
-                  </span>
-                  <span className="hidden sm:flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">←</kbd>
-                    <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">→</kbd>
-                    Keyboard
-                  </span>
                 </div>
               </div>
             )}

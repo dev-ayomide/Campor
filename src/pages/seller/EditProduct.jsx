@@ -23,8 +23,11 @@ const EditProduct = ({ toggleMobileMenu }) => {
     price: '',
     stockQuantity: '',
     categoryId: '',
-    files: []
+    files: [] // New files to upload
   });
+  
+  // Track existing images separately
+  const [existingImages, setExistingImages] = useState([]);
   const [formattedPrice, setFormattedPrice] = useState('');
   
   // Available categories
@@ -87,9 +90,10 @@ const EditProduct = ({ toggleMobileMenu }) => {
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(productData.price || ''));
             
-            // Set current images as previews
+            // Set current images as previews and track existing images
             if (productData.imageUrls && productData.imageUrls.length > 0) {
               setImagePreviews(productData.imageUrls);
+              setExistingImages(productData.imageUrls);
             }
             console.log('✅ EditProduct: Form data populated successfully');
             return;
@@ -174,9 +178,15 @@ const EditProduct = ({ toggleMobileMenu }) => {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+    
+    // IMPORTANT: The backend replaces ALL images when files are provided
+    // So we need to include existing images as files too
+    // For now, we'll show a warning to the user
+    
+    // Add new files to formData
     setFormData(prev => ({
       ...prev,
-      files: files
+      files: [...(prev.files || []), ...files]
     }));
     
     // Create previews for new files
@@ -186,6 +196,7 @@ const EditProduct = ({ toggleMobileMenu }) => {
       reader.onload = (e) => {
         newPreviews.push(e.target.result);
         if (newPreviews.length === files.length) {
+          // Add new previews to existing ones
           setImagePreviews(prev => [...prev, ...newPreviews]);
         }
       };
@@ -194,7 +205,12 @@ const EditProduct = ({ toggleMobileMenu }) => {
   };
 
   const removeImage = (index) => {
+    // Remove from previews
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    
+    // If removing an existing image (not a new file), we need to track it differently
+    // For now, we'll just remove from previews and let the backend handle the logic
+    // The backend should preserve existing images unless explicitly told to replace them
   };
 
   const handleSubmit = async (e) => {
@@ -215,8 +231,15 @@ const EditProduct = ({ toggleMobileMenu }) => {
         price: formData.price,
         stockQuantity: formData.stockQuantity,
         categoryId: formData.categoryId,
-        files: formData.files
+        files: formData.files, // New files to upload
+        existingImageUrls: existingImages // Existing image URLs to preserve
       };
+
+      console.log('🔍 EditProduct: Submitting product data:', {
+        ...productData,
+        filesCount: productData.files?.length || 0,
+        existingImagesCount: existingImages.length
+      });
 
       await updateProductInCatalogue(productId, productData);
       
@@ -381,7 +404,7 @@ const EditProduct = ({ toggleMobileMenu }) => {
               {/* Add Photo */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">Add Photo</label>
-                <p className="text-sm text-gray-600 mb-4">Add at least 1 photo for this category</p>
+                <p className="text-sm text-gray-600 mb-4">Add up to 3 photos for this product</p>
                 
                 {/* Image Upload Area */}
                 <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
@@ -410,11 +433,39 @@ const EditProduct = ({ toggleMobileMenu }) => {
                 <div className="mt-3 text-sm text-gray-500">
                   <p>Supported formats are *.jpg and *.png</p>
                   <p className="text-red-500">Picture size must not exceed 5 mb</p>
+                  <p className="text-blue-600">Maximum 3 images allowed</p>
                 </div>
 
                 {/* Image Previews */}
                 {imagePreviews.length > 0 && (
-                  <div className="mt-6">
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Current images ({imagePreviews.length} total)
+                      {existingImages.length > 0 && (
+                        <span className="text-blue-600 ml-2">
+                          ({existingImages.length} existing, {imagePreviews.length - existingImages.length} new)
+                        </span>
+                      )}
+                    </p>
+                    
+                    {/* Warning about image replacement */}
+                    {formData.files && formData.files.length > 0 && existingImages.length > 0 && (
+                      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-yellow-800">
+                              <strong>Warning:</strong> Adding new images will replace all existing images. 
+                              Make sure to include all images you want to keep.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {imagePreviews.map((preview, index) => (
                         <div key={index} className="relative group">

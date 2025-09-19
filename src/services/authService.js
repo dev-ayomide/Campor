@@ -664,7 +664,7 @@ export async function addProductToCatalogue(sellerId, productData) {
     formData.append('stockQuantity', productData.stockQuantity);
     formData.append('categoryId', productData.categoryId);
     
-    // Add product images (max 4 files)
+    // Add product images (max 3 files)
     if (productData.files && productData.files.length > 0) {
       productData.files.forEach((file, index) => {
         formData.append('files', file);
@@ -698,6 +698,12 @@ export async function addProductToCatalogue(sellerId, productData) {
 export async function updateProductInCatalogue(productId, productData) {
   try {
     console.log('🔍 SellerService: Updating product in catalogue...');
+    console.log('🔍 SellerService: Product data:', {
+      hasFiles: !!productData.files?.length,
+      filesCount: productData.files?.length || 0,
+      hasExistingImages: !!productData.existingImageUrls?.length,
+      existingImagesCount: productData.existingImageUrls?.length || 0
+    });
     
     // Create FormData for multipart/form-data request
     const formData = new FormData();
@@ -709,7 +715,10 @@ export async function updateProductInCatalogue(productId, productData) {
     if (productData.stockQuantity) formData.append('stockQuantity', productData.stockQuantity);
     if (productData.categoryId) formData.append('categoryId', productData.categoryId);
     
-    // Add product images if provided
+    // Note: Backend replaces ALL images when files are provided
+    // The existingImageUrls parameter is not supported by the API
+    
+    // Add new product images if provided
     if (productData.files && productData.files.length > 0) {
       productData.files.forEach((file, index) => {
         formData.append('files', file);

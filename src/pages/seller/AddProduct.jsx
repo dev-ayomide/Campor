@@ -72,7 +72,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
     if (files.length > 0) {
       setFormData(prev => ({
         ...prev,
-        files: [...prev.files, ...files].slice(0, 4) // Max 4 files
+        files: [...prev.files, ...files].slice(0, 3) // Max 3 files
       }));
     }
   };
