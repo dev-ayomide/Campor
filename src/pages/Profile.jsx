@@ -350,11 +350,6 @@ export default function ProfilePage() {
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   {accountData.name || user?.name || 'User Profile'}
                 </h1>
-                <p className="text-gray-600">{user?.email || accountData.email}</p>
-                <p className="text-sm text-gray-500">
-                  Role: {user?.role || 'Customer'} | 
-                  Seller Status: {user?.sellerCompleted ? 'Completed' : 'Not Completed'}
-                </p>
               </div>
             </div>
 

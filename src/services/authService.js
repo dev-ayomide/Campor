@@ -1103,11 +1103,14 @@ export async function deleteCategory(categoryId) {
 export const getSellerOrders = async (sellerId) => {
   try {
     console.log('📦 SellerService: Fetching seller orders for seller:', sellerId);
+    console.log('📦 SellerService: Full URL:', `/orders/${sellerId}/seller`);
     const response = await api.get(`/orders/${sellerId}/seller`);
     console.log('✅ SellerService: Seller orders fetched successfully:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ SellerService: Failed to fetch seller orders:', error);
+    console.error('❌ SellerService: Error details:', error.response?.data);
+    console.error('❌ SellerService: Status:', error.response?.status);
     throw new Error(error.response?.data?.message || 'Failed to fetch seller orders');
   }
 };
@@ -1135,3 +1138,48 @@ export const updateOrderStatus = async (orderId, orderStatus) => {
     throw new Error(error.response?.data?.message || 'Failed to update order status');
   }
 };
+
+// Get order by settlement code for seller
+export async function getOrderBySettlementCode(sellerId, settlementCode) {
+  try {
+    // Use the correct endpoint: GET /sellers/{id}/orders/{settlementCode}
+    const endpoint = `${API_ENDPOINTS.SELLER.UPDATE}/${sellerId}/orders/${settlementCode}`;
+    
+    // Use GET request with settlement code in URL path
+    const response = await api.get(endpoint);
+    
+    return response.data;
+    
+  } catch (error) {
+    // More specific error messages
+    if (error.response?.status === 404) {
+      throw new Error('Order not found or you don\'t have access to this order');
+    } else if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid settlement code or code expired');
+    } else if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    } else if (error.response?.status === 403) {
+      throw new Error('You don\'t have permission to access this order');
+    }
+    
+    throw new Error(error.response?.data?.message || 'Failed to retrieve order.');
+  }
+}
+
+// Initiate transfer to seller
+export async function initiateTransferToSeller(orderSellerId) {
+  try {
+    console.log('🔍 TransferService: Initiating transfer for order seller:', orderSellerId);
+    
+    const response = await api.post('/payments/transfer', {
+      orderSellerId: orderSellerId
+    });
+    
+    console.log('✅ TransferService: Transfer initiated successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ TransferService: Failed to initiate transfer:', error);
+    throw new Error(error.response?.data?.message || 'Failed to initiate transfer.');
+  }
+}
+

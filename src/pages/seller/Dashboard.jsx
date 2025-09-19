@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink } from 'lucide-react';
-import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerCatalogue, getSellerOrders } from '../../services/authService';
 import { SellerDashboardSkeleton } from '../../components/common';
@@ -103,34 +102,27 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   };
 
   if (loading) {
-    return (
-      <SellerLayout>
-        <SellerDashboardSkeleton />
-      </SellerLayout>
-    );
+    return <SellerDashboardSkeleton />;
   }
 
   if (error) {
     return (
-      <SellerLayout>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-          <div className="flex items-start">
-            <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            <div>
-              <p className="text-sm font-medium text-red-800">Error loading dashboard</p>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
-            </div>
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+        <div className="flex items-start">
+          <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="text-sm font-medium text-red-800">Error loading dashboard</p>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
           </div>
         </div>
-      </SellerLayout>
+      </div>
     );
   }
 
   return (
-    <SellerLayout>
-      <div className="max-w-full overflow-hidden">
+    <div className="max-w-full overflow-hidden">
         {/* Descriptive Text */}
         <p className="text-gray-600 mb-6">Welcome back! Here's what's happening with your store today.</p>
 
@@ -179,6 +171,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
             </div>
           </div>
         </div>
+
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -340,7 +333,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
             </div>
           </div>
         </div>
-      </div>
-    </SellerLayout>
+
+    </div>
   );
 }

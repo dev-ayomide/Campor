@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import ChatLayout from './layouts/ChatLayout';
 import AuthLayout from './layouts/AuthLayout';
+import SellerLayout from './layouts/SellerLayout';
 import { AuthenticatedRedirect, RequireAuth } from './components/ProtectedRoute';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
@@ -15,6 +16,7 @@ import { Landing, Marketplace, ProductDetail } from './pages/marketplace';
 import { Cart } from './pages/cart';
 import { Wishlist } from './pages/wishlist';
 import Profile from './pages/Profile';
+import UserOrders from './pages/UserOrders';
 import CategoryPage from './pages/categories/CategoryPage';
 import { 
   Onboarding, 
@@ -70,6 +72,11 @@ export default function App() {
             <MainLayout><Profile /></MainLayout>
           </RequireAuth>
         } />
+        <Route path="/orders" element={
+          <RequireAuth>
+            <MainLayout><UserOrders /></MainLayout>
+          </RequireAuth>
+        } />
         
         {/* Chat Route */}
         <Route path="/chat" element={
@@ -100,7 +107,7 @@ export default function App() {
         } />
         <Route path="/seller/dashboard" element={
           <RequireAuth>
-            <Dashboard />
+            <SellerLayout><Dashboard /></SellerLayout>
           </RequireAuth>
         } />
         <Route path="/seller/products" element={

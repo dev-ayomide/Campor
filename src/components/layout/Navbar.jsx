@@ -4,17 +4,15 @@ import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useState } from 'react';
 import MobileSellerMenu from './MobileSellerMenu';
-import CompleteOrderModal from '../common/CompleteOrderModal';
+import AcceptOrder from '../seller/AcceptOrder';
 import { ShoppingBagIcon, ChatIcon, ProfileIcon } from '../common';
-import { deductInventoryOnOrderCompletion } from '../../services/inventoryService';
-import { updateOrderStatus } from '../../services/ordersService';
 
 export default function Navbar({ variant = 'default', onSellerMenuToggle, isSellerMenuOpen, setIsSellerMenuOpen }) {
   const { user, logout, isSeller } = useAuth();
   const { getItemCount } = useCart();
   const { getItemCount: getWishlistCount } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCompleteOrderModalOpen, setIsCompleteOrderModalOpen] = useState(false);
+  const [isAcceptOrderModalOpen, setIsAcceptOrderModalOpen] = useState(false);
   const location = useLocation();
   
   // Debug logging for seller status
@@ -33,41 +31,9 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
     !location.pathname.includes('/catalogue');
 
   // Handle complete order with inventory deduction
-  const handleCompleteOrder = async (completionCode) => {
-    try {
-      console.log('🔍 Navbar: Completing order with code:', completionCode);
-      
-      // TODO: Get the actual order ID and items from the current order context
-      // For now, we'll need to implement this based on the seller's current orders
-      // This is a placeholder implementation - the actual order data should come from the seller's order management
-      
-      // Simulate getting order data (this should be replaced with actual order fetching)
-      const orderData = {
-        orderId: 'temp-order-id', // This should be the actual order ID
-        items: [
-          // This should be the actual order items
-          // { productId: 'product-id', quantity: 2 }
-        ]
-      };
-      
-      if (orderData.items.length === 0) {
-        throw new Error('No order items found to complete');
-      }
-      
-      // Update order status to completed
-      await updateOrderStatus(orderData.orderId, 'COMPLETED');
-      
-      // Deduct inventory for all items in the order
-      await deductInventoryOnOrderCompletion(orderData.orderId, orderData.items);
-      
-      console.log('✅ Navbar: Order completed and inventory deducted successfully');
-      
-      // Show success message
-      alert('Order completed successfully! Inventory has been updated.');
-    } catch (error) {
-      console.error('❌ Navbar: Error completing order:', error);
-      throw error;
-    }
+  // Handle Accept Order modal
+  const handleAcceptOrder = () => {
+    setIsAcceptOrderModalOpen(true);
   };
 
   return (
@@ -157,7 +123,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               {/* Accept Order Button - only show on seller pages */}
               {isSellerPage && (
                 <button 
-                  onClick={() => setIsCompleteOrderModalOpen(true)}
+                  onClick={handleAcceptOrder}
                   className="flex items-center gap-2 text-green-600 hover:text-green-700 font-medium transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,13 +252,13 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
           {/* Accept Order Button for Mobile (only on seller pages) */}
           {isSellerPage && (
             <button 
-              onClick={() => setIsCompleteOrderModalOpen(true)}
+              onClick={handleAcceptOrder}
               className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-sm">Accept</span>
+              <span className="text-sm">Complete</span>
             </button>
           )}
           
@@ -302,9 +268,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               onClick={onSellerMenuToggle}
               className="flex items-center justify-center w-10 h-10"
             >
-              <svg className={`w-6 h-6 text-gray-700 transition-transform ${isSellerMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <img 
+                src="/nav-icon.svg" 
+                alt="Menu" 
+                className={`w-10 h-10 transition-transform ${isSellerMenuOpen ? 'rotate-180' : ''}`}
+              />
             </button>
           )}
           
@@ -314,11 +282,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="flex items-center justify-center w-10 h-10"
             >
-              <div className="space-y-1">
-                <div className={`w-6 h-0.5 bg-gray-900 rounded-full transition-all ${isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></div>
-                <div className={`w-4 h-0.5 bg-gray-900 rounded-full transition-all ${isMenuOpen ? 'opacity-0' : ''}`}></div>
-                <div className={`w-6 h-0.5 bg-gray-900 rounded-full transition-all ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></div>
-              </div>
+              <img 
+                src="/nav-icon.svg" 
+                alt="Menu" 
+                className="w-10 h-10"
+              />
             </button>
           )}
         </div>
@@ -538,11 +506,10 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
         />
       )}
 
-      {/* Complete Order Modal */}
-      <CompleteOrderModal
-        isOpen={isCompleteOrderModalOpen}
-        onClose={() => setIsCompleteOrderModalOpen(false)}
-        onSubmit={handleCompleteOrder}
+      {/* Accept Order Modal */}
+      <AcceptOrder
+        isOpen={isAcceptOrderModalOpen}
+        onClose={() => setIsAcceptOrderModalOpen(false)}
       />
     </nav>
   );
