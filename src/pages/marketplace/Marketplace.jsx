@@ -417,15 +417,8 @@ export default function MarketplacePage() {
           <div className="absolute inset-0 bg-blue-900 bg-opacity-40"></div>
         </div>
         
-        <div className="relative z-10 w-full px-4 py-16 lg:py-20">
+        <div className="relative z-10 w-full px-4 py-8 lg:py-12">
           <div className="text-center">
-            <h1 className="text-4xl lg:text-5xl font-bold mb-4">
-              Market Place
-            </h1>
-            <p className="text-xl lg:text-2xl text-blue-100 mb-8">
-              Your One Stop Shop for all School items
-            </p>
-            
             {/* Full Width Search Bar */}
             <div className="w-full mx-auto px-2 sm:max-w-5xl sm:px-6">
               <form onSubmit={handleSearch} className="relative">
@@ -438,12 +431,19 @@ export default function MarketplacePage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => handleRealTimeSearch(e.target.value)}
+                      onBlur={() => {
+                        // Force viewport reset on blur to prevent zoom issues
+                        if (window.visualViewport) {
+                          window.scrollTo(0, window.scrollY);
+                        }
+                      }}
                       placeholder="What are you looking for?"
-                      className="flex-1 text-gray-900 text-sm sm:text-base focus:outline-none bg-transparent placeholder-gray-400 min-w-0"
+                      className="flex-1 text-gray-900 text-base focus:outline-none bg-transparent placeholder-gray-400 min-w-0"
                       autoComplete="off"
                       autoCorrect="off"
                       autoCapitalize="off"
                       spellCheck="false"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   <button

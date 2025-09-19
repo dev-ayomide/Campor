@@ -4,11 +4,12 @@ import { useLocation } from 'react-router-dom';
 export default function MainLayout({ children }) {
   const location = useLocation();
   const isMarketplace = location.pathname === '/marketplace';
+  const isSellerCatalogue = location.pathname.includes('/seller/') && location.pathname.includes('/catalogue');
   
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F7F5F0' }}>
       <Navbar />
-      {isMarketplace ? (
+      {isMarketplace || isSellerCatalogue ? (
         <main className="flex-1 pt-20">
           {children}
         </main>

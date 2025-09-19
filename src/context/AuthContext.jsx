@@ -186,7 +186,14 @@ export function AuthProvider({ children }) {
   const updateUserProfile = async (userData) => {
     try {
       const response = await authService.updateProfile(userData);
-      setUser({ ...user, ...response.user });
+      // The API returns both message and user data
+      if (response.user) {
+        setUser({ ...user, ...response.user });
+      } else {
+        // Fallback: fetch updated user data if response doesn't include user
+        const updatedUser = await authService.getCurrentUser();
+        setUser(updatedUser);
+      }
       return response;
     } catch (err) {
       setError(err.message || 'Failed to update profile');

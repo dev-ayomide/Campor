@@ -228,7 +228,7 @@ export async function getCurrentUser() {
     const userId = authResponse.data.id;
     
     // Then get full user details from /users/{id} endpoint
-    const response = await api.get(`/users/${userId}`);
+    const response = await api.get(`${API_ENDPOINTS.USER.GET_BY_ID}/${userId}`);
     console.log('✅ User profile fetched successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -320,10 +320,12 @@ export async function updateProfile(userData) {
       }
     }
     
-    console.log('🔍 Making request to:', `${API_BASE_URL}/users/update`);
+    console.log('🔍 Making request to:', `${API_BASE_URL}${API_ENDPOINTS.USER.UPDATE_PROFILE}`);
     
-    const response = await multipartApi.put('/users/update', formData);
+    const response = await multipartApi.put(API_ENDPOINTS.USER.UPDATE_PROFILE, formData);
     console.log('✅ User profile updated successfully:', response.data);
+    console.log('🔍 Response status:', response.status);
+    console.log('🔍 Response headers:', response.headers);
     return response.data;
   } catch (error) {
     console.error('❌ Failed to update profile:', error);
@@ -509,14 +511,60 @@ export async function getSellerProducts(sellerId) {
   try {
     console.log('🔍 SellerService: Fetching seller products for ID:', sellerId);
     
-    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
-    console.log('✅ SellerService: Seller products fetched successfully:', response.data);
+    // Use the complete catalogue endpoint to get full product details
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
+    console.log('✅ SellerService: Seller catalogue fetched successfully:', response.data);
     
-    // The API returns products with status and sales count
-    return response.data || [];
+    // Extract products from catalogue response
+    const products = response.data.products || [];
+    console.log('✅ SellerService: Products extracted:', products.length);
+    
+    return products;
   } catch (error) {
     console.error('❌ SellerService: Failed to fetch seller products:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch seller products.');
+  }
+}
+
+// Function to get a single product by ID for editing
+export async function getProductById(productId) {
+  try {
+    console.log('🔍 SellerService: Fetching product by ID:', productId);
+    
+    // First get the seller ID from the current user
+    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+    
+    // Get user profile to get seller ID
+    const authResponse = await api.get(API_ENDPOINTS.AUTH.ME);
+    const userId = authResponse.data.id;
+    
+    // Get seller profile to get seller ID
+    const sellerResponse = await api.get(`${API_ENDPOINTS.USER.GET_BY_ID}/${userId}`);
+    const sellerId = sellerResponse.data.seller?.id;
+    
+    if (!sellerId) {
+      throw new Error('Seller ID not found');
+    }
+    
+    // Get complete seller catalogue with full product details
+    const catalogueResponse = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
+    const products = catalogueResponse.data.products || [];
+    
+    // Find the specific product
+    const product = products.find(p => p.id === productId);
+    
+    if (!product) {
+      throw new Error('Product not found in catalogue');
+    }
+    
+    console.log('✅ SellerService: Product fetched successfully:', product);
+    return product;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to fetch product:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch product.');
   }
 }
 
@@ -531,6 +579,36 @@ export async function updateProductStatus(productId, status) {
   } catch (error) {
     console.error('❌ SellerService: Failed to update product status:', error);
     throw new Error(error.response?.data?.message || 'Failed to update product status.');
+  }
+}
+
+// Function to publish product
+export async function publishProduct(productId) {
+  try {
+    console.log('🔍 SellerService: Publishing product:', productId);
+    
+    const response = await api.patch(`/sellers/publish/${productId}`);
+    console.log('✅ SellerService: Product published successfully:', response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to publish product:', error);
+    throw new Error(error.response?.data?.message || 'Failed to publish product.');
+  }
+}
+
+// Function to unpublish product
+export async function unpublishProduct(productId) {
+  try {
+    console.log('🔍 SellerService: Unpublishing product:', productId);
+    
+    const response = await api.patch(`/sellers/unpublish/${productId}`);
+    console.log('✅ SellerService: Product unpublished successfully:', response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to unpublish product:', error);
+    throw new Error(error.response?.data?.message || 'Failed to unpublish product.');
   }
 }
 

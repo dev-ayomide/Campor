@@ -198,9 +198,9 @@ export default function SellerCatalogue() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden -mt-6 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-16 xl:-mx-32">
-      {/* Full-width Cover Photo Section - Breaks out of container */}
-      <div className="relative w-screen h-64 sm:h-80 md:h-96">
+    <div className="min-h-screen overflow-x-hidden">
+      {/* Full-width Cover Photo Section */}
+      <section className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden">
         {/* Cover Photo/Banner - Full Screen Width */}
         {sellerData?.catalogueCover ? (
           <img 
@@ -212,7 +212,7 @@ export default function SellerCatalogue() {
           <div className="w-full h-full bg-gradient-to-r from-teal-400 to-teal-600"></div>
         )}
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        </div>
+      </section>
 
       {/* Profile Info Card - Responsive positioning */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-32 -mt-20 sm:-mt-24 md:-mt-32 relative z-10">

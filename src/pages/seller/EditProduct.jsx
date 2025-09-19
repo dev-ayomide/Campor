@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { updateProductInCatalogue, getSellerProducts } from '../../services/authService';
+import { updateProductInCatalogue, getSellerProducts, getProductById, getCategoriesOnly } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
 import { Skeleton } from '../../components/common';
@@ -41,25 +41,86 @@ const EditProduct = ({ toggleMobileMenu }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('🔍 EditProduct: Fetching data for product ID:', productId);
         
-        // Fetch categories
-        const categoriesData = await getCategories();
+        // Fetch categories using the correct endpoint
+        try {
+          console.log('🔍 EditProduct: Fetching categories...');
+          const categoriesData = await getCategoriesOnly();
+          console.log('🔍 EditProduct: Categories response:', categoriesData);
+          
+          // The API returns { data: [...] } structure
         const categoriesList = categoriesData.data || categoriesData || [];
-        setCategories(Array.isArray(categoriesList) ? categoriesList : []);
+          console.log('🔍 EditProduct: Categories list:', categoriesList);
+          
+          if (Array.isArray(categoriesList)) {
+            setCategories(categoriesList);
+            console.log('✅ EditProduct: Categories loaded:', categoriesList.length);
+          } else {
+            console.error('❌ EditProduct: Categories is not an array:', categoriesList);
+            setCategories([]);
+          }
+        } catch (categoryError) {
+          console.error('❌ EditProduct: Failed to fetch categories:', categoryError);
+          setCategories([]);
+        }
         
-        // Fetch seller products to get current product data
+        // Try to fetch product directly by ID first
+        try {
+          console.log('🔍 EditProduct: Attempting to fetch product by ID...');
+          const productData = await getProductById(productId);
+          console.log('✅ EditProduct: Product fetched by ID:', productData);
+          
+          if (productData) {
+            setCurrentProduct(productData);
+            console.log('🔍 EditProduct: Product data structure:', productData);
+            console.log('🔍 EditProduct: Product data keys:', Object.keys(productData));
+            
+            setFormData({
+              name: productData.name || '',
+              description: productData.description || '',
+              price: productData.price || '',
+              stockQuantity: productData.stockQuantity || '',
+              categoryId: productData.category?.id || '',
+              files: []
+            });
+            // Set formatted price for display
+            setFormattedPrice(formatPriceInput(productData.price || ''));
+            
+            // Set current images as previews
+            if (productData.imageUrls && productData.imageUrls.length > 0) {
+              setImagePreviews(productData.imageUrls);
+            }
+            console.log('✅ EditProduct: Form data populated successfully');
+            return;
+          }
+        } catch (idError) {
+          console.log('⚠️ EditProduct: Failed to fetch by ID, trying fallback method:', idError.message);
+          console.log('⚠️ EditProduct: Full error details:', idError);
+        }
+        
+        // Fallback: Fetch seller products to get current product data
         if (user?.seller?.id) {
+          console.log('🔍 EditProduct: Using fallback method - fetching seller products...');
           const productsData = await getSellerProducts(user.seller.id);
+          console.log('🔍 EditProduct: All seller products:', productsData);
+          console.log('🔍 EditProduct: Looking for product ID:', productId);
+          console.log('🔍 EditProduct: Available product IDs:', productsData.map(p => ({ id: p.id, name: p.name })));
+          
           const product = productsData.find(p => p.id === productId);
+          console.log('🔍 EditProduct: Found product:', product);
           
           if (product) {
             setCurrentProduct(product);
+            console.log('🔍 EditProduct: Fallback product data structure:', product);
+            console.log('🔍 EditProduct: Fallback product data keys:', Object.keys(product));
+            
             setFormData({
               name: product.name || '',
               description: product.description || '',
               price: product.price || '',
               stockQuantity: product.stockQuantity || '',
-              categoryId: product.categoryId || '',
+              categoryId: product.category?.id || '',
               files: []
             });
             // Set formatted price for display
@@ -69,19 +130,24 @@ const EditProduct = ({ toggleMobileMenu }) => {
             if (product.imageUrls && product.imageUrls.length > 0) {
               setImagePreviews(product.imageUrls);
             }
+            console.log('✅ EditProduct: Form data populated via fallback');
           } else {
-            setError('Product not found');
+            console.error('❌ EditProduct: Product not found in seller products');
+            console.error('❌ EditProduct: Available products:', productsData.map(p => ({ id: p.id, name: p.name })));
+            setError('Product not found in your products list');
           }
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load product data');
+        console.error('❌ EditProduct: Error fetching data:', err);
+        setError('Failed to load product data: ' + err.message);
       } finally {
         setLoading(false);
       }
     };
 
+    if (productId) {
     fetchData();
+    }
   }, [productId, user?.seller?.id]);
 
   const handleInputChange = (e) => {
@@ -307,6 +373,7 @@ const EditProduct = ({ toggleMobileMenu }) => {
               </div>
             </div>
           )}
+
 
           {/* Form */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +14,8 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   const [banksList, setBanksList] = useState([]);
   const [resolvingAccount, setResolvingAccount] = useState(false);
   const [accountResolutionError, setAccountResolutionError] = useState(null);
+  const [accountVerified, setAccountVerified] = useState(false);
+  const debounceTimeoutRef = useRef(null);
 
   // Store Info Form Data
   const [storeInfo, setStoreInfo] = useState({
@@ -56,6 +58,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       setStoreInfo(newStoreInfo);
       setPaymentInfo(newPaymentInfo);
       
+      // Set account as verified if we already have account name
+      if (newPaymentInfo.accountName && newPaymentInfo.accountNumber && newPaymentInfo.bankCode) {
+        setAccountVerified(true);
+      }
+      
       console.log('🔄 Settings: Updated form state with latest seller data:', {
         cataloguePicture: user.seller.cataloguePicture,
         phoneNumber: user.seller.phoneNumber,
@@ -63,6 +70,15 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       });
     }
   }, [user?.seller]);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Fetch banks list on component mount
   useEffect(() => {
@@ -101,10 +117,25 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
   const handlePaymentInfoChange = (e) => {
     const { name, value } = e.target;
-    setPaymentInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'bankName') {
+      // Find the bank code when bank name is selected
+      const selectedBank = banksList.find(bank => bank.name === value);
+      setPaymentInfo(prev => ({
+        ...prev,
+        bankName: value,
+        bankCode: selectedBank ? selectedBank.code : '',
+        accountName: '', // Clear account name when bank changes
+        accountNumber: '' // Clear account number when bank changes
+      }));
+      setAccountVerified(false);
+      setAccountResolutionError(null);
+    } else {
+      setPaymentInfo(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -117,20 +148,20 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
     }
   };
 
-  // Resolve bank account details
-  const resolveAccountDetails = async () => {
-    if (!paymentInfo.bankCode || !paymentInfo.accountNumber) {
-      setAccountResolutionError('Please select a bank and enter account number first.');
+  // Debounced account resolution function
+  const debouncedResolveAccount = useCallback(async (accountNumber, bankCode) => {
+    if (!bankCode || !accountNumber || accountNumber.length !== 10) {
       return;
     }
 
     setResolvingAccount(true);
     setAccountResolutionError(null);
+    setAccountVerified(false);
 
     try {
       const response = await bankResolutionService.resolveAccount(
-        paymentInfo.accountNumber,
-        paymentInfo.bankCode
+        accountNumber,
+        bankCode
       );
 
       if (response.data && response.data.account_name) {
@@ -138,16 +169,55 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
           ...prev,
           accountName: response.data.account_name
         }));
+        setAccountVerified(true);
         setSuccess('Account name resolved successfully!');
         console.log('✅ Account resolved:', response.data);
       }
     } catch (error) {
       setAccountResolutionError(error.message);
+      setAccountVerified(false);
       console.error('❌ Account resolution failed:', error);
     } finally {
       setResolvingAccount(false);
     }
-  };
+  }, []);
+
+  // Handle account number change with debouncing
+  const handleAccountNumberChange = useCallback((e) => {
+    const accountNumber = e.target.value.replace(/\D/g, ''); // Only allow digits
+    
+    setPaymentInfo(prev => ({
+      ...prev,
+      accountNumber,
+      accountName: '' // Clear account name when number changes
+    }));
+    
+    setAccountVerified(false);
+    setAccountResolutionError(null);
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced resolution
+    if (accountNumber.length === 10 && paymentInfo.bankCode) {
+      debounceTimeoutRef.current = setTimeout(() => {
+        debouncedResolveAccount(accountNumber, paymentInfo.bankCode);
+      }, 1000); // 1 second delay
+    }
+  }, [paymentInfo.bankCode, debouncedResolveAccount]);
+
+  // Handle account number blur
+  const handleAccountNumberBlur = useCallback(() => {
+    if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode && !accountVerified) {
+      // Clear any existing timeout and resolve immediately
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      debouncedResolveAccount(paymentInfo.accountNumber, paymentInfo.bankCode);
+    }
+  }, [paymentInfo.accountNumber, paymentInfo.bankCode, accountVerified, debouncedResolveAccount]);
 
   const handleStoreInfoSubmit = async (e) => {
     e.preventDefault();
@@ -543,46 +613,47 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     type="text"
                     name="accountNumber"
                     value={paymentInfo.accountNumber}
-                    onChange={handlePaymentInfoChange}
+                    onChange={handleAccountNumberChange}
+                    onBlur={handleAccountNumberBlur}
                     placeholder="9012345678"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    maxLength="10"
+                    className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                      accountVerified ? 'border-green-300 bg-green-50' : 
+                      accountResolutionError ? 'border-red-300 bg-red-50' : 
+                      'border-gray-300'
+                    }`}
                     required
                   />
                   <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
+                  {resolvingAccount && (
+                    <svg className="animate-spin w-5 h-5 text-blue-500 absolute right-4 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {accountVerified && !resolvingAccount && (
+                    <svg className="w-5 h-5 text-green-500 absolute right-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
                 </div>
                 
-                {/* Resolve Account Button */}
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={resolveAccountDetails}
-                    disabled={resolvingAccount || !paymentInfo.bankCode || !paymentInfo.accountNumber}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      resolvingAccount || !paymentInfo.bankCode || !paymentInfo.accountNumber
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
-                  >
-                    {resolvingAccount ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Resolving...
-                      </>
-                    ) : (
-                      'Resolve Account Name'
-                    )}
-                  </button>
-                </div>
-                
-                {/* Account Resolution Error */}
+                {/* Account Resolution Status */}
                 {accountResolutionError && (
-                  <div className="mt-2 text-sm text-red-600">
+                  <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
                     {accountResolutionError}
+                  </div>
+                )}
+                {accountVerified && (
+                  <div className="mt-2 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-2">
+                    ✓ Account name resolved successfully
+                  </div>
+                )}
+                {paymentInfo.accountNumber.length === 10 && !accountVerified && !resolvingAccount && !accountResolutionError && (
+                  <div className="mt-2 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
+                    Account will be verified automatically when you finish typing or click outside the field
                   </div>
                 )}
               </div>
@@ -595,9 +666,9 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     type="text"
                     name="accountName"
                     value={paymentInfo.accountName}
-                    onChange={handlePaymentInfoChange}
-                    placeholder="Account holder name (use 'Resolve Account Name' button)"
-                    className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    readOnly
+                    placeholder="Account holder name (auto-filled after verification)"
+                    className={`w-full pl-12 pr-4 py-3 border rounded-lg bg-gray-50 text-gray-600 ${
                       paymentInfo.accountName ? 'border-green-300 bg-green-50' : 'border-gray-300'
                     }`}
                     required
@@ -611,9 +682,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     </svg>
                   )}
                 </div>
-                {paymentInfo.accountName && (
-                  <p className="text-xs text-green-600 mt-1">✓ Account name resolved successfully</p>
-                )}
+                <p className="text-xs text-gray-500 mt-1">This field is automatically filled after account verification</p>
               </div>
 
               {/* Security Note */}
@@ -627,10 +696,10 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               <div className="pt-6">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !accountVerified}
                   className={`w-full py-4 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center ${
-                    loading 
-                      ? 'bg-blue-400 text-white cursor-not-allowed' 
+                    loading || !accountVerified
+                      ? 'bg-gray-400 text-white cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
@@ -642,10 +711,17 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                       </svg>
                       Updating...
                     </>
+                  ) : !accountVerified ? (
+                    'Verify Account to Continue'
                   ) : (
                     'Update Payment Information'
                   )}
                 </button>
+                {!accountVerified && (
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Please verify your account details before updating payment information
+                  </p>
+                )}
               </div>
             </form>
           </div>

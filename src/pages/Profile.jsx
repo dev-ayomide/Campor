@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getCurrentUser, updateProfile } from '../services/authService';
+import { getCurrentUser } from '../services/authService';
 import { getUserOrders } from '../services/ordersService';
 import { getWishlist, removeFromWishlist } from '../services/wishlistService';
 import { addToCart, getCart } from '../services/cartService';
@@ -10,7 +10,7 @@ import profileImage from '../assets/images/profile.png';
 import productImage from '../assets/images/product.png';
 
 export default function ProfilePage() {
-  const { user, token, logout } = useContext(AuthContext);
+  const { user, token, logout, updateUserProfile } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Orders');
   const [loading, setLoading] = useState(true);
@@ -139,22 +139,45 @@ export default function ProfilePage() {
         updateData.profilePicture = profilePicture;
       }
       
-      await updateProfile(updateData);
+      const response = await updateUserProfile(updateData);
       
       console.log('✅ Profile: Profile updated successfully');
+      console.log('🔍 Profile: Update response:', response);
       
       // Show success message
       setSuccessMessage('Profile updated successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
       
-      // Refresh user profile to get updated data
-      const updatedUserData = await getCurrentUser();
-      setAccountData({
-        name: updatedUserData.name || '',
-        email: updatedUserData.email || ''
-      });
-      if (updatedUserData.profilePicture) {
-        setProfilePicturePreview(updatedUserData.profilePicture);
+      // Update local state with the response data or fetch fresh data
+      if (response.user) {
+        // Use the user data from the response
+        setAccountData({
+          name: response.user.name || '',
+          email: user?.email || accountData.email || ''
+        });
+        
+        // Handle profile picture update
+        if (profilePicture) {
+          // We just uploaded a new picture, keep the local preview
+          console.log('🔍 Profile: Keeping local preview for newly uploaded image');
+        } else if (response.user.profilePicture) {
+          // Update with the server URL for existing pictures
+          setProfilePicturePreview(response.user.profilePicture);
+          console.log('🔍 Profile: Updated profile picture from response:', response.user.profilePicture);
+        }
+      } else {
+        // Fallback: fetch updated user data
+        const updatedUserData = await getCurrentUser();
+        console.log('🔍 Profile: Fetched updated user data:', updatedUserData);
+        
+        setAccountData({
+          name: updatedUserData.name || '',
+          email: updatedUserData.email || ''
+        });
+        
+        if (updatedUserData.profilePicture) {
+          setProfilePicturePreview(updatedUserData.profilePicture);
+        }
       }
       
       // Clear the file input
@@ -325,7 +348,7 @@ export default function ProfilePage() {
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {user?.name || accountData.name || 'User Profile'}
+                  {accountData.name || user?.name || 'User Profile'}
                 </h1>
                 <p className="text-gray-600">{user?.email || accountData.email}</p>
                 <p className="text-sm text-gray-500">

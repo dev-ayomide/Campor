@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { getSellerProducts, deleteProduct, updateProductStatus } from '../../services/authService';
-import { getLowStockAlerts } from '../../services/inventoryService';
+import { getSellerProducts, deleteProduct, updateProductStatus, publishProduct, unpublishProduct } from '../../services/authService';
 import { SellerDashboardSkeleton } from '../../components/common';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
@@ -15,7 +14,6 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [lowStockAlerts, setLowStockAlerts] = useState([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -23,15 +21,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         setLoading(true);
         
         if (user?.seller?.id) {
-          const [productsData, alertsData] = await Promise.all([
-            getSellerProducts(user.seller.id),
-            getLowStockAlerts(user.seller.id, 5) // Alert when stock is 5 or below
-          ]);
-          
+          const productsData = await getSellerProducts(user.seller.id);
           setProducts(productsData || []);
-          setLowStockAlerts(alertsData || []);
           console.log('✅ Products: Fetched seller products:', productsData);
-          console.log('✅ Products: Low stock alerts:', alertsData);
         }
         
       } catch (err) {
@@ -116,8 +108,16 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   };
 
   const getSalesCount = (product) => {
-    // Use the sales count from the API
-    return product._count?.orderItems || 0;
+    // Use the soldQuantity from the API
+    return product.soldQuantity || 0;
+  };
+
+  const isLowStock = (product) => {
+    return product.stockQuantity <= 5 && product.stockQuantity > 0;
+  };
+
+  const isOutOfStock = (product) => {
+    return product.stockQuantity === 0;
   };
 
   const handleStatusUpdate = async (productId, newStatus) => {
@@ -133,18 +133,39 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     }
   };
 
+  const handlePublishProduct = async (productId) => {
+    try {
+      await publishProduct(productId);
+      setProducts(prev => prev.map(product => 
+        product.id === productId ? { ...product, status: 'ACTIVE' } : product
+      ));
+      console.log('✅ Product published successfully');
+    } catch (err) {
+      console.error('❌ Failed to publish product:', err);
+      setError(err.message);
+    }
+  };
+
+  const handleUnpublishProduct = async (productId) => {
+    try {
+      await unpublishProduct(productId);
+      setProducts(prev => prev.map(product => 
+        product.id === productId ? { ...product, status: 'DRAFT' } : product
+      ));
+      console.log('✅ Product unpublished successfully');
+    } catch (err) {
+      console.error('❌ Failed to unpublish product:', err);
+      setError(err.message);
+    }
+  };
+
   // Refresh inventory data
   const refreshInventory = async () => {
     try {
       setLoading(true);
       if (user?.seller?.id) {
-        const [productsData, alertsData] = await Promise.all([
-          getSellerProducts(user.seller.id),
-          getLowStockAlerts(user.seller.id, 5)
-        ]);
-        
+        const productsData = await getSellerProducts(user.seller.id);
         setProducts(productsData || []);
-        setLowStockAlerts(alertsData || []);
         console.log('✅ Inventory refreshed successfully');
       }
     } catch (err) {
@@ -161,53 +182,6 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         {/* Descriptive Text */}
         <p className="text-gray-600 mb-4">Manage your product inventory and listings.</p>
         
-        {/* Low Stock Alerts */}
-        {lowStockAlerts.length > 0 && (
-          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-            <div className="flex items-center gap-2 mb-3">
-              <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <h3 className="text-lg font-semibold text-orange-800">Low Stock Alert</h3>
-            </div>
-            <p className="text-orange-700 text-sm mb-3">
-              The following products are running low on stock:
-            </p>
-            <div className="space-y-2">
-              {lowStockAlerts.map((product) => (
-                <div key={product.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden">
-                      {product.imageUrls && product.imageUrls.length > 0 ? (
-                        <img 
-                          src={product.imageUrls[0]} 
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
-                      <p className="text-sm text-gray-600">Only {product.stockQuantity} left in stock</p>
-                    </div>
-                  </div>
-                  <Link 
-                    to={`/seller/products/edit/${product.id}`}
-                    className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                  >
-                    Restock
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         
         {/* Mobile Design - Search, Filter, Download, Add */}
         <div className="flex items-center space-x-3 mb-6">
@@ -355,7 +329,18 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                       </div>
                     </td>
                                 <td className="py-4 px-4 text-gray-900">₦{parseFloat(product.price).toLocaleString()}</td>
-                                <td className="py-4 px-4 text-gray-900">{product.stockQuantity}</td>
+                                <td className="py-4 px-4 text-gray-900">
+                                  <div className="text-sm">
+                                    <div className={`font-medium ${isLowStock(product) ? 'text-orange-600' : isOutOfStock(product) ? 'text-red-600' : 'text-gray-900'}`}>
+                                      {product.stockQuantity} in stock
+                                      {isLowStock(product) && ' ⚠️'}
+                                      {isOutOfStock(product) && ' ❌'}
+                                    </div>
+                                    {product.soldQuantity > 0 && (
+                                      <div className="text-gray-500 text-xs">{product.soldQuantity} sold</div>
+                                    )}
+                                  </div>
+                                </td>
                                 <td className="py-4 px-4">
                                   <div className="flex items-center gap-2">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
@@ -363,7 +348,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     </span>
                                     {status === 'DRAFT' && (
                                       <button 
-                                        onClick={() => handleStatusUpdate(product.id, 'ACTIVE')}
+                                        onClick={() => handlePublishProduct(product.id)}
                                         className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
                                         title="Publish Product"
                                       >
@@ -372,7 +357,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     )}
                                     {status === 'ACTIVE' && (
                                       <button 
-                                        onClick={() => handleStatusUpdate(product.id, 'DRAFT')}
+                                        onClick={() => handleUnpublishProduct(product.id)}
                                         className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
                                         title="Unpublish Product"
                                       >
@@ -460,12 +445,14 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
                                 {/* Stock */}
                                 <div className="text-sm text-gray-600">
-                                  <span>Stock: {product.stockQuantity}</span>
-                                </div>
-
-                                {/* Sales */}
-                                <div className="text-sm text-gray-600">
-                                  <span>Sales: {sales.toLocaleString()}</span>
+                                  <div className={`font-medium ${isLowStock(product) ? 'text-orange-600' : isOutOfStock(product) ? 'text-red-600' : 'text-gray-900'}`}>
+                                    Stock: {product.stockQuantity}
+                                    {isLowStock(product) && ' ⚠️'}
+                                    {isOutOfStock(product) && ' ❌'}
+                                  </div>
+                                  {product.soldQuantity > 0 && (
+                                    <div className="text-gray-500 text-xs">Sold: {product.soldQuantity}</div>
+                                  )}
                                 </div>
 
                                 {/* Status Badge */}
@@ -476,7 +463,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     </span>
                                     {status === 'DRAFT' && (
                                       <button 
-                                        onClick={() => handleStatusUpdate(product.id, 'ACTIVE')}
+                                        onClick={() => handlePublishProduct(product.id)}
                                         className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
                                         title="Publish Product"
                                       >
@@ -485,7 +472,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     )}
                                     {status === 'ACTIVE' && (
                                       <button 
-                                        onClick={() => handleStatusUpdate(product.id, 'DRAFT')}
+                                        onClick={() => handleUnpublishProduct(product.id)}
                                         className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
                                         title="Unpublish Product"
                                       >
@@ -556,12 +543,14 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
                                 {/* Stock */}
                                 <div className="text-sm text-gray-600">
-                                  <span>Stock: {product.stockQuantity}</span>
-                                </div>
-
-                                {/* Sales */}
-                                <div className="text-sm text-gray-600">
-                                  <span>Sales: {sales.toLocaleString()}</span>
+                                  <div className={`font-medium ${isLowStock(product) ? 'text-orange-600' : isOutOfStock(product) ? 'text-red-600' : 'text-gray-900'}`}>
+                                    Stock: {product.stockQuantity}
+                                    {isLowStock(product) && ' ⚠️'}
+                                    {isOutOfStock(product) && ' ❌'}
+                                  </div>
+                                  {product.soldQuantity > 0 && (
+                                    <div className="text-gray-500 text-xs">Sold: {product.soldQuantity}</div>
+                                  )}
                                 </div>
 
                                 {/* Status Badge */}
@@ -572,7 +561,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     </span>
                                     {status === 'DRAFT' && (
                                       <button 
-                                        onClick={() => handleStatusUpdate(product.id, 'ACTIVE')}
+                                        onClick={() => handlePublishProduct(product.id)}
                                         className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
                                         title="Publish Product"
                                       >
@@ -581,7 +570,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     )}
                                     {status === 'ACTIVE' && (
                                       <button 
-                                        onClick={() => handleStatusUpdate(product.id, 'DRAFT')}
+                                        onClick={() => handleUnpublishProduct(product.id)}
                                         className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
                                         title="Unpublish Product"
                                       >
