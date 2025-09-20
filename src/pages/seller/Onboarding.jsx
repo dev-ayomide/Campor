@@ -499,7 +499,7 @@ export default function SellerOnboardingPage() {
                     }
                   }}
                   disabled={isLoadingBanks}
-                  className="w-full pl-12 pr-10 py-3 sm:py-4 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors text-left disabled:opacity-50 flex items-center justify-between"
+                  className="w-full pl-12 pr-10 py-3 sm:py-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors text-left disabled:opacity-50 flex items-center justify-between hover:border-gray-400"
                 >
                   <div className="flex items-center">
                     <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
