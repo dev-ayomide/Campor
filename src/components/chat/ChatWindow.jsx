@@ -25,11 +25,13 @@ const chatStyles = `
     
     .chat-layout-mobile .chat-fixed-header {
       position: fixed !important;
-      top: 80px !important; /* Account for navbar */
+      top: 79px !important; /* Seamless connection to navbar */
       left: 0 !important;
       right: 0 !important;
       z-index: 40 !important;
       background-color: #F7F5F0 !important;
+      border-top: none !important; /* No border for seamless look */
+      box-shadow: none !important;
     }
     
     .chat-layout-mobile .chat-fixed-input {
@@ -46,12 +48,64 @@ const chatStyles = `
       padding-bottom: 80px !important;
       height: 100vh !important;
       overflow-y: auto !important;
+      margin-top: 0 !important;
     }
     
     .chat-layout-mobile .chat-no-conv-mobile {
       padding-top: 140px !important; /* Account for navbar + header */
       padding-bottom: 80px !important;
       height: 100vh !important;
+    }
+  }
+  
+  @media (min-width: 1025px) {
+    /* Fixed sidebar */
+    .chat-sidebar-desktop {
+      position: fixed !important;
+      top: 80px !important; /* Below navbar */
+      left: 0 !important;
+      width: 320px !important;
+      height: calc(100vh - 80px) !important;
+      z-index: 25 !important;
+      background-color: #F7F5F0 !important;
+    }
+    
+    .chat-container {
+      height: 100vh !important;
+      display: flex !important;
+      flex-direction: column !important;
+      position: relative !important;
+    }
+    
+    .chat-container .chat-fixed-header {
+      position: fixed !important;
+      top: 80px !important; /* Below navbar */
+      left: 320px !important; /* After sidebar */
+      right: 0 !important;
+      z-index: 30 !important;
+      flex-shrink: 0 !important;
+      background-color: #F7F5F0 !important;
+    }
+    
+    .chat-container .chat-messages-mobile {
+      position: fixed !important;
+      top: 160px !important; /* Below navbar + header */
+      left: 320px !important; /* After sidebar */
+      right: 0 !important;
+      bottom: 80px !important; /* Above input */
+      overflow-y: auto !important;
+      padding: 16px !important;
+      margin-top: 0 !important;
+    }
+    
+    .chat-container .chat-fixed-input {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 320px !important; /* After sidebar */
+      right: 0 !important;
+      z-index: 30 !important;
+      flex-shrink: 0 !important;
+      background-color: #F7F5F0 !important;
     }
   }
 `;
@@ -352,7 +406,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   if (!conversationId) {
     return (
-      <div className="chat-container chat-layout-mobile flex flex-col h-full relative" style={{ backgroundColor: '#F7F5F0' }}>
+      <div className="chat-container chat-layout-mobile flex flex-col h-full relative lg:flex lg:flex-col lg:h-full" style={{ backgroundColor: '#F7F5F0' }}>
         {/* Header for no conversation state */}
         {onBackToList && (
           <div className="chat-fixed-header px-4 py-3 border-b border-gray-200 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto lg:shadow-none" style={{ backgroundColor: '#F7F5F0' }}>
@@ -447,7 +501,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div className="chat-container chat-layout-mobile flex flex-col h-full relative" style={{ backgroundColor: '#F7F5F0' }}>
+    <div className="chat-container chat-layout-mobile flex flex-col h-full relative lg:flex lg:flex-col lg:h-full" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Chat Header - Fixed */}
       <div className="chat-fixed-header px-4 py-3 border-b border-gray-200 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto lg:shadow-none" style={{ backgroundColor: '#F7F5F0' }}>
         <div className="flex items-center space-x-3">
@@ -497,7 +551,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       </div>
 
       {/* Messages Area - Scrollable with proper spacing for fixed header and input */}
-      <div className="chat-messages-mobile flex-1 overflow-y-auto px-4 pb-4 space-y-4 chat-scrollbar" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+      <div className="chat-messages-mobile flex-1 overflow-y-auto px-4 pb-4 space-y-4 chat-scrollbar lg:flex-1 lg:overflow-y-auto lg:px-4 lg:pb-4 lg:space-y-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
         {loadingMessages ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -583,7 +637,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       </div>
 
       {/* Message Input - Fixed */}
-      <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto" style={{ backgroundColor: '#F7F5F0' }}>
+      <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto lg:flex-shrink-0" style={{ backgroundColor: '#F7F5F0' }}>
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           <button
             type="button"

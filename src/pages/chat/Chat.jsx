@@ -44,7 +44,7 @@ const ChatContent = () => {
       {/* Desktop Layout */}
       <div className="hidden lg:flex h-full">
         {/* Chat List Sidebar */}
-        <div className="w-80 flex-shrink-0 border-r border-gray-200 h-full" style={{ backgroundColor: '#F7F5F0' }}>
+        <div className="chat-sidebar-desktop w-80 flex-shrink-0 border-r border-gray-200 h-full" style={{ backgroundColor: '#F7F5F0' }}>
           <ChatList 
             onConversationSelect={handleConversationSelect}
             selectedConversationId={selectedConversationId}
