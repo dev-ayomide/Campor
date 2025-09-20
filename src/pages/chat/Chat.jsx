@@ -40,7 +40,7 @@ const ChatContent = () => {
   }, [sellerId, conversations]);
 
   return (
-    <div className="h-[calc(100vh-5rem)] overflow-hidden" style={{ backgroundColor: '#F7F5F0' }}>
+    <div className="h-full overflow-hidden" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Desktop Layout */}
       <div className="hidden lg:flex h-full">
         {/* Chat List Sidebar */}

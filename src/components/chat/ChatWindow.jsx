@@ -6,6 +6,64 @@ import { useSearchParams } from 'react-router-dom';
 import { socketService } from '../../services/socketService';
 import { ChatMessageSkeleton, ChatIcon } from '../common';
 
+// Add custom styles for mobile chat experience
+const chatStyles = `
+  .chat-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer and Edge */
+  }
+  
+  .chat-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  
+  @media (max-width: 1024px) {
+    .chat-layout-mobile {
+      height: 100vh !important;
+      overflow: hidden !important;
+    }
+    
+    .chat-layout-mobile .chat-fixed-header {
+      position: fixed !important;
+      top: 80px !important; /* Account for navbar */
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 40 !important;
+      background-color: #F7F5F0 !important;
+    }
+    
+    .chat-layout-mobile .chat-fixed-input {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 40 !important;
+      background-color: #F7F5F0 !important;
+    }
+    
+    .chat-layout-mobile .chat-messages-mobile {
+      padding-top: 140px !important; /* Account for navbar + header */
+      padding-bottom: 80px !important;
+      height: 100vh !important;
+      overflow-y: auto !important;
+    }
+    
+    .chat-layout-mobile .chat-no-conv-mobile {
+      padding-top: 140px !important; /* Account for navbar + header */
+      padding-bottom: 80px !important;
+      height: 100vh !important;
+    }
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined' && !document.getElementById('chat-mobile-styles')) {
+  const style = document.createElement('style');
+  style.id = 'chat-mobile-styles';
+  style.textContent = chatStyles;
+  document.head.appendChild(style);
+}
+
 const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const { sendMessage, markAsRead, joinChatRoom, leaveChatRoom, startTyping, stopTyping, typingUsers, onlineUsers } = useChat();
   const { isSeller } = useAuth();
@@ -20,7 +78,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      });
+    }
   };
 
   const loadConversation = async () => {
@@ -288,23 +352,23 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   if (!conversationId) {
     return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
-        {/* Mobile Back Button */}
+      <div className="chat-container chat-layout-mobile flex flex-col h-full relative" style={{ backgroundColor: '#F7F5F0' }}>
+        {/* Header for no conversation state */}
         {onBackToList && (
-          <div className="lg:hidden p-4 border-b border-gray-200" style={{ backgroundColor: '#F7F5F0' }}>
+          <div className="chat-fixed-header px-4 py-3 border-b border-gray-200 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto lg:shadow-none" style={{ backgroundColor: '#F7F5F0' }}>
             <button
               onClick={onBackToList}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+              className="lg:hidden flex items-center space-x-3 text-gray-600 hover:text-gray-900"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>Back to conversations</span>
+              <span className="text-lg font-semibold">New Chat</span>
             </button>
           </div>
         )}
         
-        <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex-1 flex items-center justify-center p-8 chat-no-conv-mobile" style={{ paddingTop: onBackToList ? '16px' : '32px' }}>
           <div className="text-center max-w-md">
             <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
               <ChatIcon className="w-8 h-8 text-gray-400" />
@@ -321,39 +385,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                     {error}
                   </div>
                 )}
-                
-                {/* Message Input */}
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => {
-                      setNewMessage(e.target.value);
-                      setError(null); // Clear error when typing
-                    }}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim() || sending}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2"
-                  >
-                    {sending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Sending...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                        </svg>
-                        <span>Send</span>
-                      </>
-                    )}
-                  </button>
-                </div>
               </>
             ) : (
               <>
@@ -363,6 +394,50 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             )}
           </div>
         </div>
+
+        {/* Fixed input for starting new conversation */}
+        {sellerId && (
+          <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto" style={{ backgroundColor: '#F7F5F0' }}>
+            <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+              <button
+                type="button"
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value);
+                    setError(null); // Clear error when typing
+                  }}
+                  placeholder="Type a message"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  disabled={sending}
+                />
+                
+                <button
+                  type="submit"
+                  disabled={!newMessage.trim() || sending}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {sending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     );
   }
@@ -372,15 +447,15 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
+    <div className="chat-container chat-layout-mobile flex flex-col h-full relative" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Chat Header - Fixed */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200" style={{ backgroundColor: '#F7F5F0' }}>
+      <div className="chat-fixed-header px-4 py-3 border-b border-gray-200 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto lg:shadow-none" style={{ backgroundColor: '#F7F5F0' }}>
         <div className="flex items-center space-x-3">
           {/* Mobile Back Button */}
           {onBackToList && (
             <button
               onClick={onBackToList}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2"
             >
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -396,19 +471,33 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
             )}
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-gray-900 truncate">
               {conversation?.participant.name}
             </h3>
-            <p className="text-sm text-gray-600">
-              {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Offline'}
+            <p className="text-sm text-gray-500 truncate">
+              {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Last seen recently'}
             </p>
+          </div>
+          
+          {/* Header Actions */}
+          <div className="flex items-center space-x-1">
+            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            </button>
+            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Messages Area - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 chat-scrollbar">
+      {/* Messages Area - Scrollable with proper spacing for fixed header and input */}
+      <div className="chat-messages-mobile flex-1 overflow-y-auto px-4 pb-4 space-y-4 chat-scrollbar" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
         {loadingMessages ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -430,21 +519,24 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               {dateMessages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.isFromCurrentUser ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${message.isFromCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-sm ${
                       message.isFromCurrentUser
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white text-gray-900'
+                        ? 'bg-blue-500 text-white rounded-br-sm'
+                        : 'bg-white text-gray-900 rounded-bl-sm border border-gray-100'
                     }`}
                   >
-                    <p className="text-sm">{message.content}</p>
-                    <div className={`flex items-center justify-end mt-1 ${
-                      message.isFromCurrentUser ? 'text-blue-100' : 'text-gray-500'
+                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <div className={`flex items-center justify-end mt-1 space-x-1 ${
+                      message.isFromCurrentUser ? 'text-blue-100' : 'text-gray-400'
                     }`}>
+                      <p className="text-xs">
+                        {formatTime(message.timestamp)}
+                      </p>
                       {message.isFromCurrentUser && (
-                        <div className="mr-2">
+                        <div className="">
                           {message.deliveryStatus === 'sent' && (
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -462,9 +554,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                           )}
                         </div>
                       )}
-                      <p className="text-xs">
-                        {formatTime(message.timestamp)}
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -476,9 +565,16 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
         {/* Typing Indicator */}
         {conversation && typingUsers.has(conversation.participant.id) && (
-          <div className="flex justify-start">
-            <div className="bg-white text-gray-600 px-4 py-2 rounded-lg text-sm">
-              {conversation.participant.name} is typing...
+          <div className="flex justify-start mb-4">
+            <div className="bg-white text-gray-600 px-3 py-2 rounded-lg text-sm shadow-sm border border-gray-100">
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span>typing...</span>
+              </div>
             </div>
           </div>
         )}
@@ -487,54 +583,56 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       </div>
 
       {/* Message Input - Fixed */}
-      <div className="flex-shrink-0 p-4 border-t border-gray-200" style={{ backgroundColor: '#F7F5F0' }}>
+      <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto" style={{ backgroundColor: '#F7F5F0' }}>
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           <button
             type="button"
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
           
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => {
-              setNewMessage(e.target.value);
-              if (conversation) {
-                const receiverId = conversation.participant.id;
-                if (e.target.value.trim()) {
-                  startTyping(receiverId);
-                } else {
-                  stopTyping(receiverId);
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                if (conversation) {
+                  const receiverId = conversation.participant.id;
+                  if (e.target.value.trim()) {
+                    startTyping(receiverId);
+                  } else {
+                    stopTyping(receiverId);
+                  }
                 }
-              }
-            }}
-            onBlur={() => {
-              if (conversation) {
-                stopTyping(conversation.participant.id);
-              }
-            }}
-            placeholder="Message"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={sending}
-          />
-          
-          <button
-            type="submit"
-            disabled={!newMessage.trim() || sending}
-            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {sending ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            ) : (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-              </svg>
-            )}
-          </button>
+              }}
+              onBlur={() => {
+                if (conversation) {
+                  stopTyping(conversation.participant.id);
+                }
+              }}
+              placeholder="Type a message"
+              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+              disabled={sending}
+            />
+            
+            <button
+              type="submit"
+              disabled={!newMessage.trim() || sending}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {sending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>
