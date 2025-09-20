@@ -573,48 +573,64 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     <div className="chat-container chat-layout-mobile flex flex-col h-full relative lg:flex lg:flex-col lg:h-full" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Chat Header - Fixed */}
       <div className="chat-fixed-header px-4 py-3 border-b border-gray-200 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto lg:shadow-none" style={{ backgroundColor: '#F7F5F0' }}>
-        <div className="flex items-center space-x-3">
-          {/* Mobile Back Button */}
-          {onBackToList && (
-            <button
-              onClick={onBackToList}
+          <div className="flex items-center space-x-3">
+            {/* Mobile Back Button */}
+            {onBackToList && (
+              <button
+                onClick={onBackToList}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
-          
-          <div className="relative">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-              {conversation?.participant.initials}
-            </div>
-            {conversation && onlineUsers.has(conversation.participant.id) && (
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
             )}
-          </div>
+            
+            <div className="relative">
+            {conversation?.participant.profileImage ? (
+              <div className="w-10 h-10 rounded-full overflow-hidden">
+                <img 
+                  src={conversation.participant.profileImage} 
+                  alt={conversation.participant.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                {conversation?.participant.initials}
+              </div>
+            )}
+              {conversation && onlineUsers.has(conversation.participant.id) && (
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+              )}
+            </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">
-              {conversation?.participant.name}
-            </h3>
-            <p className="text-sm text-gray-500 truncate">
-              {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Last seen recently'}
-            </p>
-          </div>
-          
-          {/* Header Actions */}
-          <div className="flex items-center space-x-1">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
+            <div className="flex items-center space-x-2 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900 truncate">
+                {conversation?.participant.name}
+              </h3>
+              {/* User Role Tag */}
+              <span className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${
+                conversation?.participant.role === 'Buyer' 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-purple-100 text-purple-700'
+              }`}>
+                {conversation?.participant.role}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className={`text-sm ${
+                conversation && onlineUsers.has(conversation.participant.id) 
+                  ? 'text-green-500' 
+                  : 'text-gray-500'
+              }`}>
+                {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Last seen recently'}
+              </span>
+              <span className="text-sm text-gray-500">•</span>
+              <span className="text-sm text-gray-500">
+                You are the {isSeller ? 'seller' : 'buyer'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -718,43 +734,43 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           </button>
           
           <div className="flex-1 relative">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => {
-                setNewMessage(e.target.value);
-                if (conversation) {
-                  const receiverId = conversation.participant.id;
-                  if (e.target.value.trim()) {
-                    startTyping(receiverId);
-                  } else {
-                    stopTyping(receiverId);
-                  }
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              if (conversation) {
+                const receiverId = conversation.participant.id;
+                if (e.target.value.trim()) {
+                  startTyping(receiverId);
+                } else {
+                  stopTyping(receiverId);
                 }
-              }}
-              onBlur={() => {
-                if (conversation) {
-                  stopTyping(conversation.participant.id);
-                }
-              }}
+              }
+            }}
+            onBlur={() => {
+              if (conversation) {
+                stopTyping(conversation.participant.id);
+              }
+            }}
               placeholder="Type a message"
               className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-              disabled={sending}
-            />
-            
-            <button
-              type="submit"
-              disabled={!newMessage.trim() || sending}
+            disabled={sending}
+          />
+          
+          <button
+            type="submit"
+            disabled={!newMessage.trim() || sending}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {sending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
+          >
+            {sending ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                </svg>
-              )}
-            </button>
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            )}
+          </button>
           </div>
         </form>
       </div>

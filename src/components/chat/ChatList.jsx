@@ -29,14 +29,18 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffInHours = (now - date) / (1000 * 60 * 60);
+    const diffInMinutes = (now - date) / (1000 * 60);
+    const diffInHours = diffInMinutes / 60;
+    const diffInDays = diffInHours / 24;
 
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
+    if (diffInMinutes < 1) {
+      return 'Just now';
+    } else if (diffInMinutes < 60) {
+      return `${Math.floor(diffInMinutes)}m ago`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else if (diffInDays < 7) {
+      return `${Math.floor(diffInDays)}d ago`;
     } else {
       return date.toLocaleDateString('en-US', { 
         month: 'short', 
@@ -89,8 +93,8 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                 onClick={() => onConversationSelect(conversation.id)}
                 className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border ${
                   selectedConversationId === conversation.id
-                    ? 'bg-blue-50 border-blue-200 shadow-sm'
-                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300 hover:shadow-sm'
+                    ? 'bg-blue-50 border-blue-300 shadow-sm'
+                    : 'bg-gray-50 border-blue-200 hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-start space-x-4">
