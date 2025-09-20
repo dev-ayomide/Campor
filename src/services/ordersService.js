@@ -35,9 +35,7 @@ export async function getUserOrders() {
 // Get seller orders
 export async function getSellerOrders(sellerId) {
   try {
-    console.log('📦 OrdersService: Fetching seller orders for seller:', sellerId);
     const response = await api.get(`/orders/${sellerId}/seller`);
-    console.log('✅ OrdersService: Seller orders fetched successfully:', response.data);
     
     const payload = response.data;
     // Support both shapes: Array or { data: Array }
@@ -45,7 +43,6 @@ export async function getSellerOrders(sellerId) {
     if (payload && Array.isArray(payload.data)) return payload.data;
     return [];
   } catch (error) {
-    console.error('❌ OrdersService: Failed to fetch seller orders:', error);
     if (error.response?.status === 401) {
       throw new Error('Unauthorized');
     }

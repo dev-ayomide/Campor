@@ -449,7 +449,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     Stock: {product.stockQuantity}
                                     {isLowStock(product) && ' ⚠️'}
                                     {isOutOfStock(product) && ' ❌'}
-                                  </div>
+                                </div>
                                   {product.soldQuantity > 0 && (
                                     <div className="text-gray-500 text-xs">Sold: {product.soldQuantity}</div>
                                   )}
@@ -547,7 +547,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                     Stock: {product.stockQuantity}
                                     {isLowStock(product) && ' ⚠️'}
                                     {isOutOfStock(product) && ' ❌'}
-                                  </div>
+                                </div>
                                   {product.soldQuantity > 0 && (
                                     <div className="text-gray-500 text-xs">Sold: {product.soldQuantity}</div>
                                   )}

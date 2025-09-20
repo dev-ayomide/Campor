@@ -4,6 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerOrders, updateOrderStatus, getOrderDetails } from '../../services/ordersService';
 import { OrderItemSkeleton } from '../../components/common';
+import productImage from '../../assets/images/product.png';
 
 export default function SellerOrdersPage() {
   const { user } = useAuth();
@@ -21,8 +22,16 @@ export default function SellerOrdersPage() {
         
         if (user?.seller?.id) {
           const ordersData = await getSellerOrders(user.seller.id);
-          setOrders(ordersData || []);
-          console.log('✅ Orders: Fetched seller orders:', ordersData);
+          console.log('✅ Orders: Raw API response:', ordersData);
+          
+          // Handle new data structure - API returns array of OrderSeller objects
+          if (Array.isArray(ordersData)) {
+            setOrders(ordersData);
+            console.log('✅ Orders: Processed seller orders:', ordersData.length);
+          } else {
+            console.log('⚠️ Orders: Unexpected data structure:', ordersData);
+            setOrders([]);
+          }
         }
         
       } catch (err) {
@@ -41,15 +50,19 @@ export default function SellerOrdersPage() {
     let filtered = orders;
 
     if (searchTerm) {
-      filtered = filtered.filter(order =>
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.userId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.hostelName?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(orderSeller =>
+        orderSeller.order?.orderCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orderSeller.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orderSeller.order?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orderSeller.order?.settlementCode?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.orderStatus === statusFilter);
+      filtered = filtered.filter(orderSeller =>
+        orderSeller.status?.toLowerCase() === statusFilter.toLowerCase() ||
+        orderSeller.order?.orderStatus?.toLowerCase() === statusFilter.toLowerCase()
+      );
     }
 
     setFilteredOrders(filtered);
@@ -58,8 +71,14 @@ export default function SellerOrdersPage() {
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
       await updateOrderStatus(orderId, newStatus);
-      setOrders(prev => prev.map(order => 
-        order.id === orderId ? { ...order, orderStatus: newStatus } : order
+      setOrders(prev => prev.map(orderSeller => 
+        orderSeller.orderId === orderId 
+          ? { 
+              ...orderSeller, 
+              status: newStatus,
+              order: { ...orderSeller.order, orderStatus: newStatus }
+            } 
+          : orderSeller
       ));
       console.log('✅ Order status updated successfully');
     } catch (err) {
@@ -109,7 +128,7 @@ export default function SellerOrdersPage() {
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search...."
+              placeholder="Search by order code, customer name, or settlement code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -175,53 +194,69 @@ export default function SellerOrdersPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-3 px-6 font-medium text-gray-600">Order ID</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Order Code</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Customer</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Items</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Status</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-600">Total</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-600">Amount Due</th>
                         <th className="text-left py-3 px-6 font-medium text-gray-600">Date</th>
                   <th className="text-left py-3 px-6 font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                      {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                      {filteredOrders.map((orderSeller) => (
+                  <tr key={orderSeller.id} className="hover:bg-gray-50">
                     <td className="py-4 px-6">
-                      <span className="font-medium text-gray-900">{order.id}</span>
+                      <span className="font-medium text-gray-900">{orderSeller.order?.orderCode || orderSeller.orderId}</span>
                     </td>
                           <td className="py-4 px-6">
                             <div>
-                              <div className="text-gray-900 font-medium">Order #{order.id.slice(-8)}</div>
-                              <div className="text-sm text-gray-500">{order.hostelName} - Block {order.blockNumber}, Room {order.roomNo}</div>
+                              <div className="text-gray-900 font-medium">{orderSeller.order?.user?.name || 'Customer'}</div>
+                              <div className="text-sm text-gray-500">
+                                {orderSeller.order?.settlementCode && (
+                                  <span>Settlement: {orderSeller.order.settlementCode}</span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="py-4 px-6 text-gray-900">
-                            <span className="text-sm text-gray-600">Items: {order.items?.length || 'N/A'}</span>
+                            {Array.isArray(orderSeller.order?.orderItems) && orderSeller.order.orderItems.length > 0 && (
+                              <div className="space-y-2">
+                                {orderSeller.order.orderItems.map((item) => (
+                                  <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
+                                    <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
+                                    <div className="flex-1">
+                                      <div className="font-medium text-gray-900">{item.product?.name}</div>
+                                      <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </td>
                     <td className="py-4 px-6">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
-                              {order.orderStatus}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(orderSeller.status || orderSeller.order?.orderStatus)}`}>
+                              {orderSeller.status || orderSeller.order?.orderStatus}
                       </span>
                     </td>
-                          <td className="py-4 px-6 text-gray-900">₦{parseFloat(order.totalPrice || 0).toLocaleString()}</td>
+                          <td className="py-4 px-6 text-gray-900">₦{parseFloat(orderSeller.amountDue || orderSeller.order?.totalPrice || 0).toLocaleString()}</td>
                           <td className="py-4 px-6 text-gray-900">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {new Date(orderSeller.order?.createdAt || orderSeller.createdAt).toLocaleDateString()}
                           </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                              {order.orderStatus === 'PENDING' && (
+                              {(orderSeller.status || orderSeller.order?.orderStatus) === 'PENDING' && (
                                 <button 
-                                  onClick={() => handleStatusUpdate(order.id, 'CONFIRMED')}
+                                  onClick={() => handleStatusUpdate(orderSeller.orderId, 'CONFIRMED')}
                                   className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
                                   title="Confirm Order"
                                 >
                                   Confirm
                                 </button>
                               )}
-                              {order.orderStatus === 'CONFIRMED' && (
+                              {(orderSeller.status || orderSeller.order?.orderStatus) === 'CONFIRMED' && (
                                 <button 
-                                  onClick={() => handleStatusUpdate(order.id, 'PROCESSING')}
+                                  onClick={() => handleStatusUpdate(orderSeller.orderId, 'PROCESSING')}
                                   className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
                                   title="Mark as Processing"
                                 >
@@ -229,7 +264,7 @@ export default function SellerOrdersPage() {
                                 </button>
                               )}
                         <button 
-                          onClick={() => handleViewOrderDetails(order.id)}
+                          onClick={() => handleViewOrderDetails(orderSeller.orderId)}
                           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
                           title="View Order Details"
                         >

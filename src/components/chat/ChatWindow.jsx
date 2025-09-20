@@ -375,58 +375,34 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
       {/* Chat Header - Fixed */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200" style={{ backgroundColor: '#F7F5F0' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {/* Mobile Back Button */}
-            {onBackToList && (
-              <button
-                onClick={onBackToList}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            )}
-            
-            <div className="relative">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {conversation?.participant.initials}
-              </div>
-              {conversation && onlineUsers.has(conversation.participant.id) && (
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-              )}
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {conversation?.participant.name}
-              </h3>
-              <p className="text-sm text-gray-600">
-                {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Offline'} . You are the {isSeller ? 'seller' : 'buyer'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="hidden lg:flex items-center space-x-2 text-sm text-gray-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        <div className="flex items-center space-x-3">
+          {/* Mobile Back Button */}
+          {onBackToList && (
+            <button
+              onClick={onBackToList}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span>Discussing: {conversation?.product.name}</span>
-            </div>
-            <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-              View Product
             </button>
+          )}
+          
+          <div className="relative">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+              {conversation?.participant.initials}
+            </div>
+            {conversation && onlineUsers.has(conversation.participant.id) && (
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+            )}
           </div>
-        </div>
-        
-        {/* Mobile Product Info */}
-        <div className="lg:hidden mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <span>Discussing: {conversation?.product.name}</span>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {conversation?.participant.name}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Offline'}
+            </p>
           </div>
         </div>
       </div>

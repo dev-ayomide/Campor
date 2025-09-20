@@ -19,7 +19,7 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
   useEffect(() => {
     // Set default availability - backend will handle validation
     setAvailability({ available: true, stockQuantity: 999, message: 'Available' });
-    setCheckingAvailability(false);
+        setCheckingAvailability(false);
   }, [productId, quantity]);
 
   const handleAddToCart = async (e) => {
