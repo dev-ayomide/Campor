@@ -168,8 +168,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const [messages, setMessages] = useState([]);
   const [conversation, setConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
@@ -197,6 +195,41 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const handleEmojiClick = (emoji) => {
     setNewMessage(prev => prev + emoji);
     setShowEmojiPicker(false);
+  };
+
+  const retryMessage = async (tempId, content) => {
+    // Update message status to sent immediately for smooth UX
+    setMessages(prev => prev.map(msg => 
+      msg.tempId === tempId 
+        ? { ...msg, deliveryStatus: 'sent' }
+        : msg
+    ));
+
+    try {
+      const receiverId = conversation?.participant?.id || sellerId;
+      const sentMessage = await sendMessage(conversationId, content, receiverId);
+      
+      // Message already appears as sent, just confirm with ID
+      setMessages(prev => prev.map(msg => 
+        msg.tempId === tempId 
+          ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+          : msg
+      ));
+    } catch (error) {
+      console.error('Error retrying message:', error);
+      // Show failure after delay
+      setTimeout(() => {
+        setMessages(prev => prev.map(msg => 
+          msg.tempId === tempId 
+            ? { ...msg, deliveryStatus: 'failed' }
+            : msg
+        ));
+      }, 500);
+    }
+  };
+
+  const deleteFailedMessage = (tempId) => {
+    setMessages(prev => prev.filter(msg => msg.tempId !== tempId));
   };
 
   // Common emojis for quick access
@@ -228,7 +261,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   const loadMessages = useCallback(async () => {
     try {
-      setLoadingMessages(true);
       const data = await chatService.getMessages(conversationId);
       console.log('📋 Loaded messages from API:', data);
       setMessages(data);
@@ -238,7 +270,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
-      setLoadingMessages(false);
     }
   }, [conversationId, markAsRead]);
 
@@ -334,14 +365,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || sending) return;
+    if (!newMessage.trim()) return;
 
     const messageContent = newMessage.trim();
     const tempId = `temp_${Date.now()}_${Math.random()}`;
     setNewMessage('');
 
     try {
-      setSending(true);
       
       if (sellerId && !conversationId) {
         // Creating new conversation with seller - Optimistic update
@@ -433,8 +463,14 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     } catch (error) {
       console.error('Failed to send message:', error);
       
-      // Remove optimistic message on failure
-      setMessages(prev => prev.filter(msg => msg.tempId !== tempId));
+      // Show failure state instead of removing message (like chat-demo)
+      setTimeout(() => {
+        setMessages(prev => prev.map(msg => 
+          msg.tempId === tempId 
+            ? { ...msg, deliveryStatus: 'failed' }
+            : msg
+        ));
+      }, 500);
       
       // Provide more specific error messages
       if (error.message.includes('Foreign key constraint violated') || error.message.includes('Unable to start conversation')) {
@@ -446,8 +482,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       } else {
         setError(error.message || 'Failed to send message. Please try again.');
       }
-    } finally {
-      setSending(false);
     }
   };
 
@@ -614,21 +648,17 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   }}
                   placeholder="Type a message"
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                  disabled={sending}
+                  disabled={false}
                 />
                 
                 <button
                   type="submit"
-                  disabled={!newMessage.trim() || sending}
+                  disabled={!newMessage.trim()}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {sending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                    </svg>
-                  )}
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                  </svg>
                 </button>
               </div>
             </form>
@@ -710,13 +740,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
       {/* Messages Area - Scrollable with proper spacing for fixed header and input */}
       <div className="chat-messages-mobile flex-1 overflow-y-auto px-4 pb-4 space-y-4 chat-scrollbar lg:flex-1 lg:overflow-y-auto lg:px-4 lg:pb-4 lg:space-y-4" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
-        {loadingMessages ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <ChatMessageSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
+        {(
           Object.entries(messageGroups).map(([date, dateMessages]) => (
           <div key={date}>
             {/* Date Separator */}
@@ -736,7 +760,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   <div
                     className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-sm ${
                       message.isFromCurrentUser
-                        ? 'bg-blue-500 text-white rounded-br-sm'
+                        ? message.deliveryStatus === 'failed' 
+                          ? 'bg-red-500 text-white rounded-br-sm'
+                          : 'bg-blue-500 text-white rounded-br-sm'
                         : 'bg-white text-gray-900 rounded-bl-sm border border-gray-100'
                     }`}
                   >
@@ -764,10 +790,43 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           )}
+                          {message.deliveryStatus === 'failed' && (
+                            <div className="flex items-center space-x-1">
+                              <svg className="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
+                  
+                  {/* Retry functionality for failed messages */}
+                  {message.isFromCurrentUser && message.deliveryStatus === 'failed' && (
+                    <div className="flex items-center mt-1 space-x-2">
+                      <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center space-x-2">
+                        <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs text-red-700 font-medium">Message failed to send</span>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => retryMessage(message.tempId, message.content)}
+                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                          >
+                            Retry
+                          </button>
+                          <button
+                            onClick={() => deleteFailedMessage(message.tempId)}
+                            className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -799,16 +858,16 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           {/* Emoji Picker Button - Desktop Only */}
           <div className="hidden lg:block relative emoji-picker-container">
-            <button
-              type="button"
+          <button
+            type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          
             {/* Emoji Picker Dropdown */}
             {showEmojiPicker && (
               <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl p-4 max-h-80 overflow-y-auto z-50 w-80">
@@ -862,21 +921,17 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             }}
               placeholder="Type a message"
               className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-            disabled={sending}
+            disabled={false}
           />
           
           <button
             type="submit"
-            disabled={!newMessage.trim() || sending}
+            disabled={!newMessage.trim()}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {sending ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            ) : (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-              </svg>
-            )}
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            </svg>
           </button>
           </div>
         </form>
