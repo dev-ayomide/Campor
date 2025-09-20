@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCart } from '../../contexts/CartContext';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Check } from 'lucide-react';
 import { ChatIcon } from '../common';
 import { checkProductAvailability } from '../../services/cartService';
 
 export default function AddToCartButton({ productId, className = '', sellerId = null, roundedStyle = 'full' }) {
   const { addProductToCart, checkProductInCart, getCartItem, updateItemQuantity, removeItemFromCart } = useCart();
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [availability, setAvailability] = useState({ available: true, stockQuantity: 0, message: '' });
   const [checkingAvailability, setCheckingAvailability] = useState(true);
 
@@ -30,7 +31,12 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
     if (loading) return;
     try {
       setLoading(true);
+      setSuccess(false);
       await addProductToCart(productId, 1);
+      
+      // Show success state briefly
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 1500);
     } catch (error) {
       console.error('Failed to add to cart:', error);
     } finally {
@@ -93,12 +99,12 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
             type="button"
             onClick={handleDecrease}
             disabled={loading}
-            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full disabled:opacity-50"
+            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full disabled:opacity-50 transition-all duration-200 hover:scale-105"
             aria-label="Decrease quantity"
           >
             <Minus className="h-4 w-4" />
           </button>
-          <span className="min-w-[2rem] h-5 flex items-center justify-center text-center font-medium text-gray-900">
+          <span className="min-w-[2rem] h-8 flex items-center justify-center text-center font-medium text-gray-900 bg-gray-50 rounded-lg">
             {loading ? (
               <span className="inline-block h-4 w-4 rounded-full border-2 border-gray-300 border-t-transparent animate-spin"></span>
             ) : (
@@ -109,7 +115,7 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
             type="button"
             onClick={handleIncrease}
             disabled={loading}
-            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full disabled:opacity-50"
+            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full disabled:opacity-50 transition-all duration-200 hover:scale-105"
             aria-label="Increase quantity"
           >
             <Plus className="h-4 w-4" />
@@ -125,12 +131,18 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       type="button"
       onClick={handleAddToCart}
       disabled={loading || checkingAvailability}
-      className={`w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white ${roundedStyle === 'full' ? 'rounded-full' : 'rounded-lg'} hover:bg-blue-700 transition-colors disabled:opacity-50 ${className}`}
+      className={`w-full flex items-center justify-center px-4 py-2 ${
+        success 
+          ? 'bg-green-600 text-white' 
+          : 'bg-blue-600 text-white hover:bg-blue-700'
+      } ${roundedStyle === 'full' ? 'rounded-full' : 'rounded-lg'} transition-all duration-300 disabled:opacity-50 hover:scale-105 ${className}`}
     >
       {loading ? (
         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/70 border-t-transparent mr-2"></div>
+      ) : success ? (
+        <Check className="h-4 w-4 mr-2" />
       ) : null}
-      {loading ? 'Adding...' : 'Add to Cart'}
+      {loading ? 'Adding...' : success ? 'Added!' : 'Add to Cart'}
     </button>
   );
 }

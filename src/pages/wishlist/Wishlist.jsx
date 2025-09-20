@@ -142,10 +142,19 @@ export default function WishlistPage() {
 
                         {/* Actions */}
                         <div className="flex items-center gap-2">
-                          <AddToCartButton 
-                            productId={productId} 
-                            className="flex-1"
-                          />
+                          {product.stockQuantity > 0 ? (
+                            <AddToCartButton 
+                              productId={productId} 
+                              className="flex-1"
+                            />
+                          ) : (
+                            <button 
+                              disabled 
+                              className="flex-1 py-2 px-3 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed"
+                            >
+                              Out of Stock
+                            </button>
+                          )}
                           
                           <button
                             onClick={() => handleRemoveFromWishlist(productId)}

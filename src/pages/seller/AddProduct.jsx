@@ -4,6 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { addProductToCatalogue, getCategoriesOnly } from '../../services/authService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
+import { ImageUpload } from '../../components/common';
 
 export default function AddProductPage({ toggleMobileMenu }) {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
     price: '',
     stockQuantity: '',
     categoryId: '',
-    files: []
+    imageUrls: []
   });
   const [formattedPrice, setFormattedPrice] = useState('');
 
@@ -67,27 +68,29 @@ export default function AddProductPage({ toggleMobileMenu }) {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        files: [...prev.files, ...files].slice(0, 3) // Max 3 files
-      }));
-    }
-  };
-
-  const removeImage = (index) => {
+  const handleImagesChange = (imageUrls) => {
     setFormData(prev => ({
       ...prev,
-      files: prev.files.filter((_, i) => i !== index)
+      imageUrls
     }));
   };
 
   const handleNext = (e) => {
     e.preventDefault();
-    if (formData.name && formData.description && formData.price && formData.stockQuantity && formData.categoryId && formData.files.length > 0) {
+    
+    if (formData.name && formData.description && formData.price && formData.stockQuantity && formData.categoryId && formData.imageUrls.length > 0) {
       setCurrentStep(2);
+    } else {
+      // Show which fields are missing
+      const missingFields = [];
+      if (!formData.name) missingFields.push('Product Name');
+      if (!formData.description) missingFields.push('Description');
+      if (!formData.price) missingFields.push('Price');
+      if (!formData.stockQuantity) missingFields.push('Stock Quantity');
+      if (!formData.categoryId) missingFields.push('Category');
+      if (formData.imageUrls.length === 0) missingFields.push('At least 1 image');
+      
+      setError(`Please fill in: ${missingFields.join(', ')}`);
     }
   };
 
@@ -107,15 +110,16 @@ export default function AddProductPage({ toggleMobileMenu }) {
         price: formData.price,
         stockQuantity: formData.stockQuantity,
         categoryId: formData.categoryId,
-        files: formData.files
+        imageUrls: formData.imageUrls
       };
 
-      console.log('Publishing product:', productData);
+      console.log('Creating product as draft:', productData);
       await addProductToCatalogue(user.seller.id, productData);
-      console.log('✅ Product published successfully');
+      console.log('✅ Product created successfully as draft');
+      
       navigate('/seller/products');
     } catch (err) {
-      console.error('❌ Failed to publish product:', err);
+      console.error('❌ Failed to create product:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -177,47 +181,18 @@ export default function AddProductPage({ toggleMobileMenu }) {
               {/* Add Photo Section */}
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Add Photo</h3>
-                <p className="text-sm text-gray-600 mb-4">Add at least 1 photo for this category</p>
+                <p className="text-sm text-gray-600 mb-4">Add at least 1 photo for this product</p>
                 
-                <div className="flex gap-4 mb-2">
-                  {formData.files.map((file, index) => (
-                    <div key={index} className="relative w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
-                      <img 
-                        src={URL.createObjectURL(file)} 
-                        alt={`Product ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {formData.files.length < 4 && (
-                    <label className="w-16 h-16 border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                      <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </label>
-                  )}
-                </div>
-                
-                <p className="text-xs text-gray-500">
-                  Supported formats are *.jpg and *.png
-                </p>
-                <p className="text-xs text-red-500">
-                  Picture size must not exceed 5 mb
-                </p>
+                <ImageUpload
+                  images={formData.imageUrls}
+                  onImagesChange={handleImagesChange}
+                  maxImages={3}
+                  disabled={loading}
+                  uploadOptions={{
+                    folder: 'samples/ecommerce',
+                    public_id: `product_${Date.now()}`
+                  }}
+                />
               </div>
 
               {/* Product Name */}
@@ -343,9 +318,9 @@ export default function AddProductPage({ toggleMobileMenu }) {
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
               {/* Product Image */}
               <div className="relative h-64 bg-gray-100">
-                {formData.files.length > 0 && (
+                {formData.imageUrls.length > 0 && (
                   <img 
-                    src={URL.createObjectURL(formData.files[0])} 
+                    src={formData.imageUrls[0]} 
                     alt="Product"
                     className="w-full h-full object-cover"
                   />
@@ -398,10 +373,10 @@ export default function AddProductPage({ toggleMobileMenu }) {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Publishing...
+                    Creating...
                   </>
                 ) : (
-                  'Publish'
+                  'Create Product (Draft)'
                 )}
               </button>
               

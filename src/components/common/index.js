@@ -7,6 +7,7 @@ export { default as ScrollToTop } from './ScrollToTop';
 export { default as ShoppingBagIcon } from './ShoppingBagIcon';
 export { default as ChatIcon } from './ChatIcon';
 export { default as ProfileIcon } from './ProfileIcon';
+export { default as ImageUpload } from './ImageUpload';
 export { 
   default as Skeleton,
   ProductCardSkeleton,

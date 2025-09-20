@@ -417,12 +417,21 @@ export default function ProductDetailPage() {
                   className="flex-1 py-3 px-6"
                 />
                 <div className="flex-1">
-                  <AddToCartButton 
-                    productId={product.id} 
-                    sellerId={product.seller?.id}
-                    className="w-full"
-                    roundedStyle="lg"
-                  />
+                  {product.stockQuantity > 0 ? (
+                    <AddToCartButton 
+                      productId={product.id} 
+                      sellerId={product.seller?.id}
+                      className="w-full"
+                      roundedStyle="lg"
+                    />
+                  ) : (
+                    <button 
+                      disabled 
+                      className="w-full py-3 px-6 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed"
+                    >
+                      Out of Stock
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

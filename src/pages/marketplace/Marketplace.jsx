@@ -98,7 +98,7 @@ export default function MarketplacePage() {
       // Immediate filter update for better UX
       fetchProducts(1);
     }
-  }, [selectedCategory, selectedPrice, sortBy]);
+  }, [selectedCategory, selectedPrice, sortBy, searchQuery]);
 
   // Fetch seller profile pictures when products change
   useEffect(() => {

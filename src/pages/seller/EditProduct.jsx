@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { updateProductInCatalogue, getSellerProducts, getProductById, getCategoriesOnly } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
-import { Skeleton } from '../../components/common';
+import { Skeleton, ImageUpload } from '../../components/common';
 
 const EditProduct = ({ toggleMobileMenu }) => {
   const { productId } = useParams();
@@ -23,11 +23,9 @@ const EditProduct = ({ toggleMobileMenu }) => {
     price: '',
     stockQuantity: '',
     categoryId: '',
-    files: [] // New files to upload
+    imageUrls: [] // All image URLs (existing + new)
   });
   
-  // Track existing images separately
-  const [existingImages, setExistingImages] = useState([]);
   const [formattedPrice, setFormattedPrice] = useState('');
   
   // Available categories
@@ -35,9 +33,6 @@ const EditProduct = ({ toggleMobileMenu }) => {
   
   // Current product data
   const [currentProduct, setCurrentProduct] = useState(null);
-  
-  // Image previews
-  const [imagePreviews, setImagePreviews] = useState([]);
 
   // Fetch product data and categories
   useEffect(() => {
@@ -85,16 +80,10 @@ const EditProduct = ({ toggleMobileMenu }) => {
               price: productData.price || '',
               stockQuantity: productData.stockQuantity || '',
               categoryId: productData.category?.id || '',
-              files: []
+              imageUrls: productData.imageUrls || []
             });
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(productData.price || ''));
-            
-            // Set current images as previews and track existing images
-            if (productData.imageUrls && productData.imageUrls.length > 0) {
-              setImagePreviews(productData.imageUrls);
-              setExistingImages(productData.imageUrls);
-            }
             console.log('✅ EditProduct: Form data populated successfully');
             return;
           }
@@ -125,15 +114,10 @@ const EditProduct = ({ toggleMobileMenu }) => {
               price: product.price || '',
               stockQuantity: product.stockQuantity || '',
               categoryId: product.category?.id || '',
-              files: []
+              imageUrls: product.imageUrls || []
             });
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(product.price || ''));
-            
-            // Set current images as previews
-            if (product.imageUrls && product.imageUrls.length > 0) {
-              setImagePreviews(product.imageUrls);
-            }
             console.log('✅ EditProduct: Form data populated via fallback');
           } else {
             console.error('❌ EditProduct: Product not found in seller products');
@@ -176,41 +160,11 @@ const EditProduct = ({ toggleMobileMenu }) => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    
-    // IMPORTANT: The backend replaces ALL images when files are provided
-    // So we need to include existing images as files too
-    // For now, we'll show a warning to the user
-    
-    // Add new files to formData
+  const handleImagesChange = (imageUrls) => {
     setFormData(prev => ({
       ...prev,
-      files: [...(prev.files || []), ...files]
+      imageUrls
     }));
-    
-    // Create previews for new files
-    const newPreviews = [];
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        newPreviews.push(e.target.result);
-        if (newPreviews.length === files.length) {
-          // Add new previews to existing ones
-          setImagePreviews(prev => [...prev, ...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const removeImage = (index) => {
-    // Remove from previews
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-    
-    // If removing an existing image (not a new file), we need to track it differently
-    // For now, we'll just remove from previews and let the backend handle the logic
-    // The backend should preserve existing images unless explicitly told to replace them
   };
 
   const handleSubmit = async (e) => {
@@ -231,14 +185,12 @@ const EditProduct = ({ toggleMobileMenu }) => {
         price: formData.price,
         stockQuantity: formData.stockQuantity,
         categoryId: formData.categoryId,
-        files: formData.files, // New files to upload
-        existingImageUrls: existingImages // Existing image URLs to preserve
+        imageUrls: formData.imageUrls // All image URLs (existing + new)
       };
 
       console.log('🔍 EditProduct: Submitting product data:', {
         ...productData,
-        filesCount: productData.files?.length || 0,
-        existingImagesCount: existingImages.length
+        imageUrlsCount: productData.imageUrls?.length || 0
       });
 
       await updateProductInCatalogue(productId, productData);
@@ -403,91 +355,19 @@ const EditProduct = ({ toggleMobileMenu }) => {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Add Photo */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-3">Add Photo</label>
-                <p className="text-sm text-gray-600 mb-4">Add up to 3 photos for this product</p>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">Product Images</label>
+                <p className="text-sm text-gray-600 mb-4">Manage your product images. You can add, remove, or reorder images.</p>
                 
-                {/* Image Upload Area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
-                  <input
-                    type="file"
-                    id="files"
-                    name="files"
-                    onChange={handleFileChange}
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <label htmlFor="files" className="cursor-pointer">
-                    <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-600 font-medium">Click to upload photos</p>
-                      <p className="text-sm text-gray-500 mt-1">or drag and drop</p>
-                    </div>
-                  </label>
-                </div>
-                
-                <div className="mt-3 text-sm text-gray-500">
-                  <p>Supported formats are *.jpg and *.png</p>
-                  <p className="text-red-500">Picture size must not exceed 5 mb</p>
-                  <p className="text-blue-600">Maximum 3 images allowed</p>
-                </div>
-
-                {/* Image Previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">
-                      Current images ({imagePreviews.length} total)
-                      {existingImages.length > 0 && (
-                        <span className="text-blue-600 ml-2">
-                          ({existingImages.length} existing, {imagePreviews.length - existingImages.length} new)
-                        </span>
-                      )}
-                    </p>
-                    
-                    {/* Warning about image replacement */}
-                    {formData.files && formData.files.length > 0 && existingImages.length > 0 && (
-                      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-yellow-800">
-                              <strong>Warning:</strong> Adding new images will replace all existing images. 
-                              Make sure to include all images you want to keep.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {imagePreviews.map((preview, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <ImageUpload
+                  images={formData.imageUrls}
+                  onImagesChange={handleImagesChange}
+                  maxImages={3}
+                  disabled={loading}
+                  uploadOptions={{
+                    folder: 'samples/ecommerce',
+                    public_id: `product_${productId}_${Date.now()}`
+                  }}
+                />
               </div>
 
               {/* Product Name */}

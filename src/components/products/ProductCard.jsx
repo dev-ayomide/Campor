@@ -136,11 +136,20 @@ export default function ProductCard({ product }) {
         {/* Add to Cart and Wishlist Buttons */}
         <div className="mt-auto">
           <div className="flex items-center gap-2">
-            <AddToCartButton 
-              productId={product.id} 
-              sellerId={product.seller?.id}
-              className="flex-1"
-            />
+            {product.stockQuantity > 0 ? (
+              <AddToCartButton 
+                productId={product.id} 
+                sellerId={product.seller?.id}
+                className="flex-1"
+              />
+            ) : (
+              <button 
+                disabled 
+                className="flex-1 py-2 px-3 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed"
+              >
+                Out of Stock
+              </button>
+            )}
             <WishlistButton 
               productId={product.id}
             />

@@ -511,12 +511,12 @@ export async function getSellerProducts(sellerId) {
   try {
     console.log('🔍 SellerService: Fetching seller products for ID:', sellerId);
     
-    // Use the complete catalogue endpoint to get full product details
-    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
-    console.log('✅ SellerService: Seller catalogue fetched successfully:', response.data);
+    // Use the specific seller products endpoint
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
+    console.log('✅ SellerService: Seller products fetched successfully:', response.data);
     
-    // Extract products from catalogue response
-    const products = response.data.products || [];
+    // The response should be an array of products directly
+    const products = Array.isArray(response.data) ? response.data : [];
     console.log('✅ SellerService: Products extracted:', products.length);
     
     return products;
@@ -654,98 +654,79 @@ export async function addProductToCatalogue(sellerId, productData) {
   try {
     console.log('🔍 SellerService: Adding product to catalogue...');
     
-    // Create FormData for multipart/form-data request
-    const formData = new FormData();
+    // Prepare product data as JSON (backend now expects application/json)
+    const payload = {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      stockQuantity: productData.stockQuantity,
+      categoryId: productData.categoryId,
+      imageUrls: productData.imageUrls || []
+    };
     
-    // Add required fields
-    formData.append('name', productData.name);
-    formData.append('description', productData.description);
-    formData.append('price', productData.price);
-    formData.append('stockQuantity', productData.stockQuantity);
-    formData.append('categoryId', productData.categoryId);
-    
-    // Add product images (max 3 files)
-    if (productData.files && productData.files.length > 0) {
-      productData.files.forEach((file, index) => {
-        formData.append('files', file);
-      });
-    }
-    
-    // Create a new axios instance for multipart/form-data
-    const multipartApi = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 30000, // Longer timeout for file uploads
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    console.log('🔍 SellerService: Product payload:', {
+      ...payload,
+      imageUrlsCount: payload.imageUrls.length
     });
     
-    // Add auth token
-    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
-    if (token) {
-      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    const response = await multipartApi.post(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`, formData);
+    const response = await api.post(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`, payload);
     console.log('✅ SellerService: Product added to catalogue successfully:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ SellerService: Failed to add product to catalogue:', error);
-    throw new Error(error.response?.data?.message || 'Failed to add product to catalogue.');
+    
+    // Handle different error types
+    if (error.response) {
+      // Server responded with error status
+      const errorMessage = error.response.data?.message || error.response.data?.error || 'Server error occurred';
+      throw new Error(errorMessage);
+    } else if (error.request) {
+      // Request was made but no response received
+      throw new Error('Network error - please check your connection');
+    } else {
+      // Something else happened
+      throw new Error(error.message || 'Failed to add product to catalogue');
+    }
   }
 }
 
 export async function updateProductInCatalogue(productId, productData) {
   try {
     console.log('🔍 SellerService: Updating product in catalogue...');
-    console.log('🔍 SellerService: Product data:', {
-      hasFiles: !!productData.files?.length,
-      filesCount: productData.files?.length || 0,
-      hasExistingImages: !!productData.existingImageUrls?.length,
-      existingImagesCount: productData.existingImageUrls?.length || 0
+    
+    // Prepare product data as JSON (backend now expects application/json)
+    const payload = {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      stockQuantity: productData.stockQuantity,
+      categoryId: productData.categoryId,
+      imageUrls: productData.imageUrls || []
+    };
+    
+    console.log('🔍 SellerService: Product update payload:', {
+      ...payload,
+      imageUrlsCount: payload.imageUrls.length
     });
     
-    // Create FormData for multipart/form-data request
-    const formData = new FormData();
-    
-    // Add fields that are being updated
-    if (productData.name) formData.append('name', productData.name);
-    if (productData.description) formData.append('description', productData.description);
-    if (productData.price) formData.append('price', productData.price);
-    if (productData.stockQuantity) formData.append('stockQuantity', productData.stockQuantity);
-    if (productData.categoryId) formData.append('categoryId', productData.categoryId);
-    
-    // Note: Backend replaces ALL images when files are provided
-    // The existingImageUrls parameter is not supported by the API
-    
-    // Add new product images if provided
-    if (productData.files && productData.files.length > 0) {
-      productData.files.forEach((file, index) => {
-        formData.append('files', file);
-      });
-    }
-    
-    // Create a new axios instance for multipart/form-data
-    const multipartApi = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 30000, // Longer timeout for file uploads
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    // Add auth token
-    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
-    if (token) {
-      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    const response = await multipartApi.put(`${API_ENDPOINTS.SELLER.UPDATE}/${productId}/catalogue`, formData);
+    const response = await api.put(`${API_ENDPOINTS.SELLER.UPDATE}/${productId}/catalogue`, payload);
     console.log('✅ SellerService: Product updated successfully:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ SellerService: Failed to update product:', error);
-    throw new Error(error.response?.data?.message || 'Failed to update product.');
+    
+    // Handle different error types
+    if (error.response) {
+      // Server responded with error status
+      const errorMessage = error.response.data?.message || error.response.data?.error || 'Server error occurred';
+      throw new Error(errorMessage);
+    } else if (error.request) {
+      // Request was made but no response received
+      throw new Error('Network error - please check your connection');
+    } else {
+      // Something else happened
+      throw new Error(error.message || 'Failed to update product');
+    }
   }
 }
 

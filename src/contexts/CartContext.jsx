@@ -79,10 +79,16 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Only pass cartId if it exists and is not null
-      const currentCartId = cartId || null;
+      // Only pass cartId if it exists and is not null/undefined
+      const currentCartId = cartId && cartId !== 'temp-cart-id' ? cartId : null;
       
+      console.log('🔍 CartContext: Adding items with cartId:', currentCartId);
       const response = await addToCart(currentCartId, items);
+      
+      // Update cartId from response if provided
+      if (response?.cartId && response.cartId !== currentCartId) {
+        setCartId(response.cartId);
+      }
       
       // Reload cart to get updated data
       await loadCart(true); // bypass cache right after add
@@ -165,15 +171,62 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Add single product to cart
+  // Add single product to cart with optimistic updates
   const addProductToCart = useCallback(async (productId, quantity = 1) => {
     const items = [{
       productId: productId,
       quantity: quantity
     }];
     
-    return await addItemsToCart(items);
-  }, [addItemsToCart]);
+    // Optimistic update - add to local cart immediately
+    const existingItem = getCartItemByProductId(cart, productId);
+    if (existingItem) {
+      // Update existing item quantity optimistically
+      setCart(prevCart => 
+        prevCart.map(sellerGroup => ({
+          ...sellerGroup,
+          items: sellerGroup.items.map(item => 
+            item.productId === productId 
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          )
+        }))
+      );
+    } else {
+      // Add new item optimistically (will be replaced by real data after API call)
+      const tempItem = {
+        id: `temp-${Date.now()}`,
+        productId: productId,
+        quantity: quantity,
+        product: { id: productId }, // Minimal product data
+        cartId: cartId || 'temp-cart-id'
+      };
+      
+      // Add to first seller group or create new one
+      setCart(prevCart => {
+        if (prevCart.length === 0) {
+          return [{
+            seller: { id: 'temp-seller', name: 'Loading...' },
+            items: [tempItem]
+          }];
+        }
+        
+        return prevCart.map((sellerGroup, index) => 
+          index === 0 
+            ? { ...sellerGroup, items: [...sellerGroup.items, tempItem] }
+            : sellerGroup
+        );
+      });
+    }
+    
+    try {
+      return await addItemsToCart(items);
+    } catch (error) {
+      // Revert optimistic update on error
+      await loadCart(true);
+      throw error;
+    }
+  }, [addItemsToCart, cart, cartId]);
 
   // Get cart totals
   const getCartTotals = useCallback(() => {

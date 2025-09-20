@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup-cloudinary": "node setup-env.js"
   },
   "dependencies": {
     "algoliasearch": "^5.36.0",
     "axios": "^1.11.0",
+    "framer-motion": "^12.23.16",
     "instantsearch.css": "^8.5.1",
     "instantsearch.js": "^4.79.2",
     "lucide-react": "^0.542.0",
