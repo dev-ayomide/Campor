@@ -171,6 +171,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -191,6 +192,30 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       }, 50);
     }
   };
+
+  // Emoji picker functionality
+  const handleEmojiClick = (emoji) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  // Common emojis for quick access
+  const commonEmojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+    '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+    '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+    '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
+    '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯',
+    '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐',
+    '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👋', '🤚',
+    '🖐️', '✋', '🖖', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️',
+    '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+    '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '🔥',
+    '⭐', '🌟', '💫', '✨', '🎉', '🎊', '🎈', '🎁', '🏆', '🥇',
+    '🎯', '🎪', '🎨', '🎭', '🎪', '🎸', '🎵', '🎶', '🎤', '🎧'
+  ];
 
   const loadConversation = async () => {
     try {
@@ -292,6 +317,20 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       }
     }, 100);
   }, [messages]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showEmojiPicker && !event.target.closest('.emoji-picker-container')) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -522,14 +561,48 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         {sellerId && (
           <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto" style={{ backgroundColor: '#F7F5F0' }}>
             <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-              <button
-                type="button"
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
+              {/* Emoji Picker Button - Desktop Only */}
+              <div className="hidden lg:block relative emoji-picker-container">
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+                
+                {/* Emoji Picker Dropdown */}
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl p-4 max-h-80 overflow-y-auto z-50 w-80">
+                    <div className="grid grid-cols-10 gap-2">
+                      {commonEmojis.map((emoji, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleEmojiClick(emoji)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg text-xl transition-colors duration-150"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Mobile Emoji Button - Non-functional */}
+              <div className="lg:hidden">
+                <button
+                  type="button"
+                  className="p-2 text-gray-400 transition-colors rounded-full"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </div>
               
               <div className="flex-1 relative">
                 <input
@@ -724,14 +797,48 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       {/* Message Input - Fixed */}
       <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto lg:flex-shrink-0" style={{ backgroundColor: '#F7F5F0' }}>
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-          <button
-            type="button"
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
+          {/* Emoji Picker Button - Desktop Only */}
+          <div className="hidden lg:block relative emoji-picker-container">
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            
+            {/* Emoji Picker Dropdown */}
+            {showEmojiPicker && (
+              <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl p-4 max-h-80 overflow-y-auto z-50 w-80">
+                <div className="grid grid-cols-10 gap-2">
+                  {commonEmojis.map((emoji, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleEmojiClick(emoji)}
+                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-lg text-xl transition-colors duration-150"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile Emoji Button - Non-functional */}
+          <div className="lg:hidden">
+            <button
+              type="button"
+              className="p-2 text-gray-400 transition-colors rounded-full"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          </div>
           
           <div className="flex-1 relative">
           <input
