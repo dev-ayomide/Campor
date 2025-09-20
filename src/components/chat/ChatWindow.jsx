@@ -18,20 +18,32 @@ const chatStyles = `
   }
   
   @media (max-width: 1024px) {
+    /* BRUTE FORCE: Perfect mobile layout */
     .chat-layout-mobile {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
       height: 100vh !important;
+      width: 100vw !important;
+      z-index: 20 !important;
       overflow: hidden !important;
     }
     
     .chat-layout-mobile .chat-fixed-header {
       position: fixed !important;
-      top: 79px !important; /* Seamless connection to navbar */
+      top: 80px !important; /* Directly below navbar */
       left: 0 !important;
       right: 0 !important;
-      z-index: 40 !important;
+      z-index: 50 !important; /* Above everything */
       background-color: #F7F5F0 !important;
-      border-top: none !important; /* No border for seamless look */
+      border: none !important;
       box-shadow: none !important;
+      margin: 0 !important;
+      padding: 12px 16px !important;
+      height: auto !important;
+      min-height: 60px !important;
     }
     
     .chat-layout-mobile .chat-fixed-input {
@@ -39,22 +51,52 @@ const chatStyles = `
       bottom: 0 !important;
       left: 0 !important;
       right: 0 !important;
-      z-index: 40 !important;
+      z-index: 50 !important; /* Above everything */
       background-color: #F7F5F0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 12px 16px !important;
+      height: auto !important;
+      min-height: 60px !important;
     }
     
     .chat-layout-mobile .chat-messages-mobile {
-      padding-top: 140px !important; /* Account for navbar + header */
-      padding-bottom: 80px !important;
-      height: 100vh !important;
+      position: fixed !important;
+      top: 140px !important; /* Below navbar + header */
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 60px !important; /* Above input */
       overflow-y: auto !important;
-      margin-top: 0 !important;
+      overflow-x: hidden !important;
+      padding: 16px !important;
+      margin: 0 !important;
+      z-index: 10 !important;
+      background-color: #F7F5F0 !important;
+      /* Force scroll to bottom */
+      scroll-behavior: smooth !important;
     }
     
     .chat-layout-mobile .chat-no-conv-mobile {
-      padding-top: 140px !important; /* Account for navbar + header */
-      padding-bottom: 80px !important;
-      height: 100vh !important;
+      position: fixed !important;
+      top: 140px !important; /* Below navbar + header */
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 60px !important; /* Above input */
+      padding: 16px !important;
+      margin: 0 !important;
+      z-index: 10 !important;
+      background-color: #F7F5F0 !important;
+    }
+    
+    /* Force scroll to bottom for messages */
+    .chat-layout-mobile .chat-messages-mobile::-webkit-scrollbar {
+      display: none !important;
+    }
+    
+    .chat-layout-mobile .chat-messages-mobile {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
     }
   }
   
@@ -133,11 +175,20 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
+      // Force scroll to bottom immediately
       messagesEndRef.current.scrollIntoView({ 
-        behavior: 'smooth',
+        behavior: 'auto', // Changed to auto for immediate scroll
         block: 'end',
         inline: 'nearest'
       });
+      
+      // Additional brute force scroll
+      setTimeout(() => {
+        const messagesContainer = document.querySelector('.chat-messages-mobile');
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }, 50);
     }
   };
 
@@ -172,6 +223,15 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       loadConversation();
       loadMessages();
       joinChatRoom(conversationId);
+      
+      // Force scroll to bottom when component mounts
+      setTimeout(() => {
+        scrollToBottom();
+        const messagesContainer = document.querySelector('.chat-messages-mobile');
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }, 200);
       
       // No periodic refresh needed - real-time updates handle everything
       
@@ -221,7 +281,16 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   }, [conversationId, joinChatRoom, leaveChatRoom, currentUser.id]);
 
   useEffect(() => {
+    // Force scroll to bottom when messages change
     scrollToBottom();
+    
+    // Additional brute force scroll for mobile
+    setTimeout(() => {
+      const messagesContainer = document.querySelector('.chat-messages-mobile');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+    }, 100);
   }, [messages]);
 
   const handleSendMessage = async (e) => {
