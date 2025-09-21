@@ -19,7 +19,13 @@ class SocketService {
       this.socket.disconnect();
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'https://campor-aa1452bb8116.herokuapp.com';
+    // Validate that VITE_SOCKET_URL is set
+    if (!import.meta.env.VITE_SOCKET_URL) {
+      console.error('❌ VITE_SOCKET_URL environment variable is not set!');
+      console.error('Please set VITE_SOCKET_URL in your environment variables.');
+    }
+    
+    const socketUrl = import.meta.env.VITE_SOCKET_URL;
     
     this.socket = io(socketUrl, {
       auth: {
