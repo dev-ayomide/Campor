@@ -93,7 +93,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen font-montserrat">
+    <div className="min-h-screen font-montserrat overflow-x-hidden">
       {/* Hero Section */}
       <section ref={heroRef} className="container mx-auto px-4 py-12 lg:py-20">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
