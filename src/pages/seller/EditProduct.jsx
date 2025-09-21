@@ -380,8 +380,8 @@ const EditProduct = ({ toggleMobileMenu }) => {
                   maxImages={3}
                   disabled={loading}
                   uploadOptions={{
-                    folder: 'samples/ecommerce',
-                    public_id: `product_${productId}_${Date.now()}`
+                    folder: 'samples/ecommerce'
+                    // Remove public_id to let Cloudinary auto-generate unique IDs
                   }}
                 />
               </div>

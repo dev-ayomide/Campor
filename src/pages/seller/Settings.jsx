@@ -4,6 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { updateSellerInfo } from '../../services/authService';
 import { bankResolutionService } from '../../services/bankResolutionService';
+import { CatalogueCoverUpload } from '../../components/common';
 
 export default function SellerSettingsPage({ toggleMobileMenu }) {
   const { user, updateSellerData } = useAuth();
@@ -17,11 +18,12 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   const [accountVerified, setAccountVerified] = useState(false);
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
+  const [isManualEntry, setIsManualEntry] = useState(false);
   const debounceTimeoutRef = useRef(null);
 
   // Store Info Form Data
   const [storeInfo, setStoreInfo] = useState({
-    cataloguePicture: null,
+    catalogueCover: '',
     catalogueName: '',
     storeDescription: '',
     phoneNumber: '',
@@ -41,7 +43,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
     if (user?.seller) {
       // Update form state with the latest data from context
       const newStoreInfo = {
-        cataloguePicture: user.seller.cataloguePicture || null,
+        catalogueCover: user.seller.catalogueCover || '',
         catalogueName: user.seller.catalogueName || '',
         storeDescription: user.seller.storeDescription || '',
         phoneNumber: user.seller.phoneNumber || '',
@@ -66,7 +68,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       }
       
       console.log('🔄 Settings: Updated form state with latest seller data:', {
-        cataloguePicture: user.seller.cataloguePicture,
+        catalogueCover: user.seller.catalogueCover,
         phoneNumber: user.seller.phoneNumber,
         whatsappNumber: user.seller.whatsappNumber
       });
@@ -160,14 +162,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setStoreInfo(prev => ({
-        ...prev,
-        cataloguePicture: file
-      }));
-    }
+  const handleCoverChange = (coverUrl) => {
+    setStoreInfo(prev => ({
+      ...prev,
+      catalogueCover: coverUrl
+    }));
   };
 
   // Debounced account resolution function
@@ -232,14 +231,41 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
   // Handle account number blur
   const handleAccountNumberBlur = useCallback(() => {
-    if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode && !accountVerified) {
+    if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode && !accountVerified && !isManualEntry) {
       // Clear any existing timeout and resolve immediately
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       debouncedResolveAccount(paymentInfo.accountNumber, paymentInfo.bankCode);
     }
-  }, [paymentInfo.accountNumber, paymentInfo.bankCode, accountVerified, debouncedResolveAccount]);
+  }, [paymentInfo.accountNumber, paymentInfo.bankCode, accountVerified, isManualEntry, debouncedResolveAccount]);
+
+  // Handle manual entry toggle
+  const handleManualEntryToggle = useCallback(() => {
+    setIsManualEntry(!isManualEntry);
+    if (!isManualEntry) {
+      // Switching to manual entry - clear verification status
+      setAccountVerified(false);
+      setAccountResolutionError(null);
+      setPaymentInfo(prev => ({ ...prev, accountName: '' }));
+    } else {
+      // Switching back to auto-verification - try to verify if we have valid details
+      if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode) {
+        debouncedResolveAccount(paymentInfo.accountNumber, paymentInfo.bankCode);
+      }
+    }
+  }, [isManualEntry, paymentInfo.accountNumber, paymentInfo.bankCode, debouncedResolveAccount]);
+
+  // Handle manual account name change
+  const handleManualAccountNameChange = useCallback((e) => {
+    setPaymentInfo(prev => ({ ...prev, accountName: e.target.value }));
+    if (e.target.value.trim()) {
+      setAccountVerified(true);
+      setAccountResolutionError(null);
+    } else {
+      setAccountVerified(false);
+    }
+  }, []);
 
   const handleStoreInfoSubmit = async (e) => {
     e.preventDefault();
@@ -259,7 +285,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
         phoneNumber: storeInfo.phoneNumber,
         whatsappNumber: storeInfo.whatsappNumber,
         location: storeInfo.location,
-        cataloguePicture: storeInfo.cataloguePicture
+        catalogueCover: storeInfo.catalogueCover
       };
 
       await updateSellerInfo(user.seller.id, sellerData);
@@ -399,52 +425,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               {/* Cover Image */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Cover Image</label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="cover-image"
-                  />
-                  <label
-                    htmlFor="cover-image"
-                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors relative"
-                  >
-                    {storeInfo.cataloguePicture ? (
-                      <div className="flex items-center justify-center w-full h-full">
-                        <img
-                          src={typeof storeInfo.cataloguePicture === 'string' 
-                            ? storeInfo.cataloguePicture 
-                            : URL.createObjectURL(storeInfo.cataloguePicture)
-                          }
-                          alt="Cover preview"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        {/* Upload overlay */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 rounded-lg opacity-0 hover:opacity-100 transition-opacity">
-                          <svg className="w-8 h-8 text-white mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                          </svg>
-                          <p className="text-sm text-white">Click to upload cover image PNG, JPG up to 5MB</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center">
-                        {/* Placeholder image */}
-                        <div className="w-16 h-16 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <svg className="w-6 h-6 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <p className="text-sm text-gray-500">Click to upload cover image PNG, JPG up to 5MB</p>
-                      </div>
-                    )}
-                  </label>
-                </div>
+                <CatalogueCoverUpload
+                  coverUrl={storeInfo.catalogueCover}
+                  onCoverChange={handleCoverChange}
+                  className="w-full"
+                />
               </div>
 
               {/* Catalogue Name */}
@@ -730,16 +715,37 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
               {/* Account Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Account Name *</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Account Name *
+                    {paymentInfo.accountName && (
+                      <span className="ml-2 text-xs text-green-600 font-medium">
+                        ✓ {isManualEntry ? 'Entered' : 'Verified'}
+                      </span>
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleManualEntryToggle}
+                    className="text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {isManualEntry ? 'Switch to Auto' : 'Enter Manually'}
+                  </button>
+                </div>
                 <div className="relative">
                   <input
                     type="text"
                     name="accountName"
                     value={paymentInfo.accountName}
-                    readOnly
-                    placeholder="Account holder name (auto-filled after verification)"
-                    className={`w-full pl-12 pr-4 py-3 border rounded-lg bg-gray-50 text-gray-600 ${
-                      paymentInfo.accountName ? 'border-green-300 bg-green-50' : 'border-gray-300'
+                    onChange={isManualEntry ? handleManualAccountNameChange : undefined}
+                    readOnly={!isManualEntry}
+                    placeholder={isManualEntry ? "Enter account holder name" : "Account holder name (auto-filled after verification)"}
+                    className={`w-full pl-12 pr-4 py-3 border rounded-lg transition-colors ${
+                      isManualEntry 
+                        ? 'bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500' 
+                        : paymentInfo.accountName 
+                          ? 'bg-gray-50 border-green-300 text-gray-600' 
+                          : 'bg-gray-50 border-gray-300 text-gray-600'
                     }`}
                     required
                   />
@@ -752,7 +758,9 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     </svg>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">This field is automatically filled after account verification</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {isManualEntry ? 'You can manually enter the account holder name' : 'This field is automatically filled after account verification'}
+                </p>
               </div>
 
               {/* Security Note */}
@@ -766,9 +774,9 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               <div className="pt-6">
                 <button
                   type="submit"
-                  disabled={loading || !accountVerified}
+                  disabled={loading || (!accountVerified && !isManualEntry)}
                   className={`w-full py-4 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center ${
-                    loading || !accountVerified
+                    loading || (!accountVerified && !isManualEntry)
                       ? 'bg-gray-400 text-white cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}

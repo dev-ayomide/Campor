@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { addProductToCatalogue, getCategoriesOnly } from '../../services/authService';
+import { addProductToCatalogue, getCategoriesOnly, verifySellerExists } from '../../services/authService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
 import { ImageUpload } from '../../components/common';
 
@@ -22,6 +22,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
     imageUrls: []
   });
   const [formattedPrice, setFormattedPrice] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -69,10 +70,29 @@ export default function AddProductPage({ toggleMobileMenu }) {
   };
 
   const handleImagesChange = (imageUrls) => {
-    setFormData(prev => ({
-      ...prev,
-      imageUrls
-    }));
+    console.log('🔍 AddProduct: handleImagesChange called with:', imageUrls);
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        imageUrls
+      };
+      console.log('🔍 AddProduct: Updated formData.imageUrls:', newData.imageUrls);
+      return newData;
+    });
+    // Reset image index when images change
+    setCurrentImageIndex(0);
+  };
+
+  const handlePreviousImage = () => {
+    setCurrentImageIndex(prev => 
+      prev === 0 ? formData.imageUrls.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex(prev => 
+      prev === formData.imageUrls.length - 1 ? 0 : prev + 1
+    );
   };
 
   const handleNext = (e) => {
@@ -100,10 +120,25 @@ export default function AddProductPage({ toggleMobileMenu }) {
       return;
     }
 
+    // Additional validation
+    if (!user.seller?.id || user.seller.id === '') {
+      setError('Invalid seller ID - please ensure you are properly registered as a seller');
+      return;
+    }
+
+    if (user.role !== 'SELLER') {
+      setError('You are not registered as a seller. Please complete seller registration first.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
+      // First verify seller exists in backend
+      console.log('🔍 AddProduct: Verifying seller exists in backend...');
+      await verifySellerExists(user.seller.id);
+      
       const productData = {
         name: formData.name,
         description: formData.description,
@@ -113,14 +148,25 @@ export default function AddProductPage({ toggleMobileMenu }) {
         imageUrls: formData.imageUrls
       };
 
-      console.log('Creating product as draft:', productData);
+      console.log('🔍 AddProduct: Full user data:', JSON.stringify(user, null, 2));
+      console.log('🔍 AddProduct: Seller ID:', user.seller?.id);
+      console.log('🔍 AddProduct: Seller data:', JSON.stringify(user.seller, null, 2));
+      console.log('🔍 AddProduct: User role:', user.role);
+      console.log('🔍 AddProduct: Creating product as draft:', productData);
+      
       await addProductToCatalogue(user.seller.id, productData);
       console.log('✅ Product created successfully as draft');
       
       navigate('/seller/products');
     } catch (err) {
       console.error('❌ Failed to create product:', err);
-      setError(err.message);
+      
+      // Provide more specific error messages
+      if (err.message.includes('Unauthorized') || err.message.includes('403')) {
+        setError('You are not authorized to create products. Please ensure you are properly registered as a seller.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -189,8 +235,8 @@ export default function AddProductPage({ toggleMobileMenu }) {
                   maxImages={3}
                   disabled={loading}
                   uploadOptions={{
-                    folder: 'samples/ecommerce',
-                    public_id: `product_${Date.now()}`
+                    folder: 'samples/ecommerce'
+                    // Remove public_id to let Cloudinary auto-generate unique IDs
                   }}
                 />
               </div>
@@ -316,28 +362,71 @@ export default function AddProductPage({ toggleMobileMenu }) {
 
             {/* Product Preview Card */}
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
-              {/* Product Image */}
+              {/* Product Image Carousel */}
               <div className="relative h-64 bg-gray-100">
-                {formData.imageUrls.length > 0 && (
-                  <img 
-                    src={formData.imageUrls[0]} 
-                    alt="Product"
-                    className="w-full h-full object-cover"
-                  />
+                {formData.imageUrls.length > 0 ? (
+                  <>
+                    <img 
+                      src={formData.imageUrls[currentImageIndex]} 
+                      alt={`Product ${currentImageIndex + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Navigation arrows - only show if multiple images */}
+                    {formData.imageUrls.length > 1 && (
+                      <>
+                        <button 
+                          onClick={handlePreviousImage}
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={handleNextImage}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* Image counter */}
+                    {formData.imageUrls.length > 1 && (
+                      <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                        {currentImageIndex + 1} / {formData.imageUrls.length}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="text-center">
+                      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-sm">No images</p>
+                    </div>
+                  </div>
                 )}
-                
-                {/* Navigation arrows */}
-                <button className="absolute left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md">
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button className="absolute right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md">
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
+              
+              {/* Dot indicators */}
+              {formData.imageUrls.length > 1 && (
+                <div className="flex justify-center py-3 space-x-2 bg-gray-50">
+                  {formData.imageUrls.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
               
               {/* Product Details */}
               <div className="p-4">

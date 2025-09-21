@@ -396,54 +396,25 @@ export async function registerSeller(sellerData) {
     console.log('🔍 SellerService: Registering seller...');
     console.log('🔍 SellerService: Seller data received:', sellerData);
     
-    // Create FormData for multipart/form-data request
-    const formData = new FormData();
+    // Prepare JSON payload for the API
+    const payload = {
+      catalogueName: sellerData.catalogueName,
+      storeDescription: sellerData.storeDescription,
+      phoneNumber: sellerData.phoneNumber,
+      whatsappNumber: sellerData.whatsappNumber,
+      location: sellerData.location,
+      bankName: sellerData.bankName,
+      bankCode: sellerData.bankCode,
+      accountNumber: sellerData.accountNumber,
+      accountName: sellerData.accountName,
+      catalogueCover: sellerData.catalogueCover
+    };
     
-    // Add required fields
-    formData.append('catalogueName', sellerData.catalogueName);
-    formData.append('bankName', sellerData.bankName);
-    formData.append('bankCode', sellerData.bankCode || '');
-    formData.append('accountNumber', sellerData.accountNumber);
-    formData.append('accountName', sellerData.accountName);
-    formData.append('phoneNumber', sellerData.phoneNumber);
-    formData.append('location', sellerData.location);
-    
-    // Add optional fields
-    if (sellerData.storeDescription) {
-      formData.append('storeDescription', sellerData.storeDescription);
-    }
-    if (sellerData.whatsappNumber) {
-      formData.append('whatsappNumber', sellerData.whatsappNumber);
-    }
-    if (sellerData.cataloguePicture) {
-      formData.append('cataloguePicture', sellerData.cataloguePicture);
-    }
-    
-    // Create a new axios instance for multipart/form-data
-    const multipartApi = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 30000, // Longer timeout for file uploads
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    // Add auth token
-    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
-    if (token) {
-      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    // Log FormData contents for debugging
-    console.log('🔍 SellerService: FormData contents:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
+    console.log('🔍 SellerService: Payload prepared:', payload);
     
     console.log('🔍 SellerService: Making request to:', `${API_BASE_URL}${API_ENDPOINTS.SELLER.REGISTER}`);
-    console.log('🔍 SellerService: Request headers:', multipartApi.defaults.headers);
     
-    const response = await multipartApi.post(API_ENDPOINTS.SELLER.REGISTER, formData);
+    const response = await api.post(API_ENDPOINTS.SELLER.REGISTER, payload);
     console.log('✅ SellerService: Seller registered successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -655,9 +626,35 @@ export async function getPublicSellerCatalogue(sellerId) {
   }
 }
 
+
+// Function to verify seller exists in backend
+export async function verifySellerExists(sellerId) {
+  try {
+    console.log('🔍 SellerService: Verifying seller exists:', sellerId);
+    
+    // Try to get seller products to verify seller exists
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
+    console.log('✅ SellerService: Seller exists and is accessible');
+    return true;
+  } catch (error) {
+    console.error('❌ SellerService: Seller verification failed:', error);
+    
+    if (error.response?.status === 404) {
+      throw new Error('Seller not found. Please ensure you are properly registered as a seller.');
+    } else if (error.response?.status === 401) {
+      throw new Error('Authentication failed. Please log in again.');
+    } else if (error.response?.status === 403) {
+      throw new Error('Access denied. You are not authorized to access this seller account.');
+    } else {
+      throw new Error('Failed to verify seller: ' + (error.response?.data?.message || error.message));
+    }
+  }
+}
+
 export async function addProductToCatalogue(sellerId, productData) {
   try {
     console.log('🔍 SellerService: Adding product to catalogue...');
+    console.log('🔍 SellerService: Seller ID:', sellerId);
     
     // Prepare product data as JSON (backend now expects application/json)
     const payload = {
@@ -673,6 +670,8 @@ export async function addProductToCatalogue(sellerId, productData) {
       ...payload,
       imageUrlsCount: payload.imageUrls.length
     });
+    
+    console.log('🔍 SellerService: Making request to:', `${API_BASE_URL}${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
     
     const response = await api.post(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`, payload);
     console.log('✅ SellerService: Product added to catalogue successfully:', response.data);
@@ -767,10 +766,10 @@ export async function updateSellerInfo(sellerId, sellerData) {
       console.log('🔍 SellerService: Added location:', sellerData.location);
     }
     
-    // Add catalogue cover if provided (API expects 'catalogueCover' not 'cataloguePicture')
-    if (sellerData.cataloguePicture) {
-      formData.append('catalogueCover', sellerData.cataloguePicture);
-      console.log('🔍 SellerService: Added catalogueCover:', sellerData.cataloguePicture);
+    // Add catalogue cover if provided
+    if (sellerData.catalogueCover) {
+      formData.append('catalogueCover', sellerData.catalogueCover);
+      console.log('🔍 SellerService: Added catalogueCover:', sellerData.catalogueCover);
     }
     
     // Create a new axios instance for multipart/form-data

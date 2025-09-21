@@ -33,12 +33,20 @@ export default function ImageUpload({
       setUploading(true);
       
       const fileArray = Array.from(files);
+      console.log('🔍 ImageUpload: Uploading files:', fileArray.map(f => f.name));
+      
       const uploadResults = await uploadMultipleImages(fileArray, uploadOptions);
+      console.log('🔍 ImageUpload: Upload results:', uploadResults);
       
       // Notify parent component of changes
       if (onImagesChange) {
         const newImageUrls = uploadResults.map(result => result.url);
+        console.log('🔍 ImageUpload: New URLs:', newImageUrls);
+        console.log('🔍 ImageUpload: Current images:', images);
+        
         const allImageUrls = [...images, ...newImageUrls];
+        console.log('🔍 ImageUpload: All URLs:', allImageUrls);
+        
         onImagesChange(allImageUrls);
       }
     } catch (err) {
@@ -95,6 +103,7 @@ export default function ImageUpload({
       fileInputRef.current?.click();
     }
   };
+
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -165,31 +174,41 @@ export default function ImageUpload({
             Images ({allImages.length}/{maxImages})
           </p>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {allImages.map((image, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={image.url || image}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                />
-                
-                {!disabled && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveImage(index);
+          {/* Grid Preview */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {allImages.map((image, index) => {
+              const imageUrl = typeof image === 'string' ? image : image.url;
+              console.log(`🔍 ImageUpload: Preview ${index + 1}:`, imageUrl);
+              
+              return (
+                <div key={`${imageUrl}-${index}`} className="relative group">
+                  <img
+                    src={imageUrl}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                    onError={(e) => {
+                      console.error(`🔍 ImageUpload: Failed to load image ${index + 1}:`, imageUrl);
+                      e.target.style.display = 'none';
                     }}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            ))}
+                  />
+                  
+                  {!disabled && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveImage(index);
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

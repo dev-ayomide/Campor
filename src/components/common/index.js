@@ -8,6 +8,7 @@ export { default as ShoppingBagIcon } from './ShoppingBagIcon';
 export { default as ChatIcon } from './ChatIcon';
 export { default as ProfileIcon } from './ProfileIcon';
 export { default as ImageUpload } from './ImageUpload';
+export { default as CatalogueCoverUpload } from './CatalogueCoverUpload';
 export { default as PasswordInput } from './PasswordInput';
 export { 
   default as Skeleton,

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { registerSeller, testSellerEndpoint } from '../../services/authService';
 import { bankResolutionService } from '../../services/bankResolutionService';
+import { CatalogueCoverUpload } from '../../components/common';
 
 export default function SellerOnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -13,7 +14,7 @@ export default function SellerOnboardingPage() {
   const [storeInfo, setStoreInfo] = useState({
     catalogueName: '',
     storeDescription: '',
-    cataloguePicture: null
+    catalogueCover: ''
   });
 
   const [bankDetails, setBankDetails] = useState({
@@ -41,6 +42,7 @@ export default function SellerOnboardingPage() {
   const [accountVerified, setAccountVerified] = useState(false);
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
+  const [isManualEntry, setIsManualEntry] = useState(false);
   const debounceTimeoutRef = useRef(null);
 
   const steps = [
@@ -179,14 +181,41 @@ export default function SellerOnboardingPage() {
 
   // Handle account number blur
   const handleAccountNumberBlur = useCallback(() => {
-    if (bankDetails.accountNumber.length === 10 && bankDetails.bankCode && !accountVerified) {
+    if (bankDetails.accountNumber.length === 10 && bankDetails.bankCode && !accountVerified && !isManualEntry) {
       // Clear any existing timeout and resolve immediately
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       debouncedResolveAccount(bankDetails.accountNumber, bankDetails.bankCode);
     }
-  }, [bankDetails.accountNumber, bankDetails.bankCode, accountVerified, debouncedResolveAccount]);
+  }, [bankDetails.accountNumber, bankDetails.bankCode, accountVerified, isManualEntry, debouncedResolveAccount]);
+
+  // Handle manual entry toggle
+  const handleManualEntryToggle = useCallback(() => {
+    setIsManualEntry(!isManualEntry);
+    if (!isManualEntry) {
+      // Switching to manual entry - clear verification status
+      setAccountVerified(false);
+      setBankVerificationError(null);
+      setBankDetails(prev => ({ ...prev, accountName: '' }));
+    } else {
+      // Switching back to auto-verification - try to verify if we have valid details
+      if (bankDetails.accountNumber.length === 10 && bankDetails.bankCode) {
+        debouncedResolveAccount(bankDetails.accountNumber, bankDetails.bankCode);
+      }
+    }
+  }, [isManualEntry, bankDetails.accountNumber, bankDetails.bankCode, debouncedResolveAccount]);
+
+  // Handle manual account name change
+  const handleManualAccountNameChange = useCallback((e) => {
+    setBankDetails(prev => ({ ...prev, accountName: e.target.value }));
+    if (e.target.value.trim()) {
+      setAccountVerified(true);
+      setBankVerificationError(null);
+    } else {
+      setAccountVerified(false);
+    }
+  }, []);
 
   // Cleanup debounce timeout on unmount
   useEffect(() => {
@@ -197,11 +226,8 @@ export default function SellerOnboardingPage() {
     };
   }, []);
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setStoreInfo(prev => ({ ...prev, cataloguePicture: file }));
-    }
+  const handleCoverChange = (coverUrl) => {
+    setStoreInfo(prev => ({ ...prev, catalogueCover: coverUrl }));
   };
 
 
@@ -215,7 +241,7 @@ export default function SellerOnboardingPage() {
                bankDetails.accountNumber && 
                bankDetails.accountName && 
                bankDetails.accountNumber.length >= 10 &&
-               accountVerified; // Require account verification
+               (accountVerified || isManualEntry); // Allow manual entry or verification
       case 3:
         return contactInfo.phoneNumber.trim() && contactInfo.location.trim();
       default:
@@ -244,7 +270,7 @@ export default function SellerOnboardingPage() {
             errorMessage = 'Please enter a valid 10-digit account number';
           } else if (!bankDetails.accountName) {
             errorMessage = 'Please wait for account verification to complete';
-          } else if (!accountVerified) {
+          } else if (!accountVerified && !isManualEntry) {
             errorMessage = 'Please verify your account details before proceeding';
           }
           break;
@@ -335,40 +361,25 @@ export default function SellerOnboardingPage() {
     }
     
     try {
-      // Prepare basic seller data (store info + contact info)
-      const basicSellerData = {
+      // Prepare complete seller data (store info + contact info + bank details)
+      const sellerData = {
         catalogueName: storeInfo.catalogueName,
         storeDescription: storeInfo.storeDescription,
-        cataloguePicture: storeInfo.cataloguePicture,
+        catalogueCover: storeInfo.catalogueCover,
         phoneNumber: contactInfo.phoneNumber,
         whatsappNumber: contactInfo.whatsappNumber || contactInfo.phoneNumber, // Use phone number if WhatsApp is empty
-        location: contactInfo.location
-      };
-      
-      // Prepare bank details separately
-      const bankDetailsData = {
+        location: contactInfo.location,
         bankName: bankDetails.bankName,
         bankCode: bankDetails.bankCode,
         accountNumber: bankDetails.accountNumber,
         accountName: bankDetails.accountName
       };
       
-      console.log('Seller registration data:', { basicSellerData, bankDetailsData });
+      console.log('Seller registration data:', sellerData);
       
-      // Call the API to register seller (basic info first)
-      const response = await registerSeller(basicSellerData);
+      // Call the API to register seller with all data
+      const response = await registerSeller(sellerData);
       console.log('Seller registration successful:', response);
-      
-      // Update bank details separately if seller was created successfully
-      if (response.seller?.id) {
-        try {
-          await bankResolutionService.updateSellerBankDetails(response.seller.id, bankDetailsData);
-          console.log('Bank details updated successfully');
-        } catch (bankError) {
-          console.error('Failed to update bank details:', bankError);
-          // Don't fail the entire registration if bank details fail
-        }
-      }
       
       // Update user's seller status in context
       completeSellersOnboarding(response);
@@ -457,29 +468,11 @@ export default function SellerOnboardingPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Cover Image
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 sm:p-8 text-center hover:border-blue-400 transition-colors">
-                <input
-                  type="file"
-                  id="coverImage"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <label htmlFor="coverImage" className="cursor-pointer">
-                  <div className="flex flex-col items-center">
-                    <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-gray-600 mb-1 sm:mb-2 text-sm sm:text-base">Click to upload cover image</p>
-                    <p className="text-xs sm:text-sm text-gray-500">PNG, JPG up to 5MB</p>
-                  </div>
-                </label>
-                {storeInfo.cataloguePicture && (
-                  <p className="mt-2 text-sm text-blue-600">
-                    Selected: {storeInfo.cataloguePicture.name}
-                  </p>
-                )}
-              </div>
+              <CatalogueCoverUpload
+                coverUrl={storeInfo.catalogueCover}
+                onCoverChange={handleCoverChange}
+                className="w-full"
+              />
             </div>
           </div>
         );
@@ -643,14 +636,23 @@ export default function SellerOnboardingPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
                 Account Name <span className="text-red-500">*</span>
                 {bankDetails.accountName && (
                   <span className="ml-2 text-xs text-green-600 font-medium">
-                    ✓ Verified
+                      ✓ {isManualEntry ? 'Entered' : 'Verified'}
                   </span>
                 )}
               </label>
+                <button
+                  type="button"
+                  onClick={handleManualEntryToggle}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  {isManualEntry ? 'Switch to Auto' : 'Enter Manually'}
+                </button>
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -660,19 +662,27 @@ export default function SellerOnboardingPage() {
                 <input
                   type="text"
                   value={bankDetails.accountName}
-                  readOnly
-                  placeholder="Account name (auto-filled after verification)"
-                  className={`w-full pl-12 pr-4 py-3 sm:py-4 bg-gray-50 border rounded-xl text-gray-600 ${
-                    bankDetails.accountName 
-                      ? 'border-green-300 bg-green-50' 
-                      : 'border-gray-300'
+                  onChange={isManualEntry ? handleManualAccountNameChange : undefined}
+                  readOnly={!isManualEntry}
+                  placeholder={isManualEntry ? "Enter account holder name" : "Account name (auto-filled after verification)"}
+                  className={`w-full pl-12 pr-4 py-3 sm:py-4 border rounded-xl transition-colors ${
+                    isManualEntry 
+                      ? 'bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500' 
+                      : bankDetails.accountName 
+                        ? 'bg-gray-50 border-green-300 text-gray-600' 
+                        : 'bg-gray-50 border-gray-300 text-gray-600'
                   }`}
                   required
                 />
               </div>
               {bankDetails.accountName && (
                 <p className="mt-1 text-xs text-green-600">
-                  Account name verified successfully
+                  {isManualEntry ? 'Account name entered manually' : 'Account name verified successfully'}
+                </p>
+              )}
+              {isManualEntry && (
+                <p className="mt-1 text-xs text-blue-600">
+                  You can manually enter the account holder name
                 </p>
               )}
             </div>
