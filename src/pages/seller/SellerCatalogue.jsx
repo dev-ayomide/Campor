@@ -618,10 +618,8 @@ export default function SellerCatalogue() {
 
                           {/* Action Buttons - Bottom aligned */}
                           <div className="flex gap-2 items-center">
-                            {product.stockQuantity === 0 ? (
-                              <button disabled className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
-                            ) : user?.seller?.id !== sellerId ? (
-                              <div className="flex-1">
+                            {user?.seller?.id !== sellerId ? (
+                              <div className={`flex-1 ${product.stockQuantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}
@@ -666,10 +664,8 @@ export default function SellerCatalogue() {
 
                           {/* Action Buttons */}
                           <div className="flex gap-2">
-                            {product.stockQuantity === 0 ? (
-                              <button disabled className="flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
-                            ) : user?.seller?.id !== sellerId ? (
-                              <div className="flex-1">
+                            {user?.seller?.id !== sellerId ? (
+                              <div className={`flex-1 ${product.stockQuantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>
                             ) : null}

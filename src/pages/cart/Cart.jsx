@@ -148,16 +148,21 @@ export default function CartPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-lg font-medium text-gray-600">
-                          {group.seller?.catalogueName?.charAt(0) || group.seller?.name?.charAt(0) || 'S'}
+                          {(group.items?.[0]?.product?.seller?.catalogueName || 
+                            group.items?.[0]?.product?.seller?.name || 
+                            group.seller?.catalogueName || 
+                            group.seller?.name || 
+                            'S').charAt(0)}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-medium text-gray-900 text-base truncate">
-                          {group.seller?.catalogueName || group.seller?.name || 'Unknown Seller'}
+                          {group.items?.[0]?.product?.seller?.catalogueName || 
+                           group.items?.[0]?.product?.seller?.name || 
+                           group.seller?.catalogueName || 
+                           group.seller?.name || 
+                           'Unknown Seller'}
                         </h3>
-                        <p className="text-sm text-gray-600 truncate">
-                          Seller ID: {group.sellerId?.slice(0, 8)}...
-                        </p>
                       </div>
                     </div>
                     
@@ -189,7 +194,10 @@ export default function CartPage() {
                     <div key={item.id} className="p-6">
                       <div className="flex gap-4">
                         {/* Product Image */}
-                        <div className="flex-shrink-0">
+                        <Link 
+                          to={`/product/${item.product?.slug}`}
+                          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                        >
                           <img 
                             src={item.product?.imageUrls?.[0] || productImage} 
                             alt={item.product?.name || 'Product'}
@@ -198,13 +206,18 @@ export default function CartPage() {
                               e.target.src = productImage;
                             }}
                           />
-                        </div>
+                        </Link>
 
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                            {item.product?.name || 'Product'}
-                          </h3>
+                          <Link 
+                            to={`/product/${item.product?.slug}`}
+                            className="hover:text-blue-600 transition-colors"
+                          >
+                            <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                              {item.product?.name || 'Product'}
+                            </h3>
+                          </Link>
                           <p className="text-lg font-bold text-gray-900 mb-3">
                             {formatPrice(item.product?.price || 0)}
                           </p>

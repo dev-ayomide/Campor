@@ -919,9 +919,13 @@ export default function MarketplacePage() {
                           }}
                         />
                         
-                        {/* Stock Status Badge - Removed for now */}
+                        {/* Stock Status Badge */}
+                        {productStock <= 0 && (
+                          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md shadow-lg z-10">
+                            Out of Stock
+                          </div>
+                        )}
                         
-
 
 
                       </div>
@@ -981,14 +985,10 @@ export default function MarketplacePage() {
 
                             {/* Action Buttons - Bottom aligned */}
                             <div className="flex gap-3 items-center">
-                              {productStock === 0 ? (
-                                <button disabled className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
-                              ) : (
-                                <div className="flex-1">
-                                  {/* Reusable quantity-aware button */}
-                                  <AddToCartButton productId={product.id} className="w-3/4" />
-                                </div>
-                              )}
+                              <div className={`flex-1 ${productStock === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {/* Reusable quantity-aware button */}
+                                <AddToCartButton productId={product.id} className="w-3/4" />
+                              </div>
                               <WishlistButton 
                                 productId={product.id}
                                 className="flex-shrink-0"
@@ -1046,14 +1046,10 @@ export default function MarketplacePage() {
 
                             {/* Action Buttons */}
                             <div className="flex gap-3">
-                              {productStock === 0 ? (
-                                <button disabled className="flex-1 py-2.5 md:py-2 px-3 rounded-lg text-sm font-medium bg-gray-400 text-white cursor-not-allowed">Out of Stock</button>
-                              ) : (
-                                <div className="flex-1">
-                                  {/* Reusable quantity-aware button */}
-                                  <AddToCartButton productId={product.id} className="w-full" />
-                                </div>
-                              )}
+                              <div className={`flex-1 ${productStock === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {/* Reusable quantity-aware button */}
+                                <AddToCartButton productId={product.id} className="w-full" />
+                              </div>
                               <WishlistButton 
                                 productId={product.id}
                               />

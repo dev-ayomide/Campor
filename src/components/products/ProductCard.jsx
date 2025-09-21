@@ -53,11 +53,12 @@ export default function ProductCard({ product }) {
           />
           
           {/* Stock Badge */}
-          {product.stockQuantity <= 0 && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+          {(product.stockQuantity <= 0 || !product.stockQuantity || product.status === 'OUT_OF_STOCK') && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md shadow-lg z-10">
               Out of Stock
             </div>
           )}
+          
           
 
         </div>
@@ -87,7 +88,7 @@ export default function ProductCard({ product }) {
             {formatPrice(product.price)}
           </span>
           <span className="text-sm text-gray-500">
-            {product.stockQuantity > 0 ? `${product.stockQuantity} left` : 'Out of stock'}
+            {(product.stockQuantity > 0 && product.stockQuantity) ? `${product.stockQuantity} left` : 'Out of stock'}
           </span>
         </div>
 
@@ -136,20 +137,13 @@ export default function ProductCard({ product }) {
         {/* Add to Cart and Wishlist Buttons */}
         <div className="mt-auto">
           <div className="flex items-center gap-2">
-            {product.stockQuantity > 0 ? (
+            <div className={`flex-1 ${(product.stockQuantity <= 0 || !product.stockQuantity) ? 'opacity-50 pointer-events-none' : ''}`}>
               <AddToCartButton 
                 productId={product.id} 
                 sellerId={product.seller?.id}
-                className="flex-1"
+                className="w-full"
               />
-            ) : (
-              <button 
-                disabled 
-                className="flex-1 py-2 px-3 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed"
-              >
-                Out of Stock
-              </button>
-            )}
+            </div>
             <WishlistButton 
               productId={product.id}
             />

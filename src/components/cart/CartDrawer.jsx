@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment, redirectToPayment } from '../../services/paymentService';
@@ -162,7 +163,11 @@ export default function CartDrawer({ isOpen, onClose }) {
                     {/* Seller Info */}
                     <div className="mb-3 pb-2 border-b">
                       <h3 className="font-medium text-gray-900">
-                        {sellerGroup.sellerId ? `Seller ${sellerGroup.sellerId.slice(0, 8)}...` : 'Unknown Seller'}
+                        {sellerGroup.items?.[0]?.product?.seller?.catalogueName || 
+                         sellerGroup.items?.[0]?.product?.seller?.name || 
+                         sellerGroup.seller?.catalogueName || 
+                         sellerGroup.seller?.name || 
+                         (sellerGroup.sellerId ? `Seller ${sellerGroup.sellerId.slice(0, 8)}...` : 'Unknown Seller')}
                       </h3>
                     </div>
                     
@@ -171,23 +176,29 @@ export default function CartDrawer({ isOpen, onClose }) {
                       {sellerGroup.items?.map((item) => (
                         <div key={item.id} className="flex items-center space-x-3">
                           {/* Product Image */}
-                          <div className="flex-shrink-0">
+                          <Link 
+                            to={`/product/${item.product?.slug}`}
+                            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                          >
                             <img
                               src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
                               alt={item.product?.name}
                               className="w-16 h-16 object-cover rounded-md"
                             />
-                          </div>
+                          </Link>
                           
                           {/* Product Details */}
-                          <div className="flex-1 min-w-0">
+                          <Link 
+                            to={`/product/${item.product?.slug}`}
+                            className="flex-1 min-w-0 hover:text-blue-600 transition-colors"
+                          >
                             <h4 className="text-sm font-medium text-gray-900 truncate">
                               {item.product?.name}
                             </h4>
                             <p className="text-sm text-gray-500">
                               {formatPrice(item.product?.price || 0)}
                             </p>
-                          </div>
+                          </Link>
                           
                           {/* Quantity Controls */}
                           <div className="flex items-center space-x-2">
