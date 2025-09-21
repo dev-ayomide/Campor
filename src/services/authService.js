@@ -507,36 +507,42 @@ export async function getProductById(productId) {
   try {
     console.log('🔍 SellerService: Fetching product by ID:', productId);
     
-    // First get the seller ID from the current user
+    // Get the seller ID from the current user context
     const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
     if (!token) {
       throw new Error('Authentication required');
     }
     
-    // Get user profile to get seller ID
+    // Get user data to extract seller ID
     const authResponse = await api.get(API_ENDPOINTS.AUTH.ME);
-    const userId = authResponse.data.id;
+    console.log('🔍 SellerService: Auth response:', authResponse.data);
     
-    // Get seller profile to get seller ID
-    const sellerResponse = await api.get(`${API_ENDPOINTS.USER.GET_BY_ID}/${userId}`);
-    const sellerId = sellerResponse.data.seller?.id;
+    const user = authResponse.data.user || authResponse.data;
+    const sellerId = user.seller?.id;
     
     if (!sellerId) {
-      throw new Error('Seller ID not found');
+      throw new Error('Seller ID not found in user data');
     }
     
-    // Get complete seller catalogue with full product details
-    const catalogueResponse = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
-    const products = catalogueResponse.data.products || [];
+    console.log('🔍 SellerService: Seller ID:', sellerId);
+    
+    // Get seller products with full details
+    const productsResponse = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
+    console.log('🔍 SellerService: Products response:', productsResponse.data);
+    
+    const products = Array.isArray(productsResponse.data) ? productsResponse.data : [];
     
     // Find the specific product
     const product = products.find(p => p.id === productId);
     
     if (!product) {
-      throw new Error('Product not found in catalogue');
+      throw new Error('Product not found in seller products');
     }
     
     console.log('✅ SellerService: Product fetched successfully:', product);
+    console.log('🔍 SellerService: Product description:', product.description);
+    console.log('🔍 SellerService: Product createdAt:', product.createdAt);
+    
     return product;
   } catch (error) {
     console.error('❌ SellerService: Failed to fetch product:', error);

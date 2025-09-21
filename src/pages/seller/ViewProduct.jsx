@@ -24,6 +24,9 @@ const ViewProduct = ({ toggleMobileMenu }) => {
           const foundProduct = products.find(p => p.id === productId);
           
           if (foundProduct) {
+            console.log('🔍 ViewProduct: Found product:', foundProduct);
+            console.log('🔍 ViewProduct: Product description:', foundProduct.description);
+            console.log('🔍 ViewProduct: Product createdAt:', foundProduct.createdAt);
             setProduct(foundProduct);
           } else {
             setError('Product not found');
@@ -211,7 +214,9 @@ const ViewProduct = ({ toggleMobileMenu }) => {
                 {/* Created Date */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-2">Created</h4>
-                  <p className="text-lg text-gray-600">{new Date(product.createdAt).toLocaleDateString()}</p>
+                  <p className="text-lg text-gray-600">
+                    {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'Date not available'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -220,7 +225,9 @@ const ViewProduct = ({ toggleMobileMenu }) => {
           {/* Description */}
           <div className="p-6 border-t border-gray-200">
             <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
-            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            <p className="text-gray-600 leading-relaxed">
+              {product.description || 'No description available'}
+            </p>
           </div>
         </div>
       </div>

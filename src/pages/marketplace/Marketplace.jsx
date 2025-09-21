@@ -921,7 +921,7 @@ export default function MarketplacePage() {
                         
                         {/* Stock Status Badge */}
                         {productStock <= 0 && (
-                          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md shadow-lg z-10">
+                          <div className="absolute top-2 left-2 bg-red-700 text-white text-xs px-3 py-1.5 rounded-full shadow-lg z-10">
                             Out of Stock
                           </div>
                         )}

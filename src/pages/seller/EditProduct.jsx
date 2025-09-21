@@ -63,83 +63,50 @@ const EditProduct = ({ toggleMobileMenu }) => {
           setCategories([]);
         }
         
-        // Try to fetch product directly by ID first
-        try {
-          console.log('🔍 EditProduct: Attempting to fetch product by ID...');
-          const productData = await getProductById(productId);
-          console.log('✅ EditProduct: Product fetched by ID:', productData);
-          
-          if (productData) {
-            setCurrentProduct(productData);
-            console.log('🔍 EditProduct: Product data structure:', productData);
-            console.log('🔍 EditProduct: Product data keys:', Object.keys(productData));
-            
-            setFormData({
-              name: productData.name || '',
-              description: productData.description || '',
-              price: productData.price || '',
-              stockQuantity: productData.stockQuantity || '',
-              categoryId: productData.category?.id || productData.categoryId || '',
-              imageUrls: productData.imageUrls || []
-            });
-            // Set formatted price for display
-            setFormattedPrice(formatPriceInput(productData.price || ''));
-            console.log('✅ EditProduct: Form data populated successfully');
-            console.log('🔍 EditProduct: Final form data:', {
-              name: productData.name || '',
-              description: productData.description || '',
-              price: productData.price || '',
-              stockQuantity: productData.stockQuantity || '',
-              categoryId: productData.category?.id || productData.categoryId || '',
-              imageUrls: productData.imageUrls || []
-            });
-            return;
-          }
-        } catch (idError) {
-          console.log('⚠️ EditProduct: Failed to fetch by ID, trying fallback method:', idError.message);
-          console.log('⚠️ EditProduct: Full error details:', idError);
-        }
-        
-        // Fallback: Fetch seller products to get current product data
+        // Fetch seller products and find the specific product
         if (user?.seller?.id) {
-          console.log('🔍 EditProduct: Using fallback method - fetching seller products...');
-          const productsData = await getSellerProducts(user.seller.id);
-          console.log('🔍 EditProduct: All seller products:', productsData);
-          console.log('🔍 EditProduct: Looking for product ID:', productId);
-          console.log('🔍 EditProduct: Available product IDs:', productsData.map(p => ({ id: p.id, name: p.name })));
-          
-          const product = productsData.find(p => p.id === productId);
-          console.log('🔍 EditProduct: Found product:', product);
-          
-          if (product) {
-            setCurrentProduct(product);
-            console.log('🔍 EditProduct: Fallback product data structure:', product);
-            console.log('🔍 EditProduct: Fallback product data keys:', Object.keys(product));
+          try {
+            console.log('🔍 EditProduct: Fetching seller products...');
+            const products = await getSellerProducts(user.seller.id);
+            console.log('🔍 EditProduct: Seller products:', products);
             
-            setFormData({
-              name: product.name || '',
-              description: product.description || '',
-              price: product.price || '',
-              stockQuantity: product.stockQuantity || '',
-              categoryId: product.category?.id || product.categoryId || '',
-              imageUrls: product.imageUrls || []
-            });
-            // Set formatted price for display
-            setFormattedPrice(formatPriceInput(product.price || ''));
-            console.log('✅ EditProduct: Form data populated via fallback');
-            console.log('🔍 EditProduct: Fallback form data:', {
-              name: product.name || '',
-              description: product.description || '',
-              price: product.price || '',
-              stockQuantity: product.stockQuantity || '',
-              categoryId: product.category?.id || product.categoryId || '',
-              imageUrls: product.imageUrls || []
-            });
-          } else {
-            console.error('❌ EditProduct: Product not found in seller products');
-            console.error('❌ EditProduct: Available products:', productsData.map(p => ({ id: p.id, name: p.name })));
-            setError('Product not found in your products list');
+            const productData = products.find(p => p.id === productId);
+            console.log('🔍 EditProduct: Found product:', productData);
+            
+            if (productData) {
+              setCurrentProduct(productData);
+              console.log('🔍 EditProduct: Product data structure:', productData);
+              console.log('🔍 EditProduct: Product data keys:', Object.keys(productData));
+              console.log('🔍 EditProduct: Product description:', productData.description);
+              console.log('🔍 EditProduct: Product createdAt:', productData.createdAt);
+              
+              setFormData({
+                name: productData.name || '',
+                description: productData.description || '',
+                price: productData.price || '',
+                stockQuantity: productData.stockQuantity || '',
+                categoryId: productData.category?.id || productData.categoryId || '',
+                imageUrls: productData.imageUrls || []
+              });
+              // Set formatted price for display
+              setFormattedPrice(formatPriceInput(productData.price || ''));
+              console.log('✅ EditProduct: Form data populated successfully');
+              console.log('🔍 EditProduct: Final form data:', {
+                name: productData.name || '',
+                description: productData.description || '',
+                price: productData.price || '',
+                stockQuantity: productData.stockQuantity || '',
+                categoryId: productData.category?.id || productData.categoryId || '',
+                imageUrls: productData.imageUrls || []
+              });
+              return;
+            }
+          } catch (productsError) {
+            console.log('⚠️ EditProduct: Failed to fetch seller products:', productsError.message);
+            setError('Failed to load product data: ' + productsError.message);
           }
+        } else {
+          setError('Seller information not found');
         }
       } catch (err) {
         console.error('❌ EditProduct: Error fetching data:', err);

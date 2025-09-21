@@ -54,7 +54,7 @@ export default function ProductCard({ product }) {
           
           {/* Stock Badge */}
           {(product.stockQuantity <= 0 || !product.stockQuantity || product.status === 'OUT_OF_STOCK') && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md shadow-lg z-10">
+            <div className="absolute top-2 left-2 bg-red-700 text-white text-xs px-3 py-1.5 rounded-full shadow-lg z-10">
               Out of Stock
             </div>
           )}
