@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../context/AuthContext';
 import { ChatListSkeleton } from '../common';
@@ -7,23 +7,49 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   const { conversations, loadConversations, searchConversations, loading } = useChat();
   const { isSeller } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [allConversations, setAllConversations] = useState([]);
+  const searchTimeoutRef = useRef(null);
 
+  // Store all conversations when they're first loaded
+  useEffect(() => {
+    if (conversations.length > 0 && searchQuery === '') {
+      setAllConversations(conversations);
+    }
+  }, [conversations, searchQuery]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSearch = async (query) => {
     console.log('🔍 ChatList: Search input changed to:', query);
     setSearchQuery(query);
-    try {
-      if (query.trim()) {
-        console.log('🔍 ChatList: Calling searchConversations with:', query);
-        await searchConversations(query);
-      } else {
-        console.log('🔍 ChatList: Empty query, reloading all conversations');
-        // If search is empty, reload all conversations
-        await loadConversations();
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
+    
+    // Debounce search by 300ms
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        if (query.trim()) {
+          console.log('🔍 ChatList: Calling searchConversations with:', query);
+          await searchConversations(query);
+        } else {
+          console.log('🔍 ChatList: Empty query, reloading all conversations');
+          // If search is empty, reload all conversations
+          await loadConversations();
+        }
+      } catch (error) {
+        console.error('Search failed:', error);
+      }
+    }, 300);
   };
 
   const formatTime = (timestamp) => {
@@ -91,10 +117,10 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
               <div
                 key={conversation.id}
                 onClick={() => onConversationSelect(conversation.id)}
-                className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border ${
+                className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border-2 ${
                   selectedConversationId === conversation.id
-                    ? 'bg-blue-50 border-blue-300 shadow-sm'
-                    : 'bg-gray-50 border-blue-200 hover:bg-gray-100 hover:border-blue-300 hover:shadow-sm'
+                    ? 'bg-blue-50 border-blue-400 shadow-sm'
+                    : 'bg-gray-50 border-blue-300 hover:bg-gray-100 hover:border-blue-400 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-start space-x-4">

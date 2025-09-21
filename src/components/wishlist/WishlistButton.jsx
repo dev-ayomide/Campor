@@ -44,10 +44,10 @@ export default function WishlistButton({ productId, className = '', showText = f
         success
           ? 'text-green-600 bg-green-50'
           : isInWishlist 
-            ? 'text-blue-600 hover:text-blue-700 bg-blue-50' 
+            ? 'text-blue-600 hover:text-blue-700' 
             : showText 
               ? 'text-blue-600 bg-white border border-blue-600 hover:bg-blue-50 rounded-lg'
-              : 'text-blue-600 hover:text-blue-700 bg-blue-50'
+              : 'text-blue-600 hover:text-blue-700'
       } ${className}`}
       aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
     >

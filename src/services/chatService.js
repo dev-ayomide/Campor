@@ -72,11 +72,9 @@ export const chatService = {
   },
 
   // Search conversations
-  searchConversations: async (query, currentUserRole = 'buyer') => {
+  searchConversations: async (query, conversations = [], currentUserRole = 'buyer') => {
     try {
       console.log('🔍 ChatService: Searching with query:', query, 'role:', currentUserRole);
-      const conversations = await this.getConversations(currentUserRole);
-      console.log('🔍 ChatService: Total conversations:', conversations.length);
       
       if (!query.trim()) {
         console.log('🔍 ChatService: Empty query, returning all conversations');

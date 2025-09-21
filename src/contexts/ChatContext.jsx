@@ -188,13 +188,13 @@ export function ChatProvider({ children }) {
   const searchConversations = useCallback(async (query) => {
     try {
       console.log('🔍 Searching conversations with query:', query);
-      const results = await chatService.searchConversations(query, currentUserRole);
+      const results = await chatService.searchConversations(query, conversations, currentUserRole);
       console.log('🔍 Search results:', results);
       setConversations(results);
     } catch (error) {
       console.error('Search failed:', error);
     }
-  }, [currentUserRole]);
+  }, [conversations, currentUserRole]);
 
   // Join chat room for real-time updates
   const joinChatRoom = useCallback((chatId) => {
