@@ -79,12 +79,20 @@ const EditProduct = ({ toggleMobileMenu }) => {
               description: productData.description || '',
               price: productData.price || '',
               stockQuantity: productData.stockQuantity || '',
-              categoryId: productData.category?.id || '',
+              categoryId: productData.category?.id || productData.categoryId || '',
               imageUrls: productData.imageUrls || []
             });
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(productData.price || ''));
             console.log('✅ EditProduct: Form data populated successfully');
+            console.log('🔍 EditProduct: Final form data:', {
+              name: productData.name || '',
+              description: productData.description || '',
+              price: productData.price || '',
+              stockQuantity: productData.stockQuantity || '',
+              categoryId: productData.category?.id || productData.categoryId || '',
+              imageUrls: productData.imageUrls || []
+            });
             return;
           }
         } catch (idError) {
@@ -113,12 +121,20 @@ const EditProduct = ({ toggleMobileMenu }) => {
               description: product.description || '',
               price: product.price || '',
               stockQuantity: product.stockQuantity || '',
-              categoryId: product.category?.id || '',
+              categoryId: product.category?.id || product.categoryId || '',
               imageUrls: product.imageUrls || []
             });
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(product.price || ''));
             console.log('✅ EditProduct: Form data populated via fallback');
+            console.log('🔍 EditProduct: Fallback form data:', {
+              name: product.name || '',
+              description: product.description || '',
+              price: product.price || '',
+              stockQuantity: product.stockQuantity || '',
+              categoryId: product.category?.id || product.categoryId || '',
+              imageUrls: product.imageUrls || []
+            });
           } else {
             console.error('❌ EditProduct: Product not found in seller products');
             console.error('❌ EditProduct: Available products:', productsData.map(p => ({ id: p.id, name: p.name })));

@@ -38,10 +38,9 @@ export default function SellerOnboardingPage() {
   const [bankVerificationError, setBankVerificationError] = useState(null);
   const [banksList, setBanksList] = useState([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(false);
+  const [accountVerified, setAccountVerified] = useState(false);
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
-  const [lastVerificationAttempt, setLastVerificationAttempt] = useState(0);
-  const [accountVerified, setAccountVerified] = useState(false);
   const debounceTimeoutRef = useRef(null);
 
   const steps = [
@@ -74,6 +73,7 @@ export default function SellerOnboardingPage() {
     const handleClickOutside = (event) => {
       if (isBankDropdownOpen && !event.target.closest('[data-bank-dropdown]')) {
         setIsBankDropdownOpen(false);
+        setBankSearchTerm('');
       }
     };
 
@@ -82,6 +82,12 @@ export default function SellerOnboardingPage() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isBankDropdownOpen]);
+
+  // Filter banks based on search term
+  const filteredBanks = banksList.filter(bank => 
+    bank.name.toLowerCase().includes(bankSearchTerm.toLowerCase())
+  );
+
 
   // Debounced account resolution function
   const debouncedResolveAccount = useCallback(async (accountNumber, bankCode) => {
@@ -198,10 +204,6 @@ export default function SellerOnboardingPage() {
     }
   };
 
-  // Filter banks based on search term
-  const filteredBanks = banksList.filter(bank => 
-    bank.name.toLowerCase().includes(bankSearchTerm.toLowerCase())
-  );
 
   // Form validation functions
   const validateCurrentStep = () => {
@@ -492,33 +494,30 @@ export default function SellerOnboardingPage() {
               <div className="relative" data-bank-dropdown style={{ zIndex: isBankDropdownOpen ? 50 : 40 }}>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setIsBankDropdownOpen(!isBankDropdownOpen);
                     if (!isBankDropdownOpen) {
                       setBankSearchTerm('');
                     }
                   }}
                   disabled={isLoadingBanks}
-                  className="w-full pl-12 pr-10 py-3 sm:py-4 bg-white border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors text-left disabled:opacity-50 flex items-center justify-between hover:border-gray-400"
+                  className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-white border border-gray-300 rounded-xl text-sm text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
                 >
                   <div className="flex items-center">
                     <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                    <span className={bankDetails.bankName ? 'text-gray-900' : 'text-gray-500'}>
+                    <span className="truncate">
                       {isLoadingBanks ? 'Loading banks...' : bankDetails.bankName || 'Select Bank'}
                     </span>
                   </div>
-                  <svg 
-                    className={`w-5 h-5 text-gray-400 transition-transform ${isBankDropdownOpen ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className={`w-5 h-5 transition-transform flex-shrink-0 ml-2 ${isBankDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                
+
                 {/* Bank Options Dropdown */}
                 {isBankDropdownOpen && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden z-50">
@@ -546,7 +545,9 @@ export default function SellerOnboardingPage() {
                           <button
                             key={bank.id}
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               setBankDetails(prev => ({ 
                                 ...prev, 
                                 bankName: bank.name,
@@ -559,9 +560,11 @@ export default function SellerOnboardingPage() {
                               setIsBankDropdownOpen(false);
                               setBankSearchTerm('');
                             }}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none flex items-center"
+                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 ${
+                              bankDetails.bankName === bank.name ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                            }`}
                           >
-                            <span className="text-gray-900">{bank.name}</span>
+                            {bank.name}
                           </button>
                         ))
                       ) : (

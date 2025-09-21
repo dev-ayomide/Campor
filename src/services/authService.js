@@ -506,18 +506,23 @@ export async function getSellerCatalogue(sellerId) {
   }
 }
 
-// New function to get seller products with status information
+// Function to get seller products with status information
+// This endpoint returns ALL products (DRAFT, ACTIVE, OUT_OF_STOCK) for seller management
 export async function getSellerProducts(sellerId) {
   try {
     console.log('🔍 SellerService: Fetching seller products for ID:', sellerId);
     
-    // Use the specific seller products endpoint
+    // Use the products endpoint - this returns ALL products regardless of status
     const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
     console.log('✅ SellerService: Seller products fetched successfully:', response.data);
     
     // The response should be an array of products directly
     const products = Array.isArray(response.data) ? response.data : [];
     console.log('✅ SellerService: Products extracted:', products.length);
+    
+    // Log product details to debug the missing name issue
+    console.log('🔍 SellerService: Sample product structure:', products[0]);
+    console.log('🔍 SellerService: Product fields:', products[0] ? Object.keys(products[0]) : 'No products');
     
     return products;
   } catch (error) {

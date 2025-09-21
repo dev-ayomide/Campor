@@ -24,6 +24,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
           const productsData = await getSellerProducts(user.seller.id);
           setProducts(productsData || []);
           console.log('✅ Products: Fetched seller products:', productsData);
+          console.log('🔍 Products: Sample product structure:', productsData?.[0]);
+          console.log('🔍 Products: Product names:', productsData?.map(p => ({ id: p.id, name: p.name, status: p.status })));
+          console.log('🔍 Products: Available fields in first product:', productsData?.[0] ? Object.keys(productsData[0]) : 'No products');
         }
         
       } catch (err) {
@@ -325,7 +328,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                         </div>
                                       )}
                                     </div>
-                        <span className="font-medium text-gray-900">{product.name}</span>
+                        <span className="font-medium text-gray-900">{product.name || 'Unnamed Product'}</span>
                       </div>
                     </td>
                                 <td className="py-4 px-4 text-gray-900">₦{parseFloat(product.price).toLocaleString()}</td>
@@ -435,7 +438,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                               {/* Product Details */}
                               <div className="p-4 space-y-3">
                                 {/* Product Title */}
-                                <h3 className="font-semibold text-gray-900 text-lg">{product.name}</h3>
+                                <h3 className="font-semibold text-gray-900 text-lg">{product.name || 'Unnamed Product'}</h3>
 
                                 {/* Price */}
                                 <div className="flex items-center gap-2">
@@ -533,7 +536,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                               {/* Product Details */}
                               <div className="flex-1 p-4 space-y-3">
                                 {/* Product Title */}
-                                <h3 className="font-semibold text-gray-900 text-lg">{product.name}</h3>
+                                <h3 className="font-semibold text-gray-900 text-lg">{product.name || 'Unnamed Product'}</h3>
 
                                 {/* Price */}
                                 <div className="flex items-center gap-2">

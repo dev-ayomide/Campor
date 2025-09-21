@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getSellerCatalogue, getSellerOrders } from '../../services/authService';
+import { getSellerCatalogue, getSellerOrders, getSellerProducts } from '../../services/authService';
 import { SellerDashboardSkeleton } from '../../components/common';
 
 export default function SellerDashboardPage({ toggleMobileMenu }) {
@@ -29,15 +29,15 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         
         // If we have a seller ID, fetch only products and orders (don't override seller profile)
         if (user?.seller?.id) {
-          const [catalogueData, ordersData] = await Promise.all([
-            getSellerCatalogue(user.seller.id),
+          const [productsData, ordersData] = await Promise.all([
+            getSellerProducts(user.seller.id),
             getSellerOrders(user.seller.id)
           ]);
           
           // Only update products and orders, keep the seller profile from context
-          setProducts(catalogueData.products || []);
+          setProducts(productsData || []);
           setOrders(ordersData.data || []);
-          console.log('✅ Dashboard: Fetched products:', catalogueData.products?.length || 0);
+          console.log('✅ Dashboard: Fetched products:', productsData?.length || 0);
           console.log('✅ Dashboard: Fetched orders:', ordersData.data?.length || 0);
         }
         

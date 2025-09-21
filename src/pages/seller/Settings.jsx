@@ -15,6 +15,8 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   const [resolvingAccount, setResolvingAccount] = useState(false);
   const [accountResolutionError, setAccountResolutionError] = useState(null);
   const [accountVerified, setAccountVerified] = useState(false);
+  const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+  const [bankSearchTerm, setBankSearchTerm] = useState('');
   const debounceTimeoutRef = useRef(null);
 
   // Store Info Form Data
@@ -79,6 +81,26 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       }
     };
   }, []);
+
+  // Close bank dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isBankDropdownOpen && !event.target.closest('[data-bank-dropdown]')) {
+        setIsBankDropdownOpen(false);
+        setBankSearchTerm('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isBankDropdownOpen]);
+
+  // Filter banks based on search term
+  const filteredBanks = banksList.filter(bank => 
+    bank.name.toLowerCase().includes(bankSearchTerm.toLowerCase())
+  );
 
   // Fetch banks list on component mount
   useEffect(() => {
@@ -552,37 +574,85 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               {/* Bank Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name *</label>
-                <div className="relative">
-                  <select
-                    name="bankName"
-                    value={paymentInfo.bankName}
-                    onChange={(e) => {
-                      handlePaymentInfoChange(e);
-                      // Auto-set bank code when bank is selected
-                      const selectedBank = banksList.find(bank => bank.name === e.target.value);
-                      if (selectedBank) {
-                        setPaymentInfo(prev => ({
-                          ...prev,
-                          bankCode: selectedBank.code
-                        }));
+                <div className="relative" data-bank-dropdown style={{ zIndex: isBankDropdownOpen ? 50 : 40 }}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsBankDropdownOpen(!isBankDropdownOpen);
+                      if (!isBankDropdownOpen) {
+                        setBankSearchTerm('');
                       }
                     }}
-                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
-                    required
+                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors"
                   >
-                    <option value="">Select Bank</option>
-                    {banksList.map(bank => (
-                      <option key={bank.id} value={bank.name}>
-                        {bank.name}
-                      </option>
-                    ))}
-                  </select>
-                  <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <svg className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      <span className="truncate">
+                        {paymentInfo.bankName || 'Select Bank'}
+                      </span>
+                    </div>
+                    <svg className={`w-5 h-5 transition-transform flex-shrink-0 ml-2 ${isBankDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Bank Options Dropdown */}
+                  {isBankDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden z-50">
+                      {/* Search Input */}
+                      <div className="p-3 border-b border-gray-200">
+                        <div className="relative">
+                          <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                          <input
+                            type="text"
+                            placeholder="Search banks..."
+                            value={bankSearchTerm}
+                            onChange={(e) => setBankSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Bank Options */}
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredBanks.length > 0 ? (
+                          filteredBanks.map((bank) => (
+                            <button
+                              key={bank.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setPaymentInfo(prev => ({
+                                  ...prev,
+                                  bankName: bank.name,
+                                  bankCode: bank.code
+                                }));
+                                setIsBankDropdownOpen(false);
+                                setBankSearchTerm('');
+                              }}
+                              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                paymentInfo.bankName === bank.name ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'
+                              }`}
+                            >
+                              {bank.name}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-gray-500 text-sm">
+                            No banks found matching "{bankSearchTerm}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
