@@ -95,7 +95,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen font-montserrat overflow-x-hidden">
       {/* Hero Section */}
-      <section ref={heroRef} className="container mx-auto px-4 py-12 lg:py-20">
+      <section ref={heroRef} className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Content */}
           <motion.div 
@@ -139,12 +139,17 @@ export default function LandingPage() {
                 >
                   <svg
                     className="w-5 h-5 mr-2"
-                    viewBox="0 0 85 60"
                     fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                     xmlns="http://www.w3.org/2000/svg"
                   >
-                    <rect width="85" height="60" rx="8" fill="#2563eb"/>
-                    <path d="M34 15L54 30L34 45" stroke="white" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
                   </svg>
                   Create Account
                 </Link>
@@ -292,8 +297,8 @@ export default function LandingPage() {
       </section>
 
       {/* App Features Section */}
-      <section ref={featuresRef} className="py-16 lg:py-24">
-        <div className="container mx-auto px-4 text-center">
+      <section ref={featuresRef} id="features" className="py-16 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6 text-center">
           <motion.h2 
             className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8"
             initial="hidden"
@@ -326,8 +331,8 @@ export default function LandingPage() {
       </section>
 
       {/* How Campor Works */}
-      <section ref={howItWorksRef} className="py-16 lg:py-24">
-        <div className="container mx-auto px-4">
+      <section ref={howItWorksRef} id="how-it-works" className="py-16 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Right Content (Text) - comes first on mobile */}
             <motion.div 
@@ -427,7 +432,7 @@ export default function LandingPage() {
 
       {/* Discover Section */}
       <section className=" py-16 lg:py-24">
-        <div className="container mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div>
@@ -480,8 +485,8 @@ export default function LandingPage() {
       </section>
 
       {/* Core Features Grid */}
-      <section ref={coreFeaturesRef} className="py-16 lg:py-24">
-        <div className="container mx-auto px-4">
+      <section ref={coreFeaturesRef} id="core-features" className="py-16 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6">
           <motion.h2 
             className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-16"
             initial="hidden"
@@ -691,8 +696,8 @@ export default function LandingPage() {
       </section>
 
       {/* FAQs Section */}
-      <section ref={faqRef} className="py-16 lg:py-24">
-        <div className="container mx-auto px-4">
+      <section ref={faqRef} id="faq" className="py-16 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6">
           <motion.h2 
             className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-16"
             initial="hidden"

@@ -66,30 +66,30 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
           {!isSignedIn ? (
             // Navigation for non-signed-in users (landing page)
             <>
-              <Link 
-                to="/features" 
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+              <a 
+                href="#features" 
+                className="text-gray-700 hover:text-gray-900 font-medium transition-colors cursor-pointer"
               >
                 Features
-              </Link>
-              <Link 
-                to="/how-it-works" 
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+              </a>
+              <a 
+                href="#how-it-works" 
+                className="text-gray-700 hover:text-gray-900 font-medium transition-colors cursor-pointer"
               >
                 How it works
-              </Link>
-              <Link 
-                to="/products" 
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+              </a>
+              <a 
+                href="#core-features" 
+                className="text-gray-700 hover:text-gray-900 font-medium transition-colors cursor-pointer"
               >
                 Products
-              </Link>
-              <Link 
-                to="/client-stories" 
-                className="text-gray-700 hover:text-gray-900 font-medium transition-colors"
+              </a>
+              <a 
+                href="#faq" 
+                className="text-gray-700 hover:text-gray-900 font-medium transition-colors cursor-pointer"
               >
                 Client Stories
-              </Link>
+              </a>
             </>
           ) : (
             // Navigation for signed-in users - Keep this empty for clean design
@@ -340,34 +340,34 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide border-b border-gray-100 mb-4">
                     Your Trusted University Marketplace
                   </div>
-                  <Link 
-                    to="/features" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                  <a 
+                    href="#features" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2 cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Features
-                  </Link>
-                  <Link 
-                    to="/how-it-works" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                  </a>
+                  <a 
+                    href="#how-it-works" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2 cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     How it works
-                  </Link>
-                  <Link 
-                    to="/products" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                  </a>
+                  <a 
+                    href="#core-features" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2 cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Products
-                  </Link>
-                  <Link 
-                    to="/client-stories" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                  </a>
+                  <a 
+                    href="#faq" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4 cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Client Stories
-                  </Link>
+                  </a>
                   <div className="border-t border-gray-100 pt-4">
                     <Link 
                       to="/login" 

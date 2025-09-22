@@ -21,7 +21,7 @@ export default function MainLayout({ children }) {
           {children}
         </main>
       ) : (
-        <main className="flex-1 container mx-auto px-4 py-8 pt-16">
+        <main className="flex-1 py-8 pt-16">
           {children}
         </main>
       )}
