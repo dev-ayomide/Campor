@@ -34,6 +34,7 @@ import SellerCatalogue from './pages/seller/SellerCatalogue';
 import { AuthLanding, Login, Register, Verify, ForgotPassword, ResetPassword } from './pages/auth';
 import { Chat } from './pages/chat';
 import NotFound from './pages/NotFound';
+import PaymentVerification from './pages/PaymentVerification';
 
 export default function App() {
   return (
@@ -96,6 +97,13 @@ export default function App() {
         <Route path="/seller/:sellerId/catalogue" element={
           <RequireAuth>
             <MainLayout><SellerCatalogue /></MainLayout>
+          </RequireAuth>
+        } />
+        
+        {/* Payment Verification Route */}
+        <Route path="/payment/verify" element={
+          <RequireAuth>
+            <PaymentVerification />
           </RequireAuth>
         } />
         

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Phone, Copy, Check, Star, Clock, Award, Package, Search } from 'lucide-react';
 import { ChatIcon } from '../../components/common';
-import { getSellerCatalogue } from '../../services/authService';
+import { getSellerCatalogue, getSellerUserId } from '../../services/authService';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
 import { ProductGridSkeleton } from '../../components/common';
@@ -274,13 +274,21 @@ export default function SellerCatalogue() {
                 <div className="flex flex-col gap-3 items-center sm:items-end">
                       <button 
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
-                        onClick={() => {
-                          // Navigate to chat with this seller
-                          navigate(`/chat?sellerId=${sellerId}`);
+                        onClick={async () => {
+                          try {
+                            // Get seller's user ID for chat
+                            const sellerUserId = await getSellerUserId(sellerId);
+                            // Navigate to chat with seller's user ID
+                            navigate(`/chat?sellerId=${sellerUserId}`);
+                          } catch (error) {
+                            console.error('Failed to get seller user ID:', error);
+                            // Fallback to seller ID if user ID not found
+                            navigate(`/chat?sellerId=${sellerId}`);
+                          }
                         }}
                       >
                     <ChatIcon className="w-4 h-4" />
-                        Message Seller
+                        Message {sellerData?.catalogueName || 'Seller'}
                       </button>
                       
                       {/* Drop a Star rating section */}

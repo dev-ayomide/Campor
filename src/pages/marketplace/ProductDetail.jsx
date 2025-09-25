@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { getProductBySlug, getSellerCatalogue } from '../../services/authService';
+import { getProductBySlug, getSellerCatalogue, getSellerUserId } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
@@ -395,12 +395,41 @@ export default function ProductDetailPage() {
                     </Link>
                     <button 
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                      onClick={() => {
-                        // Navigate to chat with this seller
-                        navigate(`/chat?sellerId=${product.seller.id}`);
+                      onClick={async () => {
+                        try {
+                          // Get seller's user ID for chat
+                          const sellerUserId = await getSellerUserId(product.seller.id);
+                          console.log('✅ ProductDetail: Using seller user ID for chat:', sellerUserId);
+                          // Navigate to chat with seller's user ID
+                          navigate(`/chat?sellerId=${sellerUserId}`);
+                        } catch (error) {
+                          console.error('❌ ProductDetail: Failed to get seller user ID:', error);
+                          console.log('🔄 ProductDetail: Falling back to seller ID:', product.seller.id);
+                          // Fallback to seller ID if user ID not found
+                          navigate(`/chat?sellerId=${product.seller.id}`);
+                        }
                       }}
                     >
-                      Message
+                      Message {product.seller.catalogueName || 'Seller'}
+                    </button>
+                    
+                    {/* Temporary debug button - remove after testing */}
+                    <button 
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                      onClick={async () => {
+                        try {
+                          console.log('🔍 DEBUG: Testing seller data retrieval...');
+                          const catalogueData = await getSellerCatalogue(product.seller.id);
+                          console.log('🔍 DEBUG: Full catalogue data:', catalogueData);
+                          console.log('🔍 DEBUG: Seller user data:', catalogueData.seller?.user);
+                          alert(`Debug info logged to console. User ID: ${catalogueData.seller?.user?.id || 'NOT FOUND'}`);
+                        } catch (error) {
+                          console.error('❌ DEBUG: Error:', error);
+                          alert(`Debug error: ${error.message}`);
+                        }
+                      }}
+                    >
+                      Debug Seller Data
                     </button>
                   </div>
                 </div>

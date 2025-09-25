@@ -550,6 +550,51 @@ export async function getProductById(productId) {
   }
 }
 
+// Function to get seller user ID from seller ID
+export async function getSellerUserId(sellerId) {
+  try {
+    console.log('🔍 SellerService: Getting user ID for seller:', sellerId);
+    
+    const catalogueData = await getSellerCatalogue(sellerId);
+    console.log('🔍 SellerService: Catalogue data structure:', catalogueData);
+    console.log('🔍 SellerService: Seller data:', catalogueData.seller);
+    console.log('🔍 SellerService: User data:', catalogueData.seller?.user);
+    
+    const userId = catalogueData.seller?.user?.id;
+    
+    if (!userId) {
+      console.error('❌ SellerService: User ID not found in catalogue data');
+      console.error('❌ SellerService: Available user fields:', catalogueData.seller?.user ? Object.keys(catalogueData.seller.user) : 'No user data');
+      
+      // Check if there's a different field that might contain the user ID
+      const possibleUserFields = ['id', 'userId', 'user_id', 'ownerId', 'owner_id'];
+      for (const field of possibleUserFields) {
+        if (catalogueData.seller?.user?.[field]) {
+          console.log(`🔍 SellerService: Found potential user ID in field '${field}':`, catalogueData.seller.user[field]);
+        }
+      }
+      
+      throw new Error('User ID not found for seller');
+    }
+    
+    console.log('✅ SellerService: Found user ID for seller:', userId);
+    console.log('🔍 SellerService: User ID type:', typeof userId);
+    console.log('🔍 SellerService: User ID length:', userId.length);
+    
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      console.error('❌ SellerService: User ID is not a valid UUID format:', userId);
+      throw new Error('Invalid user ID format');
+    }
+    
+    return userId;
+  } catch (error) {
+    console.error('❌ SellerService: Failed to get seller user ID:', error);
+    throw new Error(error.response?.data?.message || 'Failed to get seller user ID.');
+  }
+}
+
 // Function to update product status
 export async function updateProductStatus(productId, status) {
   try {

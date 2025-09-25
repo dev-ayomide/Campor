@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment } from '../../services/paymentsService';
+import { getSellerUserId } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { CartSkeleton, ChatIcon } from '../../components/common';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
@@ -260,11 +261,19 @@ export default function CartPage() {
                       <button 
                         type="button"
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          // Navigate to chat with this seller
-                          window.location.href = `/chat?sellerId=${group.sellerId}`;
+                          try {
+                            // Get seller's user ID for chat
+                            const sellerUserId = await getSellerUserId(group.sellerId);
+                            // Navigate to chat with seller's user ID
+                            window.location.href = `/chat?sellerId=${sellerUserId}`;
+                          } catch (error) {
+                            console.error('Failed to get seller user ID:', error);
+                            // Fallback to seller ID if user ID not found
+                            window.location.href = `/chat?sellerId=${group.sellerId}`;
+                          }
                         }}
                       >
                         <ChatIcon className="w-4 h-4" />

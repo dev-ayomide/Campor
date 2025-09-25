@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
   },
   PAYMENTS: {
     INITIATE: '/payments/initiate',
+    VERIFY: '/payments/verify',
   },
   WISHLIST: {
     ADD: '/wishlist/add',

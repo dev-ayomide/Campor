@@ -177,14 +177,25 @@ export async function verifyPayment(reference) {
       throw new Error('Payment reference is required');
     }
     
-    const response = await api.get(`/payments/verify/${reference}`);
+    const response = await api.get(`${API_ENDPOINTS.PAYMENTS.VERIFY}/${reference}`);
     
     console.log('✅ PaymentService: Payment verified successfully:', response.data);
     
     return response.data;
   } catch (error) {
     console.error('❌ PaymentService: Failed to verify payment:', error);
-    throw new Error(error.response?.data?.message || 'Failed to verify payment.');
+    
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid payment reference.');
+    } else if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Payment reference not found.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Payment verification service is currently unavailable. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to verify payment.');
+    }
   }
 }
 
