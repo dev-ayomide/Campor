@@ -121,6 +121,10 @@ export async function updateCartItemQuantity(itemId, quantity) {
     // Note: Inventory validation is handled by backend webhook after payment
     // Frontend allows quantity updates, backend will handle stock validation
     
+    if (!itemId) {
+      throw new Error('Item ID is required for quantity update');
+    }
+    
     const response = await api.patch(`${API_ENDPOINTS.CART.UPDATE_ITEM}/${itemId}`, {
       quantity
     });
@@ -172,6 +176,24 @@ export async function clearCart() {
   }
 }
 
+// Fix cart items (remove out-of-stock items and adjust quantities)
+export async function fixCart(cartId) {
+  try {
+    console.log('🔍 CartService: Fixing cart:', cartId);
+    
+    const response = await api.post(`${API_ENDPOINTS.CART.FIX}/${cartId}/fix`);
+    
+    // Clear cache to force refresh
+    clearCartCache();
+    
+    console.log('✅ CartService: Cart fixed successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ CartService: Failed to fix cart:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fix cart.');
+  }
+}
+
 // Helper function to calculate cart totals
 export function calculateCartTotals(cart) {
   if (!cart || !Array.isArray(cart)) return { totalItems: 0, totalPrice: 0 };
@@ -182,8 +204,10 @@ export function calculateCartTotals(cart) {
   cart.forEach(sellerGroup => {
     if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
       sellerGroup.items.forEach(item => {
-        totalItems += item.quantity || 0;
-        totalPrice += (parseFloat(item.product?.price || 0) * (item.quantity || 0));
+        // Use effectiveQuantity if available (for stock validation), otherwise use quantity
+        const effectiveQty = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity || 0;
+        totalItems += effectiveQty;
+        totalPrice += (parseFloat(item.product?.price || 0) * effectiveQty);
       });
     }
   });
@@ -207,8 +231,10 @@ export function getCartItemCount(cart) {
     console.log('🔍 CartService: Processing seller group:', sellerGroup);
     if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
       const groupCount = sellerGroup.items.reduce((itemCount, item) => {
-        console.log('🔍 CartService: Processing item:', item, 'quantity:', item.quantity);
-        return itemCount + (item.quantity || 0);
+        // Use effectiveQuantity if available (for stock validation), otherwise use quantity
+        const effectiveQty = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity || 0;
+        console.log('🔍 CartService: Processing item:', item, 'effectiveQuantity:', effectiveQty);
+        return itemCount + effectiveQty;
       }, 0);
       console.log('🔍 CartService: Group count:', groupCount);
       return count + groupCount;
@@ -413,5 +439,101 @@ export async function checkProductAvailability(productId, quantity = 1) {
       message: 'Failed to check availability'
     };
   }
+}
+
+// ===== CART STATUS VALIDATION FUNCTIONS =====
+
+/**
+ * Check if cart has items that need fixing (out of stock or stock mismatch)
+ * @param {Array} cart - Cart data
+ * @returns {boolean} - True if cart needs fixing
+ */
+export function cartNeedsFixing(cart) {
+  if (!cart || !Array.isArray(cart)) return false;
+  
+  return cart.some(sellerGroup => 
+    sellerGroup.items && Array.isArray(sellerGroup.items) &&
+    sellerGroup.items.some(item => 
+      item.status === 'out_of_stock' || item.status === 'stock_mismatch'
+    )
+  );
+}
+
+/**
+ * Get cart status summary
+ * @param {Array} cart - Cart data
+ * @returns {Object} - Status summary with counts
+ */
+export function getCartStatusSummary(cart) {
+  if (!cart || !Array.isArray(cart)) {
+    return {
+      totalItems: 0,
+      okItems: 0,
+      stockMismatchItems: 0,
+      outOfStockItems: 0,
+      needsFixing: false
+    };
+  }
+  
+  let totalItems = 0;
+  let okItems = 0;
+  let stockMismatchItems = 0;
+  let outOfStockItems = 0;
+  
+  cart.forEach(sellerGroup => {
+    if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
+      sellerGroup.items.forEach(item => {
+        totalItems++;
+        switch (item.status) {
+          case 'ok':
+            okItems++;
+            break;
+          case 'stock_mismatch':
+            stockMismatchItems++;
+            break;
+          case 'out_of_stock':
+            outOfStockItems++;
+            break;
+          default:
+            // If no status field, assume it's ok (backward compatibility)
+            okItems++;
+        }
+      });
+    }
+  });
+  
+  return {
+    totalItems,
+    okItems,
+    stockMismatchItems,
+    outOfStockItems,
+    needsFixing: stockMismatchItems > 0 || outOfStockItems > 0
+  };
+}
+
+/**
+ * Get items that need fixing
+ * @param {Array} cart - Cart data
+ * @returns {Array} - Array of items that need fixing
+ */
+export function getItemsNeedingFix(cart) {
+  if (!cart || !Array.isArray(cart)) return [];
+  
+  const itemsNeedingFix = [];
+  
+  cart.forEach(sellerGroup => {
+    if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
+      sellerGroup.items.forEach(item => {
+        if (item.status === 'out_of_stock' || item.status === 'stock_mismatch') {
+          itemsNeedingFix.push({
+            ...item,
+            sellerGroup
+          });
+        }
+      });
+    }
+  });
+  
+  return itemsNeedingFix;
 }
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment, redirectToPayment } from '../../services/paymentService';
-import { X, Plus, Minus, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ShoppingBagIcon } from '../common';
 
 export default function CartDrawer({ isOpen, onClose }) {
@@ -15,12 +15,17 @@ export default function CartDrawer({ isOpen, onClose }) {
     getItemCount,
     updateItemQuantity, 
     removeItemFromCart, 
-    clearUserCart 
+    clearUserCart,
+    fixUserCart,
+    needsFixing,
+    getStatusSummary,
+    getItemsNeedingFix
   } = useCart();
   const { user } = useAuth();
 
   const [updatingItem, setUpdatingItem] = useState(null);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [fixingCart, setFixingCart] = useState(false);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -50,6 +55,17 @@ export default function CartDrawer({ isOpen, onClose }) {
       } catch (error) {
         console.error('Failed to clear cart:', error);
       }
+    }
+  };
+
+  const handleFixCart = async () => {
+    try {
+      setFixingCart(true);
+      await fixUserCart();
+    } catch (error) {
+      console.error('Failed to fix cart:', error);
+    } finally {
+      setFixingCart(false);
     }
   };
 
@@ -102,6 +118,47 @@ export default function CartDrawer({ isOpen, onClose }) {
   };
 
   const { totalItems, totalPrice } = getCartTotals();
+  const cartNeedsFixing = needsFixing();
+  const statusSummary = getStatusSummary();
+  const itemsNeedingFix = getItemsNeedingFix();
+
+  // Helper function to get status display info
+  const getStatusInfo = (item) => {
+    switch (item.status) {
+      case 'ok':
+        return { 
+          text: 'Available', 
+          color: 'text-green-600', 
+          bgColor: '', 
+          borderColor: '',
+          icon: null
+        };
+      case 'stock_mismatch':
+        return { 
+          text: `Only ${item.maxAvailable} available`, 
+          color: 'text-yellow-600', 
+          bgColor: 'bg-yellow-50', 
+          borderColor: 'border-yellow-200',
+          icon: <AlertTriangle className="h-4 w-4" />
+        };
+      case 'out_of_stock':
+        return { 
+          text: 'Out of stock', 
+          color: 'text-red-600', 
+          bgColor: 'bg-red-50', 
+          borderColor: 'border-red-200',
+          icon: <AlertTriangle className="h-4 w-4" />
+        };
+      default:
+        return { 
+          text: 'Available', 
+          color: 'text-green-600', 
+          bgColor: '', 
+          borderColor: '',
+          icon: null
+        };
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -139,6 +196,42 @@ export default function CartDrawer({ isOpen, onClose }) {
             </div>
           )}
 
+          {/* Cart Status Warning */}
+          {cartNeedsFixing && (
+            <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Cart needs attention
+                  </h3>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    {statusSummary.outOfStockItems > 0 && `${statusSummary.outOfStockItems} item(s) out of stock`}
+                    {statusSummary.outOfStockItems > 0 && statusSummary.stockMismatchItems > 0 && ', '}
+                    {statusSummary.stockMismatchItems > 0 && `${statusSummary.stockMismatchItems} item(s) have limited stock`}
+                  </p>
+                  <button
+                    onClick={handleFixCart}
+                    disabled={fixingCart}
+                    className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-md hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {fixingCart ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-yellow-600 border-t-transparent mr-2"></div>
+                        Fixing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3 w-3 mr-2" />
+                        Fix Cart
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
             {loading ? (
@@ -173,65 +266,94 @@ export default function CartDrawer({ isOpen, onClose }) {
                     
                     {/* Items from this seller */}
                     <div className="space-y-3">
-                      {sellerGroup.items?.map((item) => (
-                        <div key={item.id} className="flex items-center space-x-3">
-                          {/* Product Image */}
-                          <Link 
-                            to={`/product/${item.product?.slug}`}
-                            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+                      {sellerGroup.items?.map((item) => {
+                        const statusInfo = getStatusInfo(item);
+                        const isOutOfStock = item.status === 'out_of_stock';
+                        const isStockMismatch = item.status === 'stock_mismatch';
+                        const effectiveQuantity = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity;
+                        
+                        return (
+                          <div 
+                            key={item.id} 
+                            className={`flex items-center space-x-3 p-3 rounded-lg border ${statusInfo.borderColor} ${statusInfo.bgColor} ${
+                              isOutOfStock ? 'opacity-60' : ''
+                            }`}
                           >
-                            <img
-                              src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
-                              alt={item.product?.name}
-                              className="w-16 h-16 object-cover rounded-md"
-                            />
-                          </Link>
-                          
-                          {/* Product Details */}
-                          <Link 
-                            to={`/product/${item.product?.slug}`}
-                            className="flex-1 min-w-0 hover:text-blue-600 transition-colors"
-                          >
-                            <h4 className="text-sm font-medium text-gray-900 truncate">
-                              {item.product?.name}
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              {formatPrice(item.product?.price || 0)}
-                            </p>
-                          </Link>
-                          
-                          {/* Quantity Controls */}
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              disabled={updatingItem === item.id}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                            {/* Product Image */}
+                            <Link 
+                              to={`/product/${item.product?.slug}`}
+                              className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock ? 'pointer-events-none' : ''}`}
                             >
-                              <Minus className="h-4 w-4" />
-                            </button>
+                              <img
+                                src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
+                                alt={item.product?.name}
+                                className="w-16 h-16 object-cover rounded-md"
+                              />
+                            </Link>
                             
-                            <span className="text-sm font-medium text-gray-900 min-w-[2rem] text-center">
-                              {item.quantity}
-                            </span>
+                            {/* Product Details */}
+                            <div className="flex-1 min-w-0">
+                              <Link 
+                                to={`/product/${item.product?.slug}`}
+                                className={`hover:text-blue-600 transition-colors ${isOutOfStock ? 'pointer-events-none' : ''}`}
+                              >
+                                <h4 className="text-sm font-medium text-gray-900 truncate">
+                                  {item.product?.name}
+                                </h4>
+                                <p className="text-sm text-gray-500">
+                                  {formatPrice(item.product?.price || 0)}
+                                </p>
+                              </Link>
+                              
+                              {/* Status Indicator */}
+                              <div className={`flex items-center space-x-1 mt-1 ${statusInfo.color}`}>
+                                {statusInfo.icon}
+                                <span className="text-xs font-medium">
+                                  {statusInfo.text}
+                                </span>
+                              </div>
+                              
+                              {/* Stock Mismatch Info */}
+                              {isStockMismatch && (
+                                <p className="text-xs text-yellow-600 mt-1">
+                                  You have {item.quantity}, but only {item.maxAvailable} available
+                                </p>
+                              )}
+                            </div>
                             
+                            {/* Quantity Controls */}
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                                disabled={updatingItem === item.id || isOutOfStock}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              
+                              <span className="text-sm font-medium text-gray-900 min-w-[2rem] text-center">
+                                {effectiveQuantity}
+                              </span>
+                              
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              disabled={updatingItem === item.id}
+                              disabled={updatingItem === item.id || isOutOfStock || (item.maxAvailable && item.quantity >= item.maxAvailable)}
                               className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
+                            </div>
+                            
+                            {/* Remove Button */}
+                            <button
+                              onClick={() => handleRemoveItem(item.id)}
+                              className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
-                          
-                          {/* Remove Button */}
-                          <button
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="p-1 text-red-400 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -265,7 +387,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                 
                 <button
                   onClick={handleCheckout}
-                  disabled={processingPayment || cart.length === 0}
+                  disabled={processingPayment || cart.length === 0 || cartNeedsFixing}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processingPayment ? (
@@ -273,6 +395,8 @@ export default function CartDrawer({ isOpen, onClose }) {
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                       Processing Payment...
                     </>
+                  ) : cartNeedsFixing ? (
+                    'Fix Cart Issues First'
                   ) : (
                     'Proceed to Checkout'
                   )}

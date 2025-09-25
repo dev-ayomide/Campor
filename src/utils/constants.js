@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
     UPDATE_ITEM: '/cart/item/update',
     REMOVE_ITEM: '/cart/item/remove',
     CLEAR: '/cart/clear',
+    FIX: '/cart',
   },
   PAYMENTS: {
     INITIATE: '/payments/initiate',

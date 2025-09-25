@@ -5,10 +5,14 @@ import {
   updateCartItemQuantity, 
   removeFromCart, 
   clearCart,
+  fixCart,
   calculateCartTotals,
   getCartItemCount,
   isProductInCart,
-  getCartItemByProductId
+  getCartItemByProductId,
+  cartNeedsFixing,
+  getCartStatusSummary,
+  getItemsNeedingFix
 } from '../services/cartService';
 
 const CartContext = createContext();
@@ -49,6 +53,8 @@ export const CartProvider = ({ children }) => {
       
       const cartData = await getCart(force);
       console.log('🔍 CartContext: Raw cart data:', cartData);
+      
+      // Debug cart structure (removed since backend is fixed)
       
       // Ensure cart is always an array
       const normalizedCart = Array.isArray(cartData) ? cartData : [];
@@ -110,15 +116,26 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await updateCartItemQuantity(itemId, quantity);
+      // Optimistic update - update local state immediately
+      setCart(prevCart => 
+        prevCart.map(sellerGroup => ({
+          ...sellerGroup,
+          items: sellerGroup.items.map(item => 
+            item.id === itemId 
+              ? { ...item, quantity: quantity, effectiveQuantity: quantity }
+              : item
+          )
+        }))
+      );
       
-      // Reload cart to get updated data
-      await loadCart();
+      const response = await updateCartItemQuantity(itemId, quantity);
       
       console.log('✅ Cart item quantity updated successfully:', response);
       return response;
     } catch (err) {
       console.error('❌ Failed to update cart item quantity:', err);
+      // Revert optimistic update on error
+      await loadCart(true);
       setError(err.message);
       throw err;
     } finally {
@@ -132,15 +149,22 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await removeFromCart(itemId);
+      // Optimistic update - remove item from local state immediately
+      setCart(prevCart => 
+        prevCart.map(sellerGroup => ({
+          ...sellerGroup,
+          items: sellerGroup.items.filter(item => item.id !== itemId)
+        })).filter(sellerGroup => sellerGroup.items.length > 0)
+      );
       
-      // Reload cart to get updated data
-      await loadCart();
+      const response = await removeFromCart(itemId);
       
       console.log('✅ Item removed from cart successfully:', response);
       return response;
     } catch (err) {
       console.error('❌ Failed to remove item from cart:', err);
+      // Revert optimistic update on error
+      await loadCart(true);
       setError(err.message);
       throw err;
     } finally {
@@ -170,6 +194,37 @@ export const CartProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  // Fix cart items (remove out-of-stock items and adjust quantities)
+  const fixUserCart = useCallback(async () => {
+    if (!cartId) {
+      throw new Error('No cart ID available');
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fixCart(cartId);
+      
+      // Update cart with fixed data
+      if (response.data) {
+        setCart(response.data);
+      } else {
+        // Reload cart to get updated data
+        await loadCart(true);
+      }
+      
+      console.log('✅ Cart fixed successfully:', response);
+      return response;
+    } catch (err) {
+      console.error('❌ Failed to fix cart:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [cartId, loadCart]);
 
   // Add single product to cart with optimistic updates
   const addProductToCart = useCallback(async (productId, quantity = 1) => {
@@ -250,6 +305,21 @@ export const CartProvider = ({ children }) => {
     return getCartItemByProductId(cart, productId);
   }, [cart]);
 
+  // Check if cart needs fixing
+  const needsFixing = useCallback(() => {
+    return cartNeedsFixing(cart);
+  }, [cart]);
+
+  // Get cart status summary
+  const getStatusSummary = useCallback(() => {
+    return getCartStatusSummary(cart);
+  }, [cart]);
+
+  // Get items that need fixing
+  const getItemsNeedingFixCallback = useCallback(() => {
+    return getItemsNeedingFix(cart);
+  }, [cart]);
+
   // Load cart on mount and when user changes
   useEffect(() => {
     console.log('🔍 CartContext: Loading cart on mount...');
@@ -270,12 +340,18 @@ export const CartProvider = ({ children }) => {
     updateItemQuantity,
     removeItemFromCart,
     clearUserCart,
+    fixUserCart,
     
     // Computed values
     getCartTotals,
     getItemCount,
     checkProductInCart,
     getCartItem,
+    
+    // Status functions
+    needsFixing,
+    getStatusSummary,
+    getItemsNeedingFix: getItemsNeedingFixCallback,
     
     // Utility
     setError: (err) => setError(err)

@@ -5,7 +5,7 @@ import { ChatIcon } from '../common';
 import { checkProductAvailability } from '../../services/cartService';
 
 export default function AddToCartButton({ productId, className = '', sellerId = null, roundedStyle = 'full' }) {
-  const { addProductToCart, checkProductInCart, getCartItem, updateItemQuantity, removeItemFromCart } = useCart();
+  const { addProductToCart, checkProductInCart, getCartItem, updateItemQuantity, removeItemFromCart, loadCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [availability, setAvailability] = useState({ available: true, stockQuantity: 0, message: '' });
@@ -50,11 +50,29 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       e.stopPropagation();
     }
     if (!cartItem || loading) return;
+    
+    // Check if we're at max stock before trying to increase
+    if (cartItem.maxAvailable && quantity >= cartItem.maxAvailable) {
+      return; // Silently prevent increase if at max stock
+    }
+    
     try {
       setLoading(true);
-      await updateItemQuantity(cartItem.id, quantity + 1);
+      
+      // Check if this is an old cart item (missing cart item ID)
+      const itemId = cartItem.id || cartItem.cartItemId || cartItem.itemId;
+      
+      if (!itemId) {
+        console.log('🔍 AddToCartButton: Old cart item detected, refreshing cart...');
+        // This is an old cart item, refresh the cart to get proper structure
+        await loadCart(true); // Force refresh
+        return; // Don't throw error, just return silently
+      }
+      
+      await updateItemQuantity(itemId, quantity + 1);
     } catch (error) {
       console.error('Failed to increase quantity:', error);
+      // Don't show error to user, just log it
     } finally {
       setLoading(false);
     }
@@ -68,13 +86,25 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
     if (!cartItem || loading) return;
     try {
       setLoading(true);
+      
+      // Check if this is an old cart item (missing cart item ID)
+      const itemId = cartItem.id || cartItem.cartItemId || cartItem.itemId;
+      
+      if (!itemId) {
+        console.log('🔍 AddToCartButton: Old cart item detected, refreshing cart...');
+        // This is an old cart item, refresh the cart to get proper structure
+        await loadCart(true); // Force refresh
+        return; // Don't throw error, just return silently
+      }
+      
       if (quantity <= 1) {
-        await removeItemFromCart(cartItem.id);
+        await removeItemFromCart(itemId);
       } else {
-        await updateItemQuantity(cartItem.id, quantity - 1);
+        await updateItemQuantity(itemId, quantity - 1);
       }
     } catch (error) {
       console.error('Failed to decrease quantity:', error);
+      // Don't show error to user, just log it
     } finally {
       setLoading(false);
     }
@@ -114,7 +144,7 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
           <button
             type="button"
             onClick={handleIncrease}
-            disabled={loading}
+            disabled={loading || (cartItem.maxAvailable && quantity >= cartItem.maxAvailable)}
             className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full disabled:opacity-50 transition-all duration-200 hover:scale-105"
             aria-label="Increase quantity"
           >

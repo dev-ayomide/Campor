@@ -4,27 +4,54 @@ import { useAuth } from '../../context/AuthContext';
 import { initiatePayment } from '../../services/paymentsService';
 import { useCart } from '../../contexts/CartContext';
 import { CartSkeleton, ChatIcon } from '../../components/common';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import productImage from '../../assets/images/product.png';
 import profileImage from '../../assets/images/profile.png';
 
 export default function CartPage() {
   const { user } = useAuth();
-  const { cart, loading, error, updateItemQuantity, removeItemFromCart, clearUserCart, getCartTotals, cartId } = useCart();
+  const { 
+    cart, 
+    loading, 
+    error, 
+    updateItemQuantity, 
+    removeItemFromCart, 
+    clearUserCart, 
+    fixUserCart,
+    getCartTotals, 
+    cartId,
+    needsFixing,
+    getStatusSummary,
+    getItemsNeedingFix
+  } = useCart();
   const isSignedIn = !!user;
+  const [fixingCart, setFixingCart] = useState(false);
   
   // Use cart data from context (already grouped by seller)
   const groupedItems = cart || [];
+  const cartNeedsFixing = needsFixing();
+  const statusSummary = getStatusSummary();
+  const itemsNeedingFix = getItemsNeedingFix();
 
-  const updateQuantity = async (itemId, newQuantity) => {
+  const updateQuantity = async (itemId, newQuantity, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     if (newQuantity < 1) return;
     try {
       await updateItemQuantity(itemId, newQuantity);
     } catch (error) {
       console.error('Failed to update quantity:', error);
+      // Don't show error to user, just log it
     }
   };
 
-  const removeItem = async (itemId) => {
+  const removeItem = async (itemId, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     try {
       await removeItemFromCart(itemId);
     } catch (error) {
@@ -54,10 +81,25 @@ export default function CartPage() {
     console.log(`Checkout for ${groupedItems[sellerId].seller.name}: ${formatPrice(total)}`);
   };
 
+  const handleFixCart = async () => {
+    try {
+      setFixingCart(true);
+      await fixUserCart();
+    } catch (error) {
+      console.error('Failed to fix cart:', error);
+    } finally {
+      setFixingCart(false);
+    }
+  };
+
   const handleCheckoutAll = async () => {
     try {
       if (!isSignedIn) {
         alert('Please sign in to continue');
+        return;
+      }
+      if (cartNeedsFixing) {
+        alert('Please fix cart issues before proceeding to checkout');
         return;
       }
       const totalAmountNaira = getTotalAmount();
@@ -134,6 +176,47 @@ export default function CartPage() {
             </div>
           )}
 
+          {/* Cart Status Warning */}
+          {!loading && !error && groupedItems.length > 0 && cartNeedsFixing && (
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Cart needs attention
+                  </h3>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    {statusSummary.outOfStockItems > 0 && `${statusSummary.outOfStockItems} item(s) out of stock`}
+                    {statusSummary.outOfStockItems > 0 && statusSummary.stockMismatchItems > 0 && ', '}
+                    {statusSummary.stockMismatchItems > 0 && `${statusSummary.stockMismatchItems} item(s) have limited stock`}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleFixCart();
+                    }}
+                    disabled={fixingCart}
+                    className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-md hover:bg-yellow-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {fixingCart ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-yellow-600 border-t-transparent mr-2"></div>
+                        Fixing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3 w-3 mr-2" />
+                        Fix Cart
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Cart Content */}
           {!loading && !error && groupedItems.length > 0 && (
           <div className="grid lg:grid-cols-3 gap-8">
@@ -175,8 +258,11 @@ export default function CartPage() {
                         View Store
                       </Link>
                       <button 
+                        type="button"
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           // Navigate to chat with this seller
                           window.location.href = `/chat?sellerId=${group.sellerId}`;
                         }}
@@ -190,70 +276,109 @@ export default function CartPage() {
 
                 {/* Seller Items */}
                 <div className="divide-y divide-gray-100">
-                  {group.items.map((item) => (
-                    <div key={item.id} className="p-6">
-                      <div className="flex gap-4">
-                        {/* Product Image */}
-                        <Link 
-                          to={`/product/${item.product?.slug}`}
-                          className="flex-shrink-0 hover:opacity-80 transition-opacity"
-                        >
-                          <img 
-                            src={item.product?.imageUrls?.[0] || productImage} 
-                            alt={item.product?.name || 'Product'}
-                            className="w-20 h-20 object-cover rounded-lg bg-gray-100"
-                            onError={(e) => {
-                              e.target.src = productImage;
-                            }}
-                          />
-                        </Link>
-
-                        {/* Product Details */}
-                        <div className="flex-1 min-w-0">
+                  {group.items.map((item) => {
+                    const isOutOfStock = item.status === 'out_of_stock';
+                    const isStockMismatch = item.status === 'stock_mismatch';
+                    const effectiveQuantity = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity;
+                    
+                    // Get status info
+                    let statusInfo = { text: 'Available', color: 'text-green-600', bgColor: '', borderColor: '' };
+                    if (isOutOfStock) {
+                      statusInfo = { text: 'Out of stock', color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
+                    } else if (isStockMismatch) {
+                      statusInfo = { text: `Only ${item.maxAvailable} available`, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' };
+                    }
+                    
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`p-6 ${statusInfo.bgColor} ${statusInfo.borderColor} border-l-4 ${isOutOfStock ? 'opacity-60' : ''}`}
+                      >
+                        <div className="flex gap-4">
+                          {/* Product Image */}
                           <Link 
                             to={`/product/${item.product?.slug}`}
-                            className="hover:text-blue-600 transition-colors"
+                            className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock ? 'pointer-events-none' : ''}`}
                           >
-                            <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                              {item.product?.name || 'Product'}
-                            </h3>
+                            <img 
+                              src={item.product?.imageUrls?.[0] || productImage} 
+                              alt={item.product?.name || 'Product'}
+                              className="w-20 h-20 object-cover rounded-lg bg-gray-100"
+                              onError={(e) => {
+                                e.target.src = productImage;
+                              }}
+                            />
                           </Link>
-                          <p className="text-lg font-bold text-gray-900 mb-3">
-                            {formatPrice(item.product?.price || 0)}
-                          </p>
 
-                          {/* Quantity Controls */}
-                          <div className="flex items-center gap-3">
-                            <button 
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600"
+                          {/* Product Details */}
+                          <div className="flex-1 min-w-0">
+                            <Link 
+                              to={`/product/${item.product?.slug}`}
+                              className={`hover:text-blue-600 transition-colors ${isOutOfStock ? 'pointer-events-none' : ''}`}
                             >
-                              -
-                            </button>
-                            <span className="text-sm font-medium min-w-[2rem] text-center">
-                              {item.quantity}
-                            </span>
-                            <button 
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600"
-                            >
-                              +
-                            </button>
+                              <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                                {item.product?.name || 'Product'}
+                              </h3>
+                            </Link>
+                            <p className="text-lg font-bold text-gray-900 mb-2">
+                              {formatPrice(item.product?.price || 0)}
+                            </p>
                             
-                            {/* Remove Button */}
-                            <button 
-                              onClick={() => removeItem(item.id)}
-                              className="ml-auto p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                            {/* Status Indicator */}
+                            <div className={`flex items-center space-x-1 mb-3 ${statusInfo.color}`}>
+                              {isOutOfStock || isStockMismatch ? (
+                                <AlertTriangle className="h-4 w-4" />
+                              ) : null}
+                              <span className="text-xs font-medium">
+                                {statusInfo.text}
+                              </span>
+                            </div>
+                            
+                            {/* Stock Mismatch Info */}
+                            {isStockMismatch && (
+                              <p className="text-xs text-yellow-600 mb-3">
+                                You have {item.quantity}, but only {item.maxAvailable} available
+                              </p>
+                            )}
+
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-3">
+                              <button 
+                                type="button"
+                                onClick={(e) => updateQuantity(item.id, item.quantity - 1, e)}
+                                disabled={isOutOfStock}
+                                className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600 disabled:opacity-50"
+                              >
+                                -
+                              </button>
+                              <span className="text-sm font-medium min-w-[2rem] text-center">
+                                {effectiveQuantity}
+                              </span>
+                              <button 
+                                type="button"
+                                onClick={(e) => updateQuantity(item.id, item.quantity + 1, e)}
+                                disabled={isOutOfStock || (item.maxAvailable && item.quantity >= item.maxAvailable)}
+                                className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600 disabled:opacity-50"
+                              >
+                                +
+                              </button>
+                              
+                              {/* Remove Button */}
+                              <button 
+                                type="button"
+                                onClick={(e) => removeItem(item.id, e)}
+                                className="ml-auto p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -297,14 +422,23 @@ export default function CartPage() {
               </div>
 
               <button 
-                onClick={handleCheckoutAll}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCheckoutAll();
+                }}
+                disabled={cartNeedsFixing}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Checkout All
+                {cartNeedsFixing ? 'Fix Cart Issues First' : 'Checkout All'}
               </button>
 
               <button 
-                onClick={async () => {
+                type="button"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   if (window.confirm('Are you sure you want to clear your cart?')) {
                     try {
                       await clearUserCart();
@@ -318,12 +452,7 @@ export default function CartPage() {
                 Clear Cart
               </button>
 
-              <div className="text-xs text-gray-500 space-y-2">
-                <p>
-                  <strong>Tip:</strong> You can checkout with each seller separately or message them directly from your cart.
-                </p>
-                <p>All payments are processed securely through Paystack.</p>
-              </div>
+             
             </div>
           </div>
         </div>

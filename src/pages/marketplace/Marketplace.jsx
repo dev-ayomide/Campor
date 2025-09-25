@@ -920,8 +920,8 @@ export default function MarketplacePage() {
                         />
                         
                         {/* Stock Status Badge */}
-                        {productStock <= 0 && (
-                          <div className="absolute top-2 left-2 bg-red-700 text-white text-xs px-3 py-1.5 rounded-full shadow-lg z-10">
+                        {(!product.inStock || product.stockQuantity <= 0 || !product.stockQuantity) && (
+                          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                             Out of Stock
                           </div>
                         )}
@@ -985,7 +985,7 @@ export default function MarketplacePage() {
 
                             {/* Action Buttons - Bottom aligned */}
                             <div className="flex gap-3 items-center">
-                              <div className={`flex-1 ${productStock === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <div className={`flex-1 ${(!product.inStock || product.stockQuantity <= 0 || !product.stockQuantity) ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {/* Reusable quantity-aware button */}
                                 <AddToCartButton productId={product.id} className="w-3/4" />
                               </div>
@@ -1046,7 +1046,7 @@ export default function MarketplacePage() {
 
                             {/* Action Buttons */}
                             <div className="flex gap-3">
-                              <div className={`flex-1 ${productStock === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <div className={`flex-1 ${(!product.inStock || product.stockQuantity <= 0 || !product.stockQuantity) ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {/* Reusable quantity-aware button */}
                                 <AddToCartButton productId={product.id} className="w-full" />
                               </div>

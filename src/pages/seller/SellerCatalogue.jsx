@@ -573,8 +573,8 @@ export default function SellerCatalogue() {
                         }}
                         />
                         
-                      {/* Stock Status Badge */}
-                        {product.stockQuantity <= 0 && (
+                      {/* Stock Status Badge - Only for grid view */}
+                        {product.stockQuantity <= 0 && viewMode === 'grid' && (
                           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                             Out of Stock
                           </div>
@@ -597,13 +597,21 @@ export default function SellerCatalogue() {
                             </div>
 
                             {/* Product Name - Compact with highlighting */}
-                            <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 leading-tight">
-                              <SearchHighlight 
-                                text={product.name} 
-                                highlight={searchQuery} 
-                                className="text-sm font-semibold text-gray-900"
-                              />
-                            </h3>
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight flex-1">
+                                <SearchHighlight 
+                                  text={product.name} 
+                                  highlight={searchQuery} 
+                                  className="text-sm font-semibold text-gray-900"
+                                />
+                              </h3>
+                              {/* Out of Stock Badge for list view */}
+                              {product.stockQuantity <= 0 && (
+                                <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0">
+                                  Out of Stock
+                                </div>
+                              )}
+                            </div>
 
                             {/* Price - Prominent */}
                             <div className="flex items-center gap-2 mb-1">
@@ -618,17 +626,13 @@ export default function SellerCatalogue() {
 
                           {/* Action Buttons - Bottom aligned */}
                           <div className="flex gap-2 items-center">
-                            {user?.seller?.id !== sellerId ? (
-                              <div className={`flex-1 ${product.stockQuantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
-                                <AddToCartButton productId={product.id} className="w-full" />
-                              </div>
-                            ) : null}
-                            {user?.seller?.id !== sellerId && (
-                              <WishlistButton 
-                                productId={product.id}
-                                className="flex-shrink-0"
-                              />
-                            )}
+                            <div className={`flex-1 ${product.stockQuantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <AddToCartButton productId={product.id} className="w-full" />
+                            </div>
+                            <WishlistButton 
+                              productId={product.id}
+                              className="flex-shrink-0"
+                            />
                           </div>
                         </div>
                       ) : (
@@ -664,16 +668,12 @@ export default function SellerCatalogue() {
 
                           {/* Action Buttons */}
                           <div className="flex gap-2">
-                            {user?.seller?.id !== sellerId ? (
-                              <div className={`flex-1 ${product.stockQuantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
-                                <AddToCartButton productId={product.id} className="w-full" />
-                              </div>
-                            ) : null}
-                            {user?.seller?.id !== sellerId && (
-                              <WishlistButton 
-                                productId={product.id}
-                              />
-                            )}
+                            <div className={`flex-1 ${product.stockQuantity === 0 ? 'opacity-50 pointer-events-none' : ''}`}>
+                              <AddToCartButton productId={product.id} className="w-full" />
+                            </div>
+                            <WishlistButton 
+                              productId={product.id}
+                            />
                           </div>
                         </div>
                       )}
