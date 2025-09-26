@@ -170,6 +170,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -276,62 +277,143 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   useEffect(() => {
     console.log('🔄 ChatWindow: useEffect triggered for conversationId:', conversationId);
     if (conversationId) {
-      loadConversation();
-      loadMessages();
-      joinChatRoom(conversationId);
-      
-      // Force scroll to bottom when component mounts
-      setTimeout(() => {
-        scrollToBottom();
-        const messagesContainer = document.querySelector('.chat-messages-mobile');
-        if (messagesContainer) {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }, 200);
-      
-      // No periodic refresh needed - real-time updates handle everything
-      
-      // Set up real-time message listeners (simplified like demo)
-      const handleNewMessage = (messageData) => {
-        console.log('📨 New message received:', messageData);
+      // Handle seller-specific conversations from orders
+      if (conversationId.startsWith('seller-')) {
+        const userId = conversationId.replace('seller-', '');
+        console.log('🔍 ChatWindow: Handling seller conversation for user ID:', userId);
+        // Create a mock conversation like chat-demo does
+        const mockConversation = {
+          id: conversationId,
+          type: 'seller',
+          participant: {
+            id: userId,
+            name: 'Seller',
+            initials: 'S',
+            role: 'Seller',
+            isOnline: false
+          },
+          lastMessage: null,
+          unreadCount: 0
+        };
+        setConversation(mockConversation);
+        setMessages([]);
         
-        // Update delivery status for pending messages and reload messages
-        setMessages(prev => {
-          const updatedMessages = prev.map(msg => {
-            if (msg.deliveryStatus === 'sent' && msg.senderId === currentUser.id) {
-              return { ...msg, deliveryStatus: 'delivered' };
-            }
-            return msg;
-          });
-          return updatedMessages;
-        });
+        // Set up socket listeners for seller conversations
+        const handleNewMessage = (messageData) => {
+          console.log('📨 New message received for seller conversation:', messageData);
+          // Reload messages to get the complete message data
+          setTimeout(() => {
+            // For seller conversations, we need to load messages differently
+            // This will be handled when the conversation is properly created
+          }, 100);
+        };
+
+        const handleMessageNotification = (notificationData) => {
+          console.log('🔔 Message notification received for seller conversation:', notificationData);
+          // Handle notifications for seller conversations
+          if (notificationData.senderId !== currentUser.id) {
+            // Reload messages when we get a notification
+            setTimeout(() => {
+              // This will be handled when the conversation is properly created
+            }, 100);
+          }
+        };
         
-        // Reload messages to get the complete message data (like demo)
+        socketService.on('new_message', handleNewMessage);
+        socketService.on('message_notification', handleMessageNotification);
+      } else {
+        loadConversation();
+        loadMessages();
+        joinChatRoom(conversationId);
+        
+        // Force scroll to bottom when component mounts
         setTimeout(() => {
-          loadMessages();
-        }, 100);
-      };
+          scrollToBottom();
+          const messagesContainer = document.querySelector('.chat-messages-mobile');
+          if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          }
+        }, 200);
+        
+        // No periodic refresh needed - real-time updates handle everything
+        
+        // Set up real-time message listeners (like chat-demo)
+        const handleNewMessage = (messageData) => {
+          console.log('📨 New message received:', messageData);
+          
+          // Update delivery status for pending messages and add new messages
+          setMessages(prev => {
+            const updatedMessages = prev.map(msg => {
+              if (msg.deliveryStatus === 'pending' && msg.senderId === currentUser.id) {
+                return { ...msg, deliveryStatus: 'sent' };
+              }
+              return msg;
+            });
+            return updatedMessages;
+          });
+          
+          // Reload messages to get the complete message data (like demo)
+          setTimeout(() => loadMessages(), 100);
+        };
 
-      const handleMessageNotification = (notificationData) => {
-        console.log('🔔 Message notification received:', notificationData);
-        // Only handle notifications for the current chat
-        if (notificationData.chatId === conversationId && notificationData.senderId !== currentUser.id) {
-          // Reload messages to get the new message (like demo)
-          loadMessages();
-        }
-      };
+        const handleMessageNotification = (notificationData) => {
+          console.log('🔔 Message notification received:', notificationData);
+          // Only handle notifications for the current chat
+          if (notificationData.chatId === conversationId && notificationData.senderId !== currentUser.id) {
+            // Reload messages to get the new message (like demo)
+            loadMessages();
+          }
+        };
 
-      // Listen for socket events
-      socketService.on('new_message', handleNewMessage);
-      socketService.on('message_notification', handleMessageNotification);
+        // Listen for socket events
+        socketService.on('new_message', handleNewMessage);
+        socketService.on('message_notification', handleMessageNotification);
+        
+        // Listen for conversation creation events
+        const handleConversationCreated = () => {
+          console.log('🔄 Conversation created, reloading conversation list');
+          // Trigger conversation list reload
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('conversationCreated'));
+          }
+        };
+        
+        socketService.on('conversation_created', handleConversationCreated);
+        
+        // Listen for new chat creation (when a new conversation is established)
+        const handleNewChat = (chatData) => {
+          console.log('🆕 New chat created:', chatData);
+          // Trigger conversation list reload
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('conversationCreated'));
+          }
+        };
+        
+        socketService.on('new_chat', handleNewChat);
+        
+        // Monitor connection status
+        const checkConnection = () => {
+          setIsConnected(socketService.connected);
+        };
+        
+        const connectionInterval = setInterval(checkConnection, 1000);
+        
+        return () => {
+          clearInterval(connectionInterval);
+        };
+      }
     }
 
     return () => {
       if (conversationId) {
-        leaveChatRoom(conversationId);
-        // Remove socket listeners
+        if (!conversationId.startsWith('seller-')) {
+          leaveChatRoom(conversationId);
+        }
+        // Remove socket listeners for all conversation types
         socketService.off('new_message');
         socketService.off('message_notification');
+        socketService.off('conversation_created');
+        socketService.off('new_chat');
       }
     };
   }, [conversationId, joinChatRoom, leaveChatRoom, currentUser.id]);
@@ -372,18 +454,70 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     setNewMessage('');
 
     try {
+      // Check for self-messaging
+      if (conversationId && conversationId.startsWith('seller-')) {
+        const userId = conversationId.replace('seller-', '');
+        if (userId === currentUser.id) {
+          alert('You cannot message yourself. Please select a different seller to chat with.');
+          return;
+        }
+      }
       
-      if (sellerId && !conversationId) {
-        // Creating new conversation with seller - Optimistic update
-        console.log('Creating conversation with sellerId:', sellerId);
+      // Handle seller-specific conversations from orders
+      if (conversationId && conversationId.startsWith('seller-')) {
+        const userId = conversationId.replace('seller-', '');
+        console.log('Creating conversation with seller user ID:', userId);
         
-        // Optimistically add the message immediately
+        // Optimistically add the message immediately - appears as sent (like chat-demo)
         const optimisticMessage = {
           tempId,
           content: messageContent,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
-          timestamp: new Date().toISOString(), // Ensure timestamp is set
+          timestamp: new Date().toISOString(),
+          sender: {
+            id: currentUser.id,
+            name: currentUser.name || 'You'
+          },
+          isFromCurrentUser: true,
+          deliveryStatus: 'sent' // Start as 'sent' for instant feel
+        };
+        
+        console.log('🚀 Adding optimistic message:', optimisticMessage);
+        setMessages([optimisticMessage]);
+        
+        const sentMessage = await sendMessage(null, messageContent, userId);
+        console.log('📤 Sent message response:', sentMessage);
+        
+        // Message already appears as sent, just confirm it silently (like chat-demo)
+        setMessages(prev => prev.map(msg => 
+          msg.tempId === tempId 
+            ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+            : msg
+        ));
+        
+        // Trigger conversation list reload and reload messages for the new conversation
+        setTimeout(() => {
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('conversationCreated'));
+          }
+          // Reload messages to get the complete conversation
+          if (sentMessage.chatId) {
+            loadMessages();
+          }
+        }, 1000);
+        
+      } else if (sellerId && !conversationId) {
+        // Creating new conversation with seller - Optimistic update (like chat-demo)
+        console.log('Creating conversation with sellerId:', sellerId);
+        
+        // Optimistically add the message immediately - appears as sent
+        const optimisticMessage = {
+          tempId,
+          content: messageContent,
+          senderId: currentUser.id,
+          sentAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
           sender: {
             id: currentUser.id,
             name: currentUser.name || 'You'
@@ -397,37 +531,33 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         const sentMessage = await sendMessage(null, messageContent, sellerId);
         console.log('📤 Sent message response:', sentMessage);
-        // Update the optimistic message with real data
-        setMessages(prev => {
-          console.log('🔄 Current messages before replacement:', prev);
-          const updated = prev.map(msg => {
-            if (msg.tempId === tempId && !msg.id) { // Only replace if it still has tempId and no real id
-              console.log('🔄 Replacing optimistic message with real data:', sentMessage);
-              return { ...sentMessage, tempId };
-            }
-            return msg;
-          });
-          console.log('🔄 Messages after replacement:', updated);
-          return updated;
-        });
         
-        // Instead of refreshing, trigger a conversation list reload
-        // This will be handled by the parent component
+        // Message already appears as sent, just confirm it silently (like chat-demo)
+        setMessages(prev => prev.map(msg => 
+          msg.tempId === tempId 
+            ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+            : msg
+        ));
+        
+        // Trigger conversation list reload and reload messages for the new conversation
         setTimeout(() => {
-          // Trigger conversation list reload in parent
           if (window.dispatchEvent) {
             window.dispatchEvent(new CustomEvent('conversationCreated'));
+          }
+          // Reload messages to get the complete conversation
+          if (sentMessage.chatId) {
+            loadMessages();
           }
         }, 1000);
         
       } else if (conversation) {
-        // Existing conversation - Optimistic update
+        // Existing conversation - Optimistic update (like chat-demo)
         const optimisticMessage = {
           tempId,
           content: messageContent,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
-          timestamp: new Date().toISOString(), // Ensure timestamp is set
+          timestamp: new Date().toISOString(),
           sender: {
             id: currentUser.id,
             name: currentUser.name || 'You'
@@ -444,19 +574,12 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const sentMessage = await sendMessage(conversationId, messageContent, receiverId);
         console.log('📤 Sent message response (existing conversation):', sentMessage);
         
-        // Update the optimistic message with real data
-        setMessages(prev => {
-          console.log('🔄 Current messages before replacement (existing):', prev);
-          const updated = prev.map(msg => {
-            if (msg.tempId === tempId && !msg.id) { // Only replace if it still has tempId and no real id
-              console.log('🔄 Replacing optimistic message with real data:', sentMessage);
-              return { ...sentMessage, tempId };
-            }
-            return msg;
-          });
-          console.log('🔄 Messages after replacement (existing):', updated);
-          return updated;
-        });
+        // Message already appears as sent, just confirm it silently (like chat-demo)
+        setMessages(prev => prev.map(msg => 
+          msg.tempId === tempId 
+            ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+            : msg
+        ));
         
         stopTyping(receiverId);
       }
@@ -690,7 +813,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             )}
             
             <div className="relative">
-            {conversation?.participant.profileImage ? (
+            {conversation?.participant?.profileImage ? (
               <div className="w-10 h-10 rounded-full overflow-hidden">
                 <img 
                   src={conversation.participant.profileImage} 
@@ -700,38 +823,26 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               </div>
             ) : (
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {conversation?.participant.initials}
+                {conversation?.participant?.initials || 'U'}
               </div>
             )}
-              {conversation && onlineUsers.has(conversation.participant.id) && (
+              {conversation?.participant && onlineUsers.has(conversation.participant.id) && (
                 <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               )}
             </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
               <h3 className="text-lg font-semibold text-gray-900 truncate">
-                {conversation?.participant.name}
+                {conversation?.participant?.name || 'Unknown User'}
               </h3>
-              {/* User Role Tag */}
-              <span className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${
-                conversation?.participant.role === 'Buyer' 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-purple-100 text-purple-700'
-              }`}>
-                {conversation?.participant.role}
-              </span>
             </div>
             <div className="flex items-center space-x-2">
               <span className={`text-sm ${
-                conversation && onlineUsers.has(conversation.participant.id) 
+                conversation?.participant && onlineUsers.has(conversation.participant.id) 
                   ? 'text-green-500' 
                   : 'text-gray-500'
               }`}>
-                {conversation && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Last seen recently'}
-              </span>
-              <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm text-gray-500">
-                You are the {isSeller ? 'seller' : 'buyer'}
+                {conversation?.participant && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Last seen recently'}
               </span>
             </div>
           </div>
@@ -927,8 +1038,11 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           <button
             type="submit"
             disabled={!newMessage.trim()}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
           >
+            {!isConnected && (
+              <div className="w-1 h-1 bg-yellow-400 rounded-full animate-pulse"></div>
+            )}
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>

@@ -112,15 +112,31 @@ export default function LandingPage() {
             >
               Your Campus<br />
               Marketplace.<br />
-              Simplified.
+              <span className="text-blue-600">Verified & Secure.</span>
             </motion.h1>
             <motion.p 
-              className="text-gray-500 text-base sm:text-lg md:text-xl mb-8 max-w-xl font-medium"
+              className="text-gray-500 text-base sm:text-lg md:text-xl mb-6 max-w-xl font-medium"
               variants={fadeInUp}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Buy, sell, or trade with fellow students anytime, anywhere. Built for students. Backed by trust.
+              Buy, sell, or trade with verified RUN students. Only @run.edu.ng emails accepted. Secure transactions guaranteed.
             </motion.p>
+            
+            {/* Social Proof */}
+            <motion.div 
+              className="flex items-center gap-4 mb-8"
+              variants={fadeInUp}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="font-medium">Verified RUN Students Only</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="font-medium">Secure Payments</span>
+              </div>
+            </motion.div>
             
             {/* CTA Buttons */}
             <motion.div 
@@ -151,7 +167,7 @@ export default function LandingPage() {
                       d="M13 7l5 5m0 0l-5 5m5-5H6"
                     />
                   </svg>
-                  Create Account
+                  Join Campor
                 </Link>
               </motion.div>
               <motion.div
@@ -163,7 +179,7 @@ export default function LandingPage() {
                   className="flex items-center justify-center bg-white border-2 border-gray-900 hover:border-gray-700 text-gray-900 rounded-full font-bold text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                   style={{ minWidth: '0', minHeight: '0' }}
                 >
-                  Explore Listings
+                  Browse Campus Items
                 </Link>
               </motion.div>
             </motion.div>
@@ -238,6 +254,9 @@ export default function LandingPage() {
                 src={heroImage} 
                 alt="Student using laptop for campus marketplace" 
                 className="w-full h-auto rounded-2xl shadow-2xl"
+                loading="eager"
+                decoding="async"
+                style={{ imageRendering: 'auto' }}
               />
             </motion.div>
             {/* Decorative Elements */}
@@ -299,15 +318,25 @@ export default function LandingPage() {
       {/* App Features Section */}
       <section ref={featuresRef} id="features" className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <motion.h2 
-            className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8"
-            initial="hidden"
-            animate={featuresInView ? "visible" : "hidden"}
-            variants={fadeInUp}
-            transition={{ duration: 0.8 }}
-          >
-            App Features That Make <br/> Buying & Selling Easy
-          </motion.h2>
+            <motion.h2 
+              className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4"
+              initial="hidden"
+              animate={featuresInView ? "visible" : "hidden"}
+              variants={fadeInUp}
+              transition={{ duration: 0.8 }}
+            >
+              Built Specifically for RUN Students
+            </motion.h2>
+            
+            <motion.p 
+              className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto"
+              initial="hidden"
+              animate={featuresInView ? "visible" : "hidden"}
+              variants={fadeInUp}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              Every feature designed with RUN campus life in mind. Verified students, secure payments, and campus-focused categories.
+            </motion.p>
           
           <motion.div 
             className="flex justify-center"
@@ -322,6 +351,9 @@ export default function LandingPage() {
                 src="/app-features.svg"
                 alt="App features illustration"
                 className="w-full h-auto mx-auto"
+                loading="lazy"
+                decoding="async"
+                style={{ imageRendering: 'auto' }}
               />
             </picture>
           </motion.div>
@@ -343,26 +375,34 @@ export default function LandingPage() {
               transition={{ duration: 0.8 }}
             >
               <motion.h2 
-                className="text-4xl lg:text-5xl font-bold text-gray-900 mb-8 leading-tight"
+                className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight"
                 variants={fadeInUp}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                How Campor<br />Works
+                How Campor<br />Works for RUN
               </motion.h2>
               
+              <motion.p 
+                className="text-gray-600 text-lg mb-8"
+                variants={fadeInUp}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                Simple steps to join the RUN campus marketplace
+              </motion.p>
+              
               <motion.ol 
-                className="list-decimal list-inside text-gray-500 text-lg space-y-2 mb-8 pl-1"
+                className="list-decimal list-inside text-gray-700 text-lg space-y-3 mb-8 pl-1"
                 variants={fadeInUp}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                <li>
-                  Create an account with your RUN email.
+                <li className="font-medium">
+                  Sign up with your @run.edu.ng email for instant verification
                 </li>
-                <li>
-                  Post your product or service, or browse student listings.
+                <li className="font-medium">
+                  List textbooks, electronics, or services. Browse campus-specific categories
                 </li>
-                <li>
-                  Chat directly and close secure deals—no middlemen.
+                <li className="font-medium">
+                  Chat with verified students and complete secure transactions
                 </li>
               </motion.ol>
 
@@ -424,6 +464,9 @@ export default function LandingPage() {
                 className="w-full h-full mb-8 object-contain"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
+                loading="lazy"
+                decoding="async"
+                style={{ imageRendering: 'auto' }}
               />
             </motion.div>
           </div>
@@ -478,6 +521,9 @@ export default function LandingPage() {
                 src="/discover.svg"
                 alt="Discover the campus marketplace"
                 className="w-full max-w-md h-auto"
+                loading="lazy"
+                decoding="async"
+                style={{ imageRendering: 'auto' }}
               />
             </div>
           </div>
@@ -488,14 +534,24 @@ export default function LandingPage() {
       <section ref={coreFeaturesRef} id="core-features" className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h2 
-            className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-16"
+            className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-4"
             initial="hidden"
             animate={coreFeaturesInView ? "visible" : "hidden"}
             variants={fadeInUp}
             transition={{ duration: 0.8 }}
           >
-            Campor's Core Features
+            Why RUN Students Choose Campor
           </motion.h2>
+          
+          <motion.p 
+            className="text-gray-600 text-lg text-center mb-16 max-w-3xl mx-auto"
+            initial="hidden"
+            animate={coreFeaturesInView ? "visible" : "hidden"}
+            variants={fadeInUp}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            Built exclusively for RUN campus community with features that matter to students
+          </motion.p>
 
           <motion.div 
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -519,9 +575,9 @@ export default function LandingPage() {
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Verified Campus Community</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">RUN-Only Verification</h3>
               <p className="text-gray-600">
-                Access to verified @run.edu.ng student accounts ensuring a safe and trusted marketplace environment for all transactions.
+                Only @run.edu.ng emails accepted. Every user is a verified RUN student, eliminating scams and external sellers.
               </p>
             </motion.div>
 
@@ -540,9 +596,9 @@ export default function LandingPage() {
                   <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Seamless Listing Tools</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Campus-Focused Categories</h3>
               <p className="text-gray-600">
-                Easily add and manage your listings. Upload multiple photos, set competitive prices, and reach your fellow students instantly.
+                Textbooks, electronics, clothing, services - all organized for RUN campus life. Find exactly what you need from fellow students.
               </p>
             </motion.div>
 
@@ -561,9 +617,9 @@ export default function LandingPage() {
                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Smart Search & Categories</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Secure Campus Payments</h3>
               <p className="text-gray-600">
-                Quickly discover what you're looking for with intelligent search features and organized product categories.
+                Built-in payment system with multiple options. All transactions are secure and protected within the platform.
               </p>
             </motion.div>
 
@@ -688,8 +744,70 @@ export default function LandingPage() {
                   src="/facilitate.svg" 
                   alt="Campus commerce illustration with phones and geometric shapes" 
                   className="w-full h-auto"
+                  loading="lazy"
+                  decoding="async"
+                  style={{ imageRendering: 'auto' }}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Section */}
+      <section className="py-16 lg:py-24 ">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Trusted by RUN Students
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Join the secure campus marketplace designed exclusively for RUN community
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Email Verification</h3>
+              <p className="text-gray-600">Only @run.edu.ng emails accepted. Every user is a verified RUN student.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Secure Payments</h3>
+              <p className="text-gray-600">Built-in payment system with multiple secure options for safe transactions.</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg 
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="#9333ea"
+                  viewBox="0 0 24 24"
+                  loading="lazy"
+                  decoding="async"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2" 
+                    d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 21l1.8-4A7.96 7.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Direct Communication</h3>
+              <p className="text-gray-600">Chat directly with buyers and sellers to negotiate and coordinate safely.</p>
             </div>
           </div>
         </div>

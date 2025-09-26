@@ -447,13 +447,20 @@ export async function getSellerCatalogue(sellerId) {
     
     const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/catalogue`);
     console.log('✅ SellerService: Seller catalogue fetched successfully:', response.data);
+    console.log('🔍 SellerService: Raw API response data:', JSON.stringify(response.data, null, 2));
     
     // The API now returns updated structure with user profile and catalogue cover
     const data = response.data;
-    return {
+    console.log('🔍 SellerService: Mapping userId to user.id:', data.userId);
+    console.log('🔍 SellerService: User data from API:', data.user);
+    
+    const mappedData = {
       seller: {
         id: sellerId,
-        user: data.user, // Contains name and profilePicture
+        user: {
+          ...data.user, // Contains name and profilePicture
+          id: data.userId // Map userId to user.id for consistency
+        },
         catalogueName: data.catalogueName,
         catalogueCover: data.catalogueCover, // New cover photo field
         cataloguePicture: data.catalogueCover, // Also map to cataloguePicture for backward compatibility
@@ -469,8 +476,12 @@ export async function getSellerCatalogue(sellerId) {
         averageRating: data.averageRating,
         productCount: data._count?.products || 0
       },
-      products: data.products || []
+      products: data.products || [],
+      rawApiResponse: data // Store raw API response for debugging
     };
+    
+    console.log('🔍 SellerService: Final mapped data:', JSON.stringify(mappedData, null, 2));
+    return mappedData;
   } catch (error) {
     console.error('❌ SellerService: Failed to fetch seller catalogue:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch seller catalogue.');
@@ -556,30 +567,55 @@ export async function getSellerUserId(sellerId) {
     console.log('🔍 SellerService: Getting user ID for seller:', sellerId);
     
     const catalogueData = await getSellerCatalogue(sellerId);
-    console.log('🔍 SellerService: Catalogue data structure:', catalogueData);
-    console.log('🔍 SellerService: Seller data:', catalogueData.seller);
-    console.log('🔍 SellerService: User data:', catalogueData.seller?.user);
+    console.log('🔍 SellerService: Raw catalogue data:', catalogueData);
+    console.log('🔍 SellerService: Seller object:', catalogueData.seller);
+    console.log('🔍 SellerService: User object:', catalogueData.seller?.user);
     
     const userId = catalogueData.seller?.user?.id;
+    console.log('🔍 SellerService: Extracted user ID:', userId);
     
     if (!userId) {
       console.error('❌ SellerService: User ID not found in catalogue data');
-      console.error('❌ SellerService: Available user fields:', catalogueData.seller?.user ? Object.keys(catalogueData.seller.user) : 'No user data');
-      
-      // Check if there's a different field that might contain the user ID
-      const possibleUserFields = ['id', 'userId', 'user_id', 'ownerId', 'owner_id'];
-      for (const field of possibleUserFields) {
-        if (catalogueData.seller?.user?.[field]) {
-          console.log(`🔍 SellerService: Found potential user ID in field '${field}':`, catalogueData.seller.user[field]);
-        }
-      }
-      
+      console.error('❌ SellerService: Available seller fields:', Object.keys(catalogueData.seller || {}));
+      console.error('❌ SellerService: Available user fields:', Object.keys(catalogueData.seller?.user || {}));
       throw new Error('User ID not found for seller');
     }
     
+    // Check if the userId is actually the seller ID (this shouldn't happen but let's handle it)
+    if (userId === sellerId) {
+      console.error('❌ SellerService: API returned seller ID as userId - this is incorrect');
+      console.error('❌ SellerService: Seller ID:', sellerId);
+      console.error('❌ SellerService: Returned userId:', userId);
+      
+      // Try to get the actual user ID from the raw API response
+      console.log('🔍 SellerService: Checking raw API response for actual user ID...');
+      const rawResponse = catalogueData.rawApiResponse || catalogueData;
+      console.log('🔍 SellerService: Raw API response:', rawResponse);
+      
+      // Look for user ID in different possible fields
+      const possibleUserIds = [
+        rawResponse.userId,
+        rawResponse.user?.id,
+        rawResponse.ownerId,
+        rawResponse.owner_id
+      ].filter(Boolean);
+      
+      console.log('🔍 SellerService: Possible user IDs found:', possibleUserIds);
+      
+      // Find a user ID that's different from the seller ID
+      const actualUserId = possibleUserIds.find(id => id !== sellerId);
+      
+      if (actualUserId) {
+        console.log('✅ SellerService: Found actual user ID:', actualUserId);
+        return actualUserId;
+      } else {
+        // If we can't find a different user ID, this is a backend API issue
+        // For now, let's throw a more helpful error
+        throw new Error(`Backend API issue: The seller catalogue endpoint is returning the seller ID (${sellerId}) as the userId field instead of the actual user ID. Please contact the backend team to fix this.`);
+      }
+    }
+    
     console.log('✅ SellerService: Found user ID for seller:', userId);
-    console.log('🔍 SellerService: User ID type:', typeof userId);
-    console.log('🔍 SellerService: User ID length:', userId.length);
     
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -588,10 +624,34 @@ export async function getSellerUserId(sellerId) {
       throw new Error('Invalid user ID format');
     }
     
+    console.log('✅ SellerService: User ID validation passed');
     return userId;
   } catch (error) {
     console.error('❌ SellerService: Failed to get seller user ID:', error);
     throw new Error(error.response?.data?.message || 'Failed to get seller user ID.');
+  }
+}
+
+// Alternative function to get seller user ID with fallback
+export async function getSellerUserIdWithFallback(sellerId) {
+  try {
+    // First try the normal method
+    return await getSellerUserId(sellerId);
+  } catch (error) {
+    console.log('🔍 SellerService: Normal method failed, trying alternative approach...');
+    
+    // If the normal method fails, try to use the seller ID directly
+    // This is a temporary workaround for the backend API issue
+    console.log('⚠️ SellerService: Using seller ID as fallback (this may not work for chat)');
+    console.log('⚠️ SellerService: Seller ID:', sellerId);
+    
+    // Validate that the seller ID is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(sellerId)) {
+      throw new Error('Invalid seller ID format');
+    }
+    
+    return sellerId;
   }
 }
 

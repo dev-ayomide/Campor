@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { getProductBySlug, getSellerCatalogue, getSellerUserId } from '../../services/authService';
+import { getProductBySlug, getSellerCatalogue, getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
@@ -397,39 +397,20 @@ export default function ProductDetailPage() {
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
                       onClick={async () => {
                         try {
-                          // Get seller's user ID for chat
-                          const sellerUserId = await getSellerUserId(product.seller.id);
-                          console.log('✅ ProductDetail: Using seller user ID for chat:', sellerUserId);
+                          console.log('🔍 ProductDetail: Starting to get seller user ID for seller:', product.seller.id);
+                          // Get seller's user ID for chat with fallback
+                          const sellerUserId = await getSellerUserIdWithFallback(product.seller.id);
+                          console.log('✅ ProductDetail: Successfully got seller user ID:', sellerUserId);
                           // Navigate to chat with seller's user ID
                           navigate(`/chat?sellerId=${sellerUserId}`);
                         } catch (error) {
                           console.error('❌ ProductDetail: Failed to get seller user ID:', error);
-                          console.log('🔄 ProductDetail: Falling back to seller ID:', product.seller.id);
-                          // Fallback to seller ID if user ID not found
-                          navigate(`/chat?sellerId=${product.seller.id}`);
+                          // Show error message
+                          alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                         }
                       }}
                     >
                       Message {product.seller.catalogueName || 'Seller'}
-                    </button>
-                    
-                    {/* Temporary debug button - remove after testing */}
-                    <button 
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                      onClick={async () => {
-                        try {
-                          console.log('🔍 DEBUG: Testing seller data retrieval...');
-                          const catalogueData = await getSellerCatalogue(product.seller.id);
-                          console.log('🔍 DEBUG: Full catalogue data:', catalogueData);
-                          console.log('🔍 DEBUG: Seller user data:', catalogueData.seller?.user);
-                          alert(`Debug info logged to console. User ID: ${catalogueData.seller?.user?.id || 'NOT FOUND'}`);
-                        } catch (error) {
-                          console.error('❌ DEBUG: Error:', error);
-                          alert(`Debug error: ${error.message}`);
-                        }
-                      }}
-                    >
-                      Debug Seller Data
                     </button>
                   </div>
                 </div>

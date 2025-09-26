@@ -131,7 +131,8 @@ class ChatApiService {
       });
 
       const result = await this.handleResponse(response);
-      return result.data || [];
+      // Return the data structure with chats and orders
+      return result.data || { chats: [], orders: [] };
     } catch (error) {
       console.error('Failed to get chats:', error);
       throw error;
@@ -187,6 +188,58 @@ class ChatApiService {
       unreadCount: 0, // Not provided in API, might need to be added
       updatedAt: apiChat.updatedAt,
       conversationType: 'general' // Will be determined based on context
+    };
+  }
+
+  // Transform API order data to match our component structure for order-grouped chats
+  transformOrderData(order, currentUserId) {
+    return {
+      id: `order-${order.id}`,
+      type: 'order',
+      orderCode: order.orderCode,
+      orderStatus: order.orderStatus,
+      settlementCodeExpiresAt: order.settlementCodeExpiresAt,
+      participant: {
+        id: 'multiple', // Multiple sellers in one order
+        name: `${order.orderSellers.length} Seller${order.orderSellers.length > 1 ? 's' : ''}`,
+        initials: 'OS', // Order Sellers
+        role: 'Seller',
+        avatar: null,
+        isOnline: false
+      },
+      product: {
+        id: order.id,
+        name: `${order.orderItems.length} Item${order.orderItems.length > 1 ? 's' : ''}`,
+        image: order.orderItems[0]?.product?.imageUrls?.[0] || null,
+        price: order.orderItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+      },
+      lastMessage: null, // Orders don't have direct messages
+      unreadCount: 0,
+      updatedAt: order.settlementCodeExpiresAt,
+      conversationType: 'order',
+      orderSellers: order.orderSellers.map(orderSeller => ({
+        id: orderSeller.id,
+        sellerId: orderSeller.sellerId,
+        amountDue: orderSeller.amountDue,
+        status: orderSeller.status,
+        seller: {
+          id: orderSeller.seller.id,
+          catalogueName: orderSeller.seller.catalogueName,
+          userId: orderSeller.seller.userId
+        }
+      })),
+      orderItems: order.orderItems.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          imageUrls: item.product.imageUrls,
+          price: item.product.price
+        }
+      }))
     };
   }
 

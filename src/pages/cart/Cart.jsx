@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment } from '../../services/paymentsService';
-import { getSellerUserId } from '../../services/authService';
+import { getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { CartSkeleton, ChatIcon } from '../../components/common';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
@@ -265,14 +265,14 @@ export default function CartPage() {
                           e.preventDefault();
                           e.stopPropagation();
                           try {
-                            // Get seller's user ID for chat
-                            const sellerUserId = await getSellerUserId(group.sellerId);
+                            // Get seller's user ID for chat with fallback
+                            const sellerUserId = await getSellerUserIdWithFallback(group.sellerId);
                             // Navigate to chat with seller's user ID
                             window.location.href = `/chat?sellerId=${sellerUserId}`;
                           } catch (error) {
                             console.error('Failed to get seller user ID:', error);
-                            // Fallback to seller ID if user ID not found
-                            window.location.href = `/chat?sellerId=${group.sellerId}`;
+                            // Show error message
+                            alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                           }
                         }}
                       >

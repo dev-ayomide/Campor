@@ -3,10 +3,10 @@ import { chatApiService } from './chatApiService';
 
 // Chat service functions
 export const chatService = {
-  // Get all conversations for the current user based on their role
+  // Get all conversations and orders for the current user
   getConversations: async (currentUserRole = 'buyer') => {
     try {
-      const apiChats = await chatApiService.getChats();
+      const response = await chatApiService.getChats();
       const currentUserId = localStorage.getItem('campor_user') 
         ? JSON.parse(localStorage.getItem('campor_user')).id 
         : null;
@@ -15,17 +15,35 @@ export const chatService = {
         throw new Error('User not authenticated');
       }
 
-      const conversations = apiChats.map(chat => 
+      console.log('🔍 ChatService: Raw API response:', response);
+
+      // Handle the new structure with chats and orders
+      const { chats = [], orders = [] } = response;
+
+      // Transform individual chats
+      const transformedChats = chats.map(chat => 
         chatApiService.transformChatData(chat, currentUserId)
       );
 
+      // Transform orders into order-grouped conversations
+      const orderConversations = orders.map(order => 
+        chatApiService.transformOrderData(order, currentUserId)
+      );
+
+      // Combine all conversations
+      const allConversations = [...transformedChats, ...orderConversations];
+
       // Filter conversations based on current user role
       if (currentUserRole === 'seller') {
-        // Sellers see conversations where they are the seller
-        return conversations.filter(conv => conv.participant.role === 'Buyer');
+        // Sellers see conversations where they are the seller, plus all order conversations
+        return allConversations.filter(conv => 
+          conv.type === 'order' || conv.participant.role === 'Buyer'
+        );
       } else {
-        // Buyers (including non-sellers) see conversations where they are the buyer
-        return conversations.filter(conv => conv.participant.role === 'Seller');
+        // Buyers (including non-sellers) see conversations where they are the buyer, plus all order conversations
+        return allConversations.filter(conv => 
+          conv.type === 'order' || conv.participant.role === 'Seller'
+        );
       }
     } catch (error) {
       console.error('Failed to get conversations:', error);
@@ -100,7 +118,7 @@ export const chatService = {
   // Get conversation by ID
   getConversation: async (conversationId) => {
     try {
-      const apiChats = await chatApiService.getChats();
+      const response = await chatApiService.getChats();
       const currentUserId = localStorage.getItem('campor_user') 
         ? JSON.parse(localStorage.getItem('campor_user')).id 
         : null;
@@ -109,11 +127,23 @@ export const chatService = {
         throw new Error('User not authenticated');
       }
 
-      const conversations = apiChats.map(chat => 
+      // Handle the new structure with chats and orders
+      const { chats = [], orders = [] } = response;
+
+      // Transform individual chats
+      const transformedChats = chats.map(chat => 
         chatApiService.transformChatData(chat, currentUserId)
       );
+
+      // Transform orders into order-grouped conversations
+      const orderConversations = orders.map(order => 
+        chatApiService.transformOrderData(order, currentUserId)
+      );
+
+      // Combine all conversations
+      const allConversations = [...transformedChats, ...orderConversations];
       
-      return conversations.find(conv => conv.id === conversationId);
+      return allConversations.find(conv => conv.id === conversationId);
     } catch (error) {
       console.error('Failed to get conversation:', error);
       throw error;

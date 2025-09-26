@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Phone, Copy, Check, Star, Clock, Award, Package, Search } from 'lucide-react';
 import { ChatIcon } from '../../components/common';
-import { getSellerCatalogue, getSellerUserId } from '../../services/authService';
+import { getSellerCatalogue, getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
 import { ProductGridSkeleton } from '../../components/common';
@@ -276,14 +276,14 @@ export default function SellerCatalogue() {
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
                         onClick={async () => {
                           try {
-                            // Get seller's user ID for chat
-                            const sellerUserId = await getSellerUserId(sellerId);
+                            // Get seller's user ID for chat with fallback
+                            const sellerUserId = await getSellerUserIdWithFallback(sellerId);
                             // Navigate to chat with seller's user ID
                             navigate(`/chat?sellerId=${sellerUserId}`);
                           } catch (error) {
                             console.error('Failed to get seller user ID:', error);
-                            // Fallback to seller ID if user ID not found
-                            navigate(`/chat?sellerId=${sellerId}`);
+                            // Show error message
+                            alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                           }
                         }}
                       >

@@ -41,7 +41,21 @@ export function ChatProvider({ children }) {
   // Initialize Socket.IO connection
   useEffect(() => {
     if (token && user) {
-      socketService.connect(token);
+      const connectSocket = async () => {
+        try {
+          await socketService.connect(token);
+          console.log('✅ Socket connection established');
+        } catch (error) {
+          console.error('❌ Failed to connect to socket:', error);
+          // Retry connection after 3 seconds
+          setTimeout(() => {
+            console.log('🔄 Retrying socket connection...');
+            connectSocket();
+          }, 3000);
+        }
+      };
+      
+      connectSocket();
       
       // Set up real-time event listeners
       socketService.on('new_message', (messageData) => {
@@ -91,6 +105,17 @@ export function ChatProvider({ children }) {
             return newSet;
           });
         }
+      });
+      
+      // Listen for conversation creation events
+      socketService.on('conversation_created', () => {
+        console.log('🔄 Conversation created event received in ChatContext');
+        loadConversations();
+      });
+      
+      socketService.on('new_chat', (chatData) => {
+        console.log('🆕 New chat created event received in ChatContext:', chatData);
+        loadConversations();
       });
 
       socketService.on('message_notification', (notificationData) => {

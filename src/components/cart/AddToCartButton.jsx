@@ -3,7 +3,7 @@ import { useCart } from '../../contexts/CartContext';
 import { Plus, Minus, Check } from 'lucide-react';
 import { ChatIcon } from '../common';
 import { checkProductAvailability } from '../../services/cartService';
-import { getSellerUserId } from '../../services/authService';
+import { getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 
 export default function AddToCartButton({ productId, className = '', sellerId = null, roundedStyle = 'full' }) {
   const { addProductToCart, checkProductInCart, getCartItem, updateItemQuantity, removeItemFromCart, loadCart } = useCart();
@@ -115,14 +115,14 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
   const handleMessageSeller = async () => {
     if (sellerId) {
       try {
-        // Get seller's user ID for chat
-        const sellerUserId = await getSellerUserId(sellerId);
+        // Get seller's user ID for chat with fallback
+        const sellerUserId = await getSellerUserIdWithFallback(sellerId);
         // Navigate to chat with seller's user ID
         window.location.href = `/chat?sellerId=${sellerUserId}`;
       } catch (error) {
         console.error('Failed to get seller user ID:', error);
-        // Fallback to seller ID if user ID not found
-        window.location.href = `/chat?sellerId=${sellerId}`;
+        // Show error message
+        alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
       }
     } else {
       alert('Seller information not available. Please contact support.');
