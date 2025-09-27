@@ -166,12 +166,89 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const [searchParams] = useSearchParams();
   const sellerId = searchParams.get('sellerId');
   const [messages, setMessages] = useState([]);
-  const [conversation, setConversation] = useState(null);
+  // Initialize conversation state with seller info if it's a seller conversation
+  const getInitialConversation = () => {
+    if (conversationId && conversationId.startsWith('seller-')) {
+      // Parse the new format: seller-userId::catalogueName
+      let userId, catalogueName;
+      
+      if (conversationId.includes('::')) {
+        // New format with seller info
+        const [sellerPart, namePart] = conversationId.split('::');
+        userId = sellerPart.replace('seller-', '');
+        catalogueName = namePart;
+      } else {
+        // Old format fallback
+        userId = conversationId.replace('seller-', '');
+        catalogueName = 'Seller';
+      }
+      
+      return {
+        id: conversationId,
+        type: 'seller',
+        participant: {
+          id: userId,
+          name: catalogueName,
+          initials: catalogueName.charAt(0).toUpperCase(),
+          role: 'Seller',
+          isOnline: false
+        },
+        lastMessage: null,
+        unreadCount: 0
+      };
+    }
+    return null;
+  };
+
+  const [conversation, setConversation] = useState(getInitialConversation());
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Immediately initialize seller conversations to prevent 'Unknown User' flash
+  const initializeSellerConversation = (convId) => {
+    if (convId && convId.startsWith('seller-')) {
+      // Parse the new format: seller-userId::catalogueName
+      let userId, catalogueName;
+      
+      if (convId.includes('::')) {
+        // New format with seller info
+        const [sellerPart, namePart] = convId.split('::');
+        userId = sellerPart.replace('seller-', '');
+        catalogueName = namePart;
+      } else {
+        // Old format fallback
+        userId = convId.replace('seller-', '');
+        catalogueName = 'Seller';
+      }
+      
+      // Create mock conversation immediately
+      const mockConversation = {
+        id: convId,
+        type: 'seller',
+        participant: {
+          id: userId,
+          name: catalogueName,
+          initials: catalogueName.charAt(0).toUpperCase(),
+          role: 'Seller',
+          isOnline: false
+        },
+        lastMessage: null,
+        unreadCount: 0
+      };
+      
+      return mockConversation;
+    }
+    return null;
+  };
+
+  // Initialize conversation immediately if it's a seller conversation
+  const initialConversation = initializeSellerConversation(conversationId);
+  if (initialConversation && !conversation) {
+    setConversation(initialConversation);
+  }
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -279,23 +356,40 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     if (conversationId) {
       // Handle seller-specific conversations from orders
       if (conversationId.startsWith('seller-')) {
-        const userId = conversationId.replace('seller-', '');
-        console.log('🔍 ChatWindow: Handling seller conversation for user ID:', userId);
-        // Create a mock conversation like chat-demo does
-        const mockConversation = {
-          id: conversationId,
-          type: 'seller',
-          participant: {
-            id: userId,
-            name: 'Seller',
-            initials: 'S',
-            role: 'Seller',
-            isOnline: false
-          },
-          lastMessage: null,
-          unreadCount: 0
-        };
-        setConversation(mockConversation);
+        // Parse the new format: seller-userId::catalogueName
+        let userId, catalogueName;
+        
+        if (conversationId.includes('::')) {
+          // New format with seller info
+          const [sellerPart, namePart] = conversationId.split('::');
+          userId = sellerPart.replace('seller-', '');
+          catalogueName = namePart;
+        } else {
+          // Old format fallback
+          userId = conversationId.replace('seller-', '');
+          catalogueName = 'Seller';
+        }
+        
+        console.log('🔍 ChatWindow: Handling seller conversation for user ID:', userId, 'catalog:', catalogueName);
+        
+        // Only set conversation if it's not already initialized
+        if (!conversation) {
+          // Create a mock conversation with actual seller name
+          const mockConversation = {
+            id: conversationId,
+            type: 'seller',
+            participant: {
+              id: userId,
+              name: catalogueName,
+              initials: catalogueName.charAt(0).toUpperCase(),
+              role: 'Seller',
+              isOnline: false
+            },
+            lastMessage: null,
+            unreadCount: 0
+          };
+          setConversation(mockConversation);
+        }
         setMessages([]);
         
         // Set up socket listeners for seller conversations
@@ -322,52 +416,52 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         socketService.on('new_message', handleNewMessage);
         socketService.on('message_notification', handleMessageNotification);
       } else {
-        loadConversation();
-        loadMessages();
-        joinChatRoom(conversationId);
-        
-        // Force scroll to bottom when component mounts
-        setTimeout(() => {
-          scrollToBottom();
-          const messagesContainer = document.querySelector('.chat-messages-mobile');
-          if (messagesContainer) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          }
-        }, 200);
-        
-        // No periodic refresh needed - real-time updates handle everything
-        
+      loadConversation();
+      loadMessages();
+      joinChatRoom(conversationId);
+      
+      // Force scroll to bottom when component mounts
+      setTimeout(() => {
+        scrollToBottom();
+        const messagesContainer = document.querySelector('.chat-messages-mobile');
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }, 200);
+      
+      // No periodic refresh needed - real-time updates handle everything
+      
         // Set up real-time message listeners (like chat-demo)
-        const handleNewMessage = (messageData) => {
-          console.log('📨 New message received:', messageData);
-          
+      const handleNewMessage = (messageData) => {
+        console.log('📨 New message received:', messageData);
+        
           // Update delivery status for pending messages and add new messages
-          setMessages(prev => {
-            const updatedMessages = prev.map(msg => {
+        setMessages(prev => {
+          const updatedMessages = prev.map(msg => {
               if (msg.deliveryStatus === 'pending' && msg.senderId === currentUser.id) {
                 return { ...msg, deliveryStatus: 'sent' };
-              }
-              return msg;
-            });
-            return updatedMessages;
+            }
+            return msg;
           });
-          
-          // Reload messages to get the complete message data (like demo)
+          return updatedMessages;
+        });
+        
+        // Reload messages to get the complete message data (like demo)
           setTimeout(() => loadMessages(), 100);
-        };
+      };
 
-        const handleMessageNotification = (notificationData) => {
-          console.log('🔔 Message notification received:', notificationData);
-          // Only handle notifications for the current chat
-          if (notificationData.chatId === conversationId && notificationData.senderId !== currentUser.id) {
-            // Reload messages to get the new message (like demo)
-            loadMessages();
-          }
-        };
+      const handleMessageNotification = (notificationData) => {
+        console.log('🔔 Message notification received:', notificationData);
+        // Only handle notifications for the current chat
+        if (notificationData.chatId === conversationId && notificationData.senderId !== currentUser.id) {
+          // Reload messages to get the new message (like demo)
+          loadMessages();
+        }
+      };
 
-        // Listen for socket events
-        socketService.on('new_message', handleNewMessage);
-        socketService.on('message_notification', handleMessageNotification);
+      // Listen for socket events
+      socketService.on('new_message', handleNewMessage);
+      socketService.on('message_notification', handleMessageNotification);
         
         // Listen for conversation creation events
         const handleConversationCreated = () => {
@@ -407,7 +501,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     return () => {
       if (conversationId) {
         if (!conversationId.startsWith('seller-')) {
-          leaveChatRoom(conversationId);
+        leaveChatRoom(conversationId);
         }
         // Remove socket listeners for all conversation types
         socketService.off('new_message');
@@ -456,7 +550,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     try {
       // Check for self-messaging
       if (conversationId && conversationId.startsWith('seller-')) {
-        const userId = conversationId.replace('seller-', '');
+        // Parse seller userId from new format: seller-userId::catalogueName
+        const userId = conversationId.includes('::') 
+          ? conversationId.split('::')[0].replace('seller-', '')
+          : conversationId.replace('seller-', '');
         if (userId === currentUser.id) {
           alert('You cannot message yourself. Please select a different seller to chat with.');
           return;
@@ -465,7 +562,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       
       // Handle seller-specific conversations from orders
       if (conversationId && conversationId.startsWith('seller-')) {
-        const userId = conversationId.replace('seller-', '');
+        // Parse seller userId from new format: seller-userId::catalogueName
+        const userId = conversationId.includes('::') 
+          ? conversationId.split('::')[0].replace('seller-', '')
+          : conversationId.replace('seller-', '');
         console.log('Creating conversation with seller user ID:', userId);
         
         // Optimistically add the message immediately - appears as sent (like chat-demo)
@@ -823,7 +923,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               </div>
             ) : (
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {conversation?.participant?.initials || 'U'}
+                {conversation?.participant?.initials || (
+                  <div className="w-4 h-4 bg-white bg-opacity-30 rounded animate-pulse"></div>
+                )}
               </div>
             )}
               {conversation?.participant && onlineUsers.has(conversation.participant.id) && (
@@ -833,7 +935,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
               <h3 className="text-lg font-semibold text-gray-900 truncate">
-                {conversation?.participant?.name || 'Unknown User'}
+                {conversation?.participant?.name || (
+                  <span className="animate-pulse bg-gray-200 h-6 w-24 rounded"></span>
+                )}
               </h3>
             </div>
             <div className="flex items-center space-x-2">

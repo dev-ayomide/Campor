@@ -13,6 +13,35 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   const [isConnected, setIsConnected] = useState(false);
   const searchTimeoutRef = useRef(null);
 
+  // Algorithm to check existing chats and handle message button clicks
+  const handleMessageSeller = async (orderSeller) => {
+    const sellerUserId = orderSeller.seller.userId;
+    const sellerCatalogueName = orderSeller.seller.catalogueName;
+    
+    console.log('🔍 Checking for existing chat with seller:', sellerUserId, sellerCatalogueName);
+    
+    // Check if there's an existing chat with this seller
+    const existingChat = conversations.find(conv => {
+      // Check if this is a regular chat (not order-type)
+      if (conv.type === 'order') return false;
+      
+      // Check if the participant is this seller
+      return conv.participant.id === sellerUserId;
+    });
+    
+    if (existingChat) {
+      console.log('✅ Found existing chat:', existingChat);
+      console.log('👤 Navigating to existing chat with seller name:', existingChat.participant.name);
+      // Navigate to existing chat - show seller's actual name (like "Daniel")
+      onConversationSelect(existingChat.id);
+    } else {
+      console.log('🆕 No existing chat found, starting new chat');
+      console.log('🏪 Starting new chat with catalog name:', sellerCatalogueName);
+      // Start new chat - pass seller info in structured format: seller-userId::catalogueName
+      onConversationSelect(`seller-${sellerUserId}::${sellerCatalogueName}`);
+    }
+  };
+
   // Store all conversations when they're first loaded
   useEffect(() => {
     if (conversations.length > 0 && searchQuery === '') {
@@ -227,7 +256,6 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                                   {orderSeller.seller.catalogueName.charAt(0)}
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  
                                   <span className="font-medium text-gray-900">{orderSeller.seller.catalogueName}</span>
                                 </div>
                               </div>
@@ -237,7 +265,8 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                                     alert('You cannot message yourself. This is your own order.');
                                     return;
                                   }
-                                  onConversationSelect(`seller-${orderSeller.seller.userId}`);
+                                  // Use the algorithm to check existing chats
+                                  handleMessageSeller(orderSeller);
                                 }}
                                 disabled={isCurrentUser}
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
@@ -323,23 +352,23 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                       {conversation.lastMessage && (
                         <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                           {formatTime(conversation.lastMessage.timestamp)}
-                      </span>
+                        </span>
                       )}
                     </div>
                     
                     {/* Message Preview */}
-                        {conversation.lastMessage && (
-                    <p className="text-sm text-gray-600 mb-2 truncate">
-                      {conversation.lastMessage.content}
-                    </p>
-                        )}
+                    {conversation.lastMessage && (
+                      <p className="text-sm text-gray-600 mb-2 truncate">
+                        {conversation.lastMessage.content}
+                      </p>
+                    )}
                     
                     {/* Unread Count */}
-                        {conversation.unreadCount > 0 && (
+                    {conversation.unreadCount > 0 && (
                       <div className="flex justify-end">
-                          <div className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                            {conversation.unreadCount}
-                          </div>
+                        <div className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                          {conversation.unreadCount}
+                        </div>
                       </div>
                     )}
                   </div>

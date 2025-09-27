@@ -100,12 +100,8 @@ export default function App() {
           </RequireAuth>
         } />
         
-        {/* Payment Verification Route */}
-        <Route path="/payment/verify" element={
-          <RequireAuth>
-            <PaymentVerification />
-          </RequireAuth>
-        } />
+        {/* Payment Verification Route - No auth required */}
+        <Route path="/payment/verify" element={<PaymentVerification />} />
         
         {/* Seller Routes */}
         <Route path="/seller/onboarding" element={

@@ -9,7 +9,7 @@ import { CheckCircle, XCircle, AlertCircle, Loader2, Mail, ArrowLeft } from 'luc
 export default function PaymentVerificationPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { clearUserCart } = useCart();
   
   const [loading, setLoading] = useState(true);
@@ -40,10 +40,17 @@ export default function PaymentVerificationPage() {
           setVerificationStatus('success');
           setPaymentData(verificationResult.data);
           
-          // Clear cart after successful payment verification
+          // Clear cart after successful payment verification (only if user is authenticated)
           // Backend webhook will handle order creation and inventory deduction
-          await clearUserCart();
-          clearCartCache();
+          if (user) {
+            try {
+              await clearUserCart();
+              clearCartCache();
+            } catch (cartError) {
+              console.warn('Failed to clear cart (user may not be authenticated):', cartError);
+              // Don't fail the entire verification if cart clearing fails
+            }
+          }
           
           console.log('✅ PaymentVerification: Payment verified successfully');
         } else {
@@ -61,7 +68,7 @@ export default function PaymentVerificationPage() {
     };
 
     verifyPaymentCallback();
-  }, [searchParams, clearUserCart]);
+  }, [searchParams, clearUserCart, user]);
 
   // Loading state - Payment verification in progress
   if (loading) {
@@ -214,12 +221,21 @@ export default function PaymentVerificationPage() {
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <button
-            onClick={() => navigate('/orders')}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            View My Orders
-          </button>
+          {user ? (
+            <button
+              onClick={() => navigate('/orders')}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              View My Orders
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="block w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Log In to View Orders
+            </Link>
+          )}
           <Link
             to="/marketplace"
             className="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors"
@@ -230,8 +246,17 @@ export default function PaymentVerificationPage() {
 
         {/* Footer Info */}
         <div className="mt-8 text-xs text-gray-500 space-y-1">
-          <p>Your cart has been cleared and your order is being processed.</p>
-          <p>Thank you for shopping with Campor!</p>
+          {user ? (
+            <>
+              <p>Your cart has been cleared and your order is being processed.</p>
+              <p>Thank you for shopping with Campor!</p>
+            </>
+          ) : (
+            <>
+              <p>Your order is being processed. Please log in to view your order history.</p>
+              <p>Thank you for shopping with Campor!</p>
+            </>
+          )}
         </div>
       </div>
     </div>
