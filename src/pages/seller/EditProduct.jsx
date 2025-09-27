@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { updateProductInCatalogue, getSellerProducts, getProductById, getCategoriesOnly } from '../../services/authService';
 import { getCategories } from '../../services/categoryService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
-import { Skeleton, ImageUpload } from '../../components/common';
+import { Skeleton, ImageUpload, Breadcrumb } from '../../components/common';
 
 const EditProduct = ({ toggleMobileMenu }) => {
   const { productId } = useParams();
@@ -284,15 +284,13 @@ const EditProduct = ({ toggleMobileMenu }) => {
       <div className="min-h-screen ">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Breadcrumb */}
-          <nav className="mb-6">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <span>Home </span>
-              <span>›</span>
-              <span>Sell</span>
-              <span>›</span>
-              <span className="text-gray-900 font-medium">Edit Product</span>
-            </div>
-          </nav>
+          <Breadcrumb 
+            items={[
+              { label: 'Dashboard', href: '/seller/dashboard' },
+              { label: 'Products', href: '/seller/products' },
+              { label: 'Edit Product' }
+            ]} 
+          />
 
           {/* Header */}
           <div className="mb-8">

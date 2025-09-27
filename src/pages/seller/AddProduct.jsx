@@ -4,7 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { addProductToCatalogue, getCategoriesOnly, verifySellerExists } from '../../services/authService';
 import { formatPriceInput, parsePrice, formatPrice } from '../../utils/formatting';
-import { ImageUpload } from '../../components/common';
+import { ImageUpload, Breadcrumb } from '../../components/common';
 
 export default function AddProductPage({ toggleMobileMenu }) {
   const navigate = useNavigate();
@@ -176,25 +176,13 @@ export default function AddProductPage({ toggleMobileMenu }) {
     <SellerLayout>
       <div className="max-w-2xl mx-auto overflow-hidden">
         {/* Breadcrumb */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center text-sm text-gray-500">
-            <Link to="/" className="hover:text-gray-700">Home</Link>
-            <span className="mx-2">›</span>
-            <Link to="/seller" className="hover:text-gray-700">Sell</Link>
-            <span className="mx-2">›</span>
-            <span className="text-gray-900">Post Product</span>
-          </div>
-          
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={toggleMobileMenu}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/seller/dashboard' },
+            { label: 'Products', href: '/seller/products' },
+            { label: 'Add Product' }
+          ]} 
+        />
 
         {currentStep === 1 ? (
           // Step 1: Product Details Form

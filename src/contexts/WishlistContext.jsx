@@ -55,13 +55,32 @@ export const WishlistProvider = ({ children }) => {
   // Add product to wishlist
   const addProductToWishlist = useCallback(async (productId) => {
     try {
-      setLoading(true);
       setError(null);
       
       const response = await addToWishlist(productId);
       
-      // Reload wishlist to get updated data (always force refresh after add/remove)
-      await loadWishlist(true); // bypass cache right after add
+      // Optimistically update the wishlist state instead of reloading
+      setWishlist(prevWishlist => {
+        // Check if product is already in wishlist to avoid duplicates
+        const isAlreadyInWishlist = prevWishlist.some(item => {
+          const itemProductId = item.productId || item.product?.id || item.id;
+          return String(itemProductId) === String(productId);
+        });
+        
+        if (isAlreadyInWishlist) {
+          return prevWishlist; // Don't add duplicate
+        }
+        
+        // Add new item to wishlist
+        const newItem = {
+          id: Date.now(), // Temporary ID
+          productId: productId,
+          product: { id: productId }, // Minimal product info
+          createdAt: new Date().toISOString()
+        };
+        
+        return [...prevWishlist, newItem];
+      });
       
       console.log('✅ Product added to wishlist successfully:', response);
       return response;
@@ -69,21 +88,23 @@ export const WishlistProvider = ({ children }) => {
       console.error('❌ Failed to add product to wishlist:', err);
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  }, [loadWishlist]);
+  }, []);
 
   // Remove product from wishlist
   const removeProductFromWishlist = useCallback(async (productId) => {
     try {
-      setLoading(true);
       setError(null);
       
       const response = await removeFromWishlist(productId);
       
-      // Reload wishlist to get updated data
-      await loadWishlist(true); // bypass cache right after remove
+      // Optimistically update the wishlist state instead of reloading
+      setWishlist(prevWishlist => {
+        return prevWishlist.filter(item => {
+          const itemProductId = item.productId || item.product?.id || item.id;
+          return String(itemProductId) !== String(productId);
+        });
+      });
       
       console.log('✅ Product removed from wishlist successfully:', response);
       return response;
@@ -91,10 +112,8 @@ export const WishlistProvider = ({ children }) => {
       console.error('❌ Failed to remove product from wishlist:', err);
       setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  }, [loadWishlist]);
+  }, []);
 
   // Check if product is in wishlist
   const checkProductInWishlist = useCallback((productId) => {

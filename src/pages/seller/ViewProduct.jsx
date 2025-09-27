@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts } from '../../services/authService';
-import { ProductDetailSkeleton } from '../../components/common';
+import { ProductDetailSkeleton, Breadcrumb } from '../../components/common';
 
 const ViewProduct = ({ toggleMobileMenu }) => {
   const { productId } = useParams();
@@ -132,6 +132,15 @@ const ViewProduct = ({ toggleMobileMenu }) => {
   return (
     <SellerLayout>
       <div className="max-w-4xl mx-auto">
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/seller/dashboard' },
+            { label: 'Products', href: '/seller/products' },
+            { label: product.name }
+          ]} 
+        />
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">

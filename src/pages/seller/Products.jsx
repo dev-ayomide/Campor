@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts, deleteProduct, updateProductStatus, publishProduct, unpublishProduct } from '../../services/authService';
-import { SellerDashboardSkeleton } from '../../components/common';
+import { SellerDashboardSkeleton, Breadcrumb, MobileSearchFilter } from '../../components/common';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -182,59 +182,92 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   return (
     <SellerLayout>
       <div className="max-w-full overflow-hidden">
-        {/* Descriptive Text */}
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/seller/dashboard' },
+            { label: 'Products' }
+          ]} 
+        />
         <p className="text-gray-600 mb-4">Manage your product inventory and listings.</p>
         
-        
-        {/* Mobile Design - Search, Filter, Download, Add */}
-        <div className="flex items-center space-x-3 mb-6">
-          {/* Search Bar */}
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Search...."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <svg className="w-5 h-5 text-gray-400 absolute right-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+        {/* Mobile Search and Filter */}
+        <MobileSearchFilter
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={[
+            { value: 'DRAFT', label: 'Draft' },
+            { value: 'ACTIVE', label: 'Active' },
+            { value: 'OUT_OF_STOCK', label: 'Out of Stock' }
+          ]}
+          onRefresh={refreshInventory}
+          addLink="/seller/products/add"
+          addLabel="Add Product"
+          searchPlaceholder="Search products..."
+          loading={loading}
+          className="mb-6"
+        />
+
+        {/* Desktop Search and Filter */}
+        <div className="hidden lg:block mb-6">
+          <div className="flex items-center justify-between gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+                <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Filter and Actions */}
+            <div className="flex items-center gap-4">
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value="all">All Status</option>
+                <option value="DRAFT">Draft</option>
+                <option value="ACTIVE">Active</option>
+                <option value="OUT_OF_STOCK">Out of Stock</option>
+              </select>
+              
+              {/* Refresh Button */}
+              <button 
+                onClick={refreshInventory}
+                disabled={loading}
+                className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                title="Refresh inventory"
+              >
+                <svg className={`w-4 h-4 text-gray-600 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+              
+              {/* Add Product Button */}
+              <Link 
+                to="/seller/products/add"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Product
+              </Link>
+            </div>
           </div>
-          
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="DRAFT">Draft</option>
-            <option value="ACTIVE">Active</option>
-            <option value="OUT_OF_STOCK">Out of Stock</option>
-          </select>
-          
-          {/* Refresh Button */}
-          <button 
-            onClick={refreshInventory}
-            disabled={loading}
-            className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center disabled:opacity-50"
-            title="Refresh inventory"
-          >
-            <svg className={`w-5 h-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-          
-          {/* Add Button */}
-          <Link 
-            to="/seller/products/add"
-            className="w-12 h-12 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center justify-center"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </Link>
         </div>
 
         {/* Loading State */}

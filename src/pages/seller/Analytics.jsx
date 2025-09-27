@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
+import { Breadcrumb } from '../../components/common';
 
 export default function SellerAnalyticsPage() {
   const [customers] = useState([
@@ -50,13 +51,12 @@ export default function SellerAnalyticsPage() {
     <SellerLayout>
       <div className="max-w-full overflow-hidden">
         {/* Breadcrumb */}
-        <div className="flex items-center text-sm text-gray-500 mb-4">
-          <Link to="/" className="hover:text-gray-700">Home</Link>
-          <span className="mx-2">›</span>
-          <Link to="/seller" className="hover:text-gray-700">Sell</Link>
-          <span className="mx-2">›</span>
-          <span className="text-gray-900">Analytics</span>
-        </div>
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/seller/dashboard' },
+            { label: 'Analytics' }
+          ]} 
+        />
 
         {/* Header */}
         <div className="mb-6">

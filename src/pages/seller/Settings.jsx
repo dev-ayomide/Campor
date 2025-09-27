@@ -4,7 +4,7 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { updateSellerInfo } from '../../services/authService';
 import { bankResolutionService } from '../../services/bankResolutionService';
-import { CatalogueCoverUpload } from '../../components/common';
+import { CatalogueCoverUpload, Breadcrumb } from '../../components/common';
 
 export default function SellerSettingsPage({ toggleMobileMenu }) {
   const { user, updateSellerData } = useAuth();
@@ -360,7 +360,13 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   return (
     <SellerLayout>
       <div className="max-w-4xl mx-auto overflow-hidden">
-        {/* Descriptive Text */}
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          items={[
+            { label: 'Dashboard', href: '/seller/dashboard' },
+            { label: 'Settings' }
+          ]} 
+        />
         <p className="text-gray-600 mb-6">Manage your store configuration and preferences.</p>
 
         {/* Tabs */}

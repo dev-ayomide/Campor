@@ -10,6 +10,8 @@ export { default as ProfileIcon } from './ProfileIcon';
 export { default as ImageUpload } from './ImageUpload';
 export { default as CatalogueCoverUpload } from './CatalogueCoverUpload';
 export { default as PasswordInput } from './PasswordInput';
+export { default as Breadcrumb } from './Breadcrumb';
+export { default as MobileSearchFilter } from './MobileSearchFilter';
 export { 
   default as Skeleton,
   ProductCardSkeleton,
