@@ -69,6 +69,29 @@ export default function Footer() {
         <div className="text-center">
           <h3 className="text-xl font-bold mb-2">Campor</h3>
           <p className="text-gray-300 mb-4">Your Campus Marketplace. Simplified.</p>
+          
+          {/* Legal Links */}
+          <div className="flex justify-center space-x-6 mb-4">
+            <Link 
+              to="/terms" 
+              className="text-gray-400 hover:text-gray-300 text-sm transition-colors underline"
+            >
+              Terms & Conditions
+            </Link>
+            <Link 
+              to="/privacy" 
+              className="text-gray-400 hover:text-gray-300 text-sm transition-colors underline"
+            >
+              Privacy Policy
+            </Link>
+            <a 
+              href="mailto:support@campor.live" 
+              className="text-gray-400 hover:text-gray-300 text-sm transition-colors underline"
+            >
+              Contact Support
+            </a>
+          </div>
+          
           <p className="text-gray-500 text-sm">
             Copyright © 2025 Campor
           </p>

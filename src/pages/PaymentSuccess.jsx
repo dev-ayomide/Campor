@@ -152,7 +152,7 @@ export default function PaymentSuccessPage() {
 
         <div className="mt-6 text-xs text-gray-500">
           <p>Your cart has been cleared and your order is being processed.</p>
-          <p>Sellers will be notified and inventory will be updated automatically.</p>
+          <p>Sellers will be notified.</p>
         </div>
       </div>
     </div>

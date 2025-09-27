@@ -212,7 +212,6 @@ export default function PaymentVerificationPage() {
                 <li>• You'll receive an email confirmation shortly</li>
                 <li>• Your order is being processed by our team</li>
                 <li>• Sellers will be notified of your purchase</li>
-                <li>• Inventory will be updated automatically</li>
                 <li>• You'll get settlement codes for pickup</li>
               </ul>
             </div>

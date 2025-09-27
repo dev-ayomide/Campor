@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isValidEmail, isValidPassword } from '../../utils/validators';
-import { PasswordInput } from '../../components/common';
+import { PasswordInput, Modal } from '../../components/common';
+import TermsAndConditions from './TermsAndConditions';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -10,6 +11,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [localErr, setLocalErr] = useState(null);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const { register, loading } = useAuth();
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ export default function RegisterPage() {
     if (!isValidEmail(email)) return setLocalErr('Use your RUN email (your.name@run.edu.ng)');
     if (!isValidPassword(password)) return setLocalErr('Password must be at least 6 characters');
     if (password !== confirm) return setLocalErr('Passwords do not match');
+    if (!agreeToTerms) return setLocalErr('You must agree to the Terms and Conditions');
 
     try {
       await register({ name: fullName, email, password });
@@ -120,6 +124,37 @@ export default function RegisterPage() {
           />
         </div>
 
+        {/* Terms and Conditions Checkbox */}
+        <div className="flex items-start space-x-3">
+          <div className="flex items-center h-5">
+            <input
+              id="agree-terms"
+              type="checkbox"
+              checked={agreeToTerms}
+              onChange={(e) => setAgreeToTerms(e.target.checked)}
+              className={`w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 ${
+                localErr && !agreeToTerms ? 'border-red-300' : ''
+              }`}
+              required
+            />
+          </div>
+          <div className="text-sm">
+            <label htmlFor="agree-terms" className="text-gray-700 cursor-pointer">
+              I agree to the{' '}
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-blue-600 hover:text-blue-700 underline font-medium"
+              >
+                Terms and Conditions
+              </button>
+            </label>
+            {localErr && !agreeToTerms && (
+              <p className="text-xs text-red-500 mt-1">You must agree to the terms to continue</p>
+            )}
+          </div>
+        </div>
+
         {localErr && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
             <p className="text-sm text-red-600">{localErr}</p>
@@ -129,7 +164,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-base"
-          disabled={loading}
+          disabled={loading || !agreeToTerms}
         >
           {loading ? (
             <span className="flex items-center justify-center">
@@ -159,6 +194,16 @@ export default function RegisterPage() {
           </Link>
         </p>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <Modal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title="Terms and Conditions"
+        size="xl"
+      >
+        <TermsAndConditions />
+      </Modal>
     </div>
   );
 }

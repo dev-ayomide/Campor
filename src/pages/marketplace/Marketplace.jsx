@@ -14,6 +14,7 @@ import { formatPrice } from '../../utils/formatting';
 import { useCart } from '../../contexts/CartContext';
 import marketplaceImage from '../../assets/images/marketplace.png';
 import productImage from '../../assets/images/product.png';
+import filterIcon from '../../../public/filter.svg';
 import SearchHighlight from '../../components/search/SearchHighlight';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
@@ -451,9 +452,7 @@ export default function MarketplacePage() {
               {/* Filter Header with View Toggle */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.586V4z" />
-                  </svg>
+                  <img src={filterIcon} alt="Filter" className="w-5 h-5" />
                   <span className="text-lg font-semibold text-gray-900">Filter</span>
                 </div>
                 
@@ -683,9 +682,7 @@ export default function MarketplacePage() {
               <div className="p-4 border-b border-gray-100">
                 <button className="w-full flex items-center justify-between p-3 rounded-lg transition-colors">
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.586V4z" />
-                    </svg>
+                    <img src={filterIcon} alt="Filter" className="w-4 h-4" />
                     <span className="font-medium text-gray-700">Filter</span>
                   </div>
                   

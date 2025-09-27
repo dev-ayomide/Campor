@@ -35,6 +35,7 @@ import { AuthLanding, Login, Register, Verify, ForgotPassword, ResetPassword } f
 import { Chat } from './pages/chat';
 import NotFound from './pages/NotFound';
 import PaymentVerification from './pages/PaymentVerification';
+import TermsAndConditionsPage from './pages/TermsAndConditions';
 
 export default function App() {
   return (
@@ -102,6 +103,9 @@ export default function App() {
         
         {/* Payment Verification Route - No auth required */}
         <Route path="/payment/verify" element={<PaymentVerification />} />
+        
+        {/* Terms and Conditions Route - Public */}
+        <Route path="/terms" element={<TermsAndConditionsPage />} />
         
         {/* Seller Routes */}
         <Route path="/seller/onboarding" element={

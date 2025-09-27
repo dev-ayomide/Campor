@@ -12,6 +12,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   const [allConversations, setAllConversations] = useState([]);
   const [expandedOrders, setExpandedOrders] = useState(new Set());
   const [isConnected, setIsConnected] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'chats', 'orders'
   const searchTimeoutRef = useRef(null);
 
   // Improved algorithm to check existing chats and handle message button clicks
@@ -65,6 +66,20 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
       setAllConversations(conversations);
     }
   }, [conversations, searchQuery]);
+
+  // Filter conversations based on active filter
+  const getFilteredConversations = () => {
+    if (activeFilter === 'all') {
+      return conversations;
+    } else if (activeFilter === 'chats') {
+      return conversations.filter(conv => conv.type !== 'order');
+    } else if (activeFilter === 'orders') {
+      return conversations.filter(conv => conv.type === 'order');
+    }
+    return conversations;
+  };
+
+  const filteredConversations = getFilteredConversations();
 
   // Listen for conversation creation events
   useEffect(() => {
@@ -189,7 +204,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
         </div>
         
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative mb-4">
           <input
             type="text"
             placeholder="Search...."
@@ -197,6 +212,40 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-colors text-gray-700 placeholder-gray-500"
           />
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setActiveFilter('all')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeFilter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setActiveFilter('chats')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeFilter === 'chats'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Chats
+          </button>
+          <button
+            onClick={() => setActiveFilter('orders')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeFilter === 'orders'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Orders
+          </button>
         </div>
       </div>
 
@@ -206,13 +255,13 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
           <div className="p-3">
             <ChatListSkeleton />
           </div>
-        ) : conversations.length === 0 ? (
+        ) : filteredConversations.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p>No conversations found</p>
           </div>
         ) : (
           <div className="space-y-2 p-3">
-            {conversations.map((conversation) => (
+            {filteredConversations.map((conversation) => (
               <div key={conversation.id}>
                 {conversation.type === 'order' ? (
                   // Order-grouped conversation
