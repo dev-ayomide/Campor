@@ -64,49 +64,52 @@ const EditProduct = ({ toggleMobileMenu }) => {
         }
         
         // Fetch seller products and find the specific product
-        if (user?.seller?.id) {
-          try {
-            console.log('🔍 EditProduct: Fetching seller products...');
-            const products = await getSellerProducts(user.seller.id);
-            console.log('🔍 EditProduct: Seller products:', products);
+        if (!user?.seller?.id) {
+          setError('Seller information not found. Please complete seller registration.');
+          return;
+        }
+        
+        try {
+          console.log('🔍 EditProduct: Fetching seller products for seller ID:', user.seller.id);
+          const products = await getSellerProducts(user.seller.id);
+          console.log('🔍 EditProduct: Seller products:', products);
+          
+          const productData = products.find(p => p.id === productId);
+          console.log('🔍 EditProduct: Found product:', productData);
+          
+          if (productData) {
+            setCurrentProduct(productData);
+            console.log('🔍 EditProduct: Product data structure:', productData);
+            console.log('🔍 EditProduct: Product data keys:', Object.keys(productData));
+            console.log('🔍 EditProduct: Product description:', productData.description);
+            console.log('🔍 EditProduct: Product createdAt:', productData.createdAt);
             
-            const productData = products.find(p => p.id === productId);
-            console.log('🔍 EditProduct: Found product:', productData);
-            
-            if (productData) {
-              setCurrentProduct(productData);
-              console.log('🔍 EditProduct: Product data structure:', productData);
-              console.log('🔍 EditProduct: Product data keys:', Object.keys(productData));
-              console.log('🔍 EditProduct: Product description:', productData.description);
-              console.log('🔍 EditProduct: Product createdAt:', productData.createdAt);
-              
-              setFormData({
-                name: productData.name || '',
-                description: productData.description || '',
-                price: productData.price || '',
-                stockQuantity: productData.stockQuantity || '',
-                categoryId: productData.category?.id || productData.categoryId || '',
-                imageUrls: productData.imageUrls || []
-              });
-              // Set formatted price for display
-              setFormattedPrice(formatPriceInput(productData.price || ''));
-              console.log('✅ EditProduct: Form data populated successfully');
-              console.log('🔍 EditProduct: Final form data:', {
-                name: productData.name || '',
-                description: productData.description || '',
-                price: productData.price || '',
-                stockQuantity: productData.stockQuantity || '',
-                categoryId: productData.category?.id || productData.categoryId || '',
-                imageUrls: productData.imageUrls || []
-              });
-              return;
-            }
-          } catch (productsError) {
-            console.log('⚠️ EditProduct: Failed to fetch seller products:', productsError.message);
-            setError('Failed to load product data: ' + productsError.message);
+            setFormData({
+              name: productData.name || '',
+              description: productData.description || '',
+              price: productData.price || '',
+              stockQuantity: productData.stockQuantity || '',
+              categoryId: productData.category?.id || productData.categoryId || '',
+              imageUrls: productData.imageUrls || []
+            });
+            // Set formatted price for display
+            setFormattedPrice(formatPriceInput(productData.price || ''));
+            console.log('✅ EditProduct: Form data populated successfully');
+            console.log('🔍 EditProduct: Final form data:', {
+              name: productData.name || '',
+              description: productData.description || '',
+              price: productData.price || '',
+              stockQuantity: productData.stockQuantity || '',
+              categoryId: productData.category?.id || productData.categoryId || '',
+              imageUrls: productData.imageUrls || []
+            });
+            return;
+          } else {
+            setError('Product not found');
           }
-        } else {
-          setError('Seller information not found');
+        } catch (productsError) {
+          console.log('⚠️ EditProduct: Failed to fetch seller products:', productsError.message);
+          setError('Failed to load product data: ' + productsError.message);
         }
       } catch (err) {
         console.error('❌ EditProduct: Error fetching data:', err);
@@ -117,9 +120,9 @@ const EditProduct = ({ toggleMobileMenu }) => {
     };
 
     if (productId) {
-    fetchData();
+      fetchData();
     }
-  }, [productId, user?.seller?.id]);
+  }, [productId, user?.seller?.id]); // Only depend on seller ID, not the entire user object
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -19,19 +19,31 @@ export default function SellerOrdersPage() {
     const fetchOrders = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear previous errors
         
-        if (user?.seller?.id) {
-          const ordersData = await getSellerOrders(user.seller.id);
-          console.log('✅ Orders: Raw API response:', ordersData);
-          
-          // Handle new data structure - API returns array of OrderSeller objects
-          if (Array.isArray(ordersData)) {
-            setOrders(ordersData);
-            console.log('✅ Orders: Processed seller orders:', ordersData.length);
-          } else {
-            console.log('⚠️ Orders: Unexpected data structure:', ordersData);
-            setOrders([]);
-          }
+        // Wait for user context to be fully loaded
+        if (!user) {
+          console.log('⏳ Orders: Waiting for user context...');
+          return;
+        }
+        
+        if (!user.seller?.id) {
+          console.log('⚠️ Orders: No seller ID available');
+          setError('Seller information not found. Please complete seller registration.');
+          return;
+        }
+        
+        console.log('🔍 Orders: Fetching orders for seller ID:', user.seller.id);
+        const ordersData = await getSellerOrders(user.seller.id);
+        console.log('✅ Orders: Raw API response:', ordersData);
+        
+        // Handle new data structure - API returns array of OrderSeller objects
+        if (Array.isArray(ordersData)) {
+          setOrders(ordersData);
+          console.log('✅ Orders: Processed seller orders:', ordersData.length);
+        } else {
+          console.log('⚠️ Orders: Unexpected data structure:', ordersData);
+          setOrders([]);
         }
         
       } catch (err) {
@@ -43,7 +55,7 @@ export default function SellerOrdersPage() {
     };
 
     fetchOrders();
-  }, [user]);
+  }, [user?.seller?.id]); // Only depend on seller ID, not the entire user object
 
   // Filter orders based on search term and status
   useEffect(() => {
@@ -96,6 +108,36 @@ export default function SellerOrdersPage() {
     } catch (err) {
       console.error('❌ Failed to fetch order details:', err);
       setError(err.message);
+    }
+  };
+
+  // Retry function for failed requests
+  const retryFetch = async () => {
+    try {
+      setLoading(true);
+      setError(null); // Clear previous errors
+      
+      if (!user?.seller?.id) {
+        setError('Seller information not found. Please complete seller registration.');
+        return;
+      }
+      
+      const ordersData = await getSellerOrders(user.seller.id);
+      console.log('✅ Orders: Raw API response:', ordersData);
+      
+      // Handle new data structure - API returns array of OrderSeller objects
+      if (Array.isArray(ordersData)) {
+        setOrders(ordersData);
+        console.log('✅ Orders: Processed seller orders:', ordersData.length);
+      } else {
+        console.log('⚠️ Orders: Unexpected data structure:', ordersData);
+        setOrders([]);
+      }
+    } catch (err) {
+      console.error('❌ Orders: Failed to fetch orders:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -208,9 +250,16 @@ export default function SellerOrdersPage() {
               <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-red-800">Error loading orders</p>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
+                <button 
+                  onClick={retryFetch}
+                  disabled={loading}
+                  className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  {loading ? 'Retrying...' : 'Try Again'}
+                </button>
               </div>
             </div>
           </div>

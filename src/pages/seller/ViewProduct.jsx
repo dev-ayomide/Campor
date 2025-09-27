@@ -18,19 +18,31 @@ const ViewProduct = ({ toggleMobileMenu }) => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear previous errors
         
-        if (user?.seller?.id) {
-          const products = await getSellerProducts(user.seller.id);
-          const foundProduct = products.find(p => p.id === productId);
-          
-          if (foundProduct) {
-            console.log('🔍 ViewProduct: Found product:', foundProduct);
-            console.log('🔍 ViewProduct: Product description:', foundProduct.description);
-            console.log('🔍 ViewProduct: Product createdAt:', foundProduct.createdAt);
-            setProduct(foundProduct);
-          } else {
-            setError('Product not found');
-          }
+        // Wait for user context to be fully loaded
+        if (!user) {
+          console.log('⏳ ViewProduct: Waiting for user context...');
+          return;
+        }
+        
+        if (!user.seller?.id) {
+          console.log('⚠️ ViewProduct: No seller ID available');
+          setError('Seller information not found. Please complete seller registration.');
+          return;
+        }
+        
+        console.log('🔍 ViewProduct: Fetching products for seller ID:', user.seller.id);
+        const products = await getSellerProducts(user.seller.id);
+        const foundProduct = products.find(p => p.id === productId);
+        
+        if (foundProduct) {
+          console.log('🔍 ViewProduct: Found product:', foundProduct);
+          console.log('🔍 ViewProduct: Product description:', foundProduct.description);
+          console.log('🔍 ViewProduct: Product createdAt:', foundProduct.createdAt);
+          setProduct(foundProduct);
+        } else {
+          setError('Product not found');
         }
       } catch (err) {
         console.error('❌ Failed to fetch product:', err);
@@ -41,7 +53,36 @@ const ViewProduct = ({ toggleMobileMenu }) => {
     };
 
     fetchProduct();
-  }, [productId, user]);
+  }, [productId, user?.seller?.id]); // Only depend on seller ID, not the entire user object
+
+  // Retry function for failed requests
+  const retryFetch = async () => {
+    try {
+      setLoading(true);
+      setError(null); // Clear previous errors
+      
+      if (!user?.seller?.id) {
+        setError('Seller information not found. Please complete seller registration.');
+        return;
+      }
+      
+      console.log('🔍 ViewProduct: Retrying fetch for seller ID:', user.seller.id);
+      const products = await getSellerProducts(user.seller.id);
+      const foundProduct = products.find(p => p.id === productId);
+      
+      if (foundProduct) {
+        console.log('🔍 ViewProduct: Found product on retry:', foundProduct);
+        setProduct(foundProduct);
+      } else {
+        setError('Product not found');
+      }
+    } catch (err) {
+      console.error('❌ ViewProduct: Retry failed:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getProductStatus = (product) => {
     if (product.status) {
@@ -93,9 +134,16 @@ const ViewProduct = ({ toggleMobileMenu }) => {
             <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-medium text-red-800">Error loading product</p>
               <p className="text-sm text-red-700 mt-1">{error}</p>
+              <button 
+                onClick={retryFetch}
+                disabled={loading}
+                className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {loading ? 'Retrying...' : 'Try Again'}
+              </button>
             </div>
           </div>
         </div>

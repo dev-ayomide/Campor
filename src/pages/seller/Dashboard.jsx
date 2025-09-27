@@ -18,6 +18,19 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
     const fetchSellerData = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear previous errors
+        
+        // Wait for user context to be fully loaded
+        if (!user) {
+          console.log('⏳ Dashboard: Waiting for user context...');
+          return;
+        }
+        
+        if (!user.seller?.id) {
+          console.log('⚠️ Dashboard: No seller ID available');
+          setError('Seller information not found. Please complete seller registration.');
+          return;
+        }
         
         // Always use seller data from user context first (this has the latest updates)
         if (user?.seller) {
@@ -28,18 +41,21 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         }
         
         // If we have a seller ID, fetch only products and orders (don't override seller profile)
-        if (user?.seller?.id) {
-          const [productsData, ordersData] = await Promise.all([
-            getSellerProducts(user.seller.id),
-            getSellerOrders(user.seller.id)
-          ]);
-          
-          // Only update products and orders, keep the seller profile from context
-          setProducts(productsData || []);
-          setOrders(ordersData.data || []);
-          console.log('✅ Dashboard: Fetched products:', productsData?.length || 0);
-          console.log('✅ Dashboard: Fetched orders:', ordersData.data?.length || 0);
-        }
+        console.log('🔍 Dashboard: Fetching data for seller ID:', user.seller.id);
+        const [productsData, ordersData] = await Promise.all([
+          getSellerProducts(user.seller.id),
+          getSellerOrders(user.seller.id)
+        ]);
+        
+        // Only update products and orders, keep the seller profile from context
+        setProducts(productsData || []);
+        
+        // Handle orders data structure - getSellerOrders returns response.data directly
+        const ordersArray = Array.isArray(ordersData) ? ordersData : (ordersData?.data || []);
+        setOrders(ordersArray);
+        console.log('✅ Dashboard: Fetched products:', productsData?.length || 0);
+        console.log('✅ Dashboard: Fetched orders:', ordersArray.length);
+        console.log('🔍 Dashboard: Sample order structure:', ordersArray[0]);
         
       } catch (err) {
         console.error('❌ Dashboard: Failed to fetch seller data:', err);
@@ -50,7 +66,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
     };
 
     fetchSellerData();
-  }, [user]);
+  }, [user?.seller?.id]); // Only depend on seller ID, not the entire user object
 
   // Separate effect to update seller data when user context changes
   useEffect(() => {
@@ -63,17 +79,30 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   // Calculate stats from real data
   const totalProducts = products.length;
   const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, order) => {
-    return sum + parseFloat(order.totalPrice || 0);
+  
+  // Debug orders for revenue calculation
+  console.log('🔍 Dashboard: Calculating revenue from orders:', orders.length);
+  console.log('🔍 Dashboard: Sample order for revenue calc:', orders[0]);
+  
+  const totalRevenue = orders.reduce((sum, orderSeller) => {
+    // Use the same pattern as Orders page - check for amountDue first, then order.totalPrice
+    const price = orderSeller.amountDue || orderSeller.order?.totalPrice || 0;
+    const parsedPrice = parseFloat(price) || 0;
+    console.log('🔍 Dashboard: OrderSeller price fields:', {
+      amountDue: orderSeller.amountDue,
+      orderTotalPrice: orderSeller.order?.totalPrice,
+      parsed: parsedPrice
+    });
+    return sum + parsedPrice;
   }, 0);
   
-  // Calculate unique customers (unique userIds)
-  const uniqueCustomers = new Set(orders.map(order => order.userId)).size;
+  // Calculate unique customers (unique userIds) - use the same pattern as Orders page
+  const uniqueCustomers = new Set(orders.map(orderSeller => orderSeller.order?.user?.id || orderSeller.order?.userId)).size;
   
   // Get recent orders (last 5)
   const recentOrders = orders.slice(0, 5);
   
-  // Get status color for orders
+  // Get status color for orders - use same pattern as Orders page
   const getStatusColor = (status) => {
     switch (status) {
       case 'CONFIRMED':
@@ -101,23 +130,65 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
     }
   };
 
+  // Retry function for failed requests
+  const retryFetch = async () => {
+    try {
+      setLoading(true);
+      setError(null); // Clear previous errors
+      
+      if (!user?.seller?.id) {
+        setError('Seller information not found. Please complete seller registration.');
+        return;
+      }
+      
+      console.log('🔍 Dashboard: Retrying fetch for seller ID:', user.seller.id);
+      const [productsData, ordersData] = await Promise.all([
+        getSellerProducts(user.seller.id),
+        getSellerOrders(user.seller.id)
+      ]);
+      
+      // Only update products and orders, keep the seller profile from context
+      setProducts(productsData || []);
+      
+      // Handle orders data structure - getSellerOrders returns response.data directly
+      const ordersArray = Array.isArray(ordersData) ? ordersData : (ordersData?.data || []);
+      setOrders(ordersArray);
+      console.log('✅ Dashboard: Retry successful - Products:', productsData?.length || 0, 'Orders:', ordersArray.length);
+      
+    } catch (err) {
+      console.error('❌ Dashboard: Retry failed:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <SellerDashboardSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
-        <div className="flex items-start">
-          <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <p className="text-sm font-medium text-red-800">Error loading dashboard</p>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
+      <SellerLayout>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">Error loading dashboard</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <button 
+                onClick={retryFetch}
+                disabled={loading}
+                className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {loading ? 'Retrying...' : 'Try Again'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </SellerLayout>
     );
   }
 
@@ -125,53 +196,6 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
     <div className="max-w-full overflow-hidden">
         {/* Descriptive Text */}
         <p className="text-gray-600 mb-6">Welcome back! Here's what's happening with your store today.</p>
-
-        {/* Catalogue Sharing Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Share Your Catalogue</h3>
-              <p className="text-gray-600 mb-3">
-                Let customers view your products and make purchases. Share this link on social media, WhatsApp, or anywhere online.
-              </p>
-              <div className="flex items-center gap-2 bg-white rounded-lg p-3 border border-gray-200">
-                <code className="text-sm text-gray-700 flex-1 break-all">
-                  {window.location.origin}/seller/{user?.seller?.id}/catalogue
-                </code>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <Link
-                to={`/seller/${user?.seller?.id}/catalogue`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Preview
-              </Link>
-              
-              <button
-                onClick={handleCopyCatalogueLink}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {catalogueLinkCopied ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy Link
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -238,6 +262,54 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           </div>
         </div>
 
+        {/* Catalogue Sharing Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Share Your Catalogue</h3>
+              <p className="text-gray-600">
+                Let customers view your products and make purchases. Share this link on social media, WhatsApp, or anywhere online.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2 bg-white rounded-lg p-3 border border-gray-200 flex-1">
+                <code className="text-sm text-gray-700 flex-1 break-all">
+                  {window.location.origin}/seller/{user?.seller?.id}/catalogue
+                </code>
+              </div>
+              
+              <div className="flex gap-2">
+                <Link
+                  to={`/seller/${user?.seller?.id}/catalogue`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Preview
+                </Link>
+                
+                <button
+                  onClick={handleCopyCatalogueLink}
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                >
+                  {catalogueLinkCopied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Link
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -245,24 +317,28 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Orders</h3>
             {recentOrders.length > 0 ? (
-            <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0">
-                <div>
-                      <p className="font-medium text-gray-900">{order.id}</p>
-                      <p className="text-sm text-gray-500">
-                        User: {order.userId} • {order.hostelName} - Block {order.blockNumber}, Room {order.roomNo}
-                      </p>
-                </div>
-                <div className="text-right">
-                      <p className="font-semibold text-gray-900">₦{parseFloat(order.totalPrice).toLocaleString()}</p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
-                        {order.orderStatus}
-                  </span>
-                </div>
-              </div>
+              <div className="space-y-3">
+                {recentOrders.map((orderSeller) => (
+                  <div key={orderSeller.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{orderSeller.order?.orderCode || orderSeller.orderId}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {orderSeller.order?.user?.name || 'Customer'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-gray-900 text-sm">₦{parseFloat(orderSeller.amountDue || orderSeller.order?.totalPrice || 0).toLocaleString()}</p>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${getStatusColor(orderSeller.status || orderSeller.order?.orderStatus)}`}>
+                            {(orderSeller.status || orderSeller.order?.orderStatus)?.toLowerCase() || 'pending'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-                </div>
+              </div>
             ) : (
               <div className="text-center py-8">
                 <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +346,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 </svg>
                 <p className="text-gray-500 mb-4">No orders yet</p>
                 <p className="text-sm text-gray-400">Your customer orders will appear here</p>
-                </div>
+              </div>
             )}
             <div className="mt-6">
               <Link 

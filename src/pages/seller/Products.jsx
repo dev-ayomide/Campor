@@ -19,15 +19,27 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear previous errors
         
-        if (user?.seller?.id) {
-          const productsData = await getSellerProducts(user.seller.id);
-          setProducts(productsData || []);
-          console.log('✅ Products: Fetched seller products:', productsData);
-          console.log('🔍 Products: Sample product structure:', productsData?.[0]);
-          console.log('🔍 Products: Product names:', productsData?.map(p => ({ id: p.id, name: p.name, status: p.status })));
-          console.log('🔍 Products: Available fields in first product:', productsData?.[0] ? Object.keys(productsData[0]) : 'No products');
+        // Wait for user context to be fully loaded
+        if (!user) {
+          console.log('⏳ Products: Waiting for user context...');
+          return;
         }
+        
+        if (!user.seller?.id) {
+          console.log('⚠️ Products: No seller ID available');
+          setError('Seller information not found. Please complete seller registration.');
+          return;
+        }
+        
+        console.log('🔍 Products: Fetching products for seller ID:', user.seller.id);
+        const productsData = await getSellerProducts(user.seller.id);
+        setProducts(productsData || []);
+        console.log('✅ Products: Fetched seller products:', productsData);
+        console.log('🔍 Products: Sample product structure:', productsData?.[0]);
+        console.log('🔍 Products: Product names:', productsData?.map(p => ({ id: p.id, name: p.name, status: p.status })));
+        console.log('🔍 Products: Available fields in first product:', productsData?.[0] ? Object.keys(productsData[0]) : 'No products');
         
       } catch (err) {
         console.error('❌ Products: Failed to fetch products:', err);
@@ -38,7 +50,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     };
 
     fetchProducts();
-  }, [user]);
+  }, [user?.seller?.id]); // Only depend on seller ID, not the entire user object
 
   // Filter products based on search term and status
   useEffect(() => {
@@ -166,17 +178,27 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   const refreshInventory = async () => {
     try {
       setLoading(true);
-      if (user?.seller?.id) {
-        const productsData = await getSellerProducts(user.seller.id);
-        setProducts(productsData || []);
-        console.log('✅ Inventory refreshed successfully');
+      setError(null); // Clear previous errors
+      
+      if (!user?.seller?.id) {
+        setError('Seller information not found. Please complete seller registration.');
+        return;
       }
+      
+      const productsData = await getSellerProducts(user.seller.id);
+      setProducts(productsData || []);
+      console.log('✅ Inventory refreshed successfully');
     } catch (err) {
       console.error('❌ Failed to refresh inventory:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Retry function for failed requests
+  const retryFetch = () => {
+    refreshInventory();
   };
 
   return (
@@ -280,9 +302,16 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
               <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium text-red-800">Error loading products</p>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
+                <button 
+                  onClick={retryFetch}
+                  disabled={loading}
+                  className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  {loading ? 'Retrying...' : 'Try Again'}
+                </button>
               </div>
             </div>
           </div>

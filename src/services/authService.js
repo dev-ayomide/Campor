@@ -4,11 +4,14 @@ import { API_BASE_URL, API_ENDPOINTS } from '../utils/constants';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased timeout for better reliability
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Request deduplication to prevent multiple simultaneous requests
+const pendingRequests = new Map();
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
@@ -490,27 +493,61 @@ export async function getSellerCatalogue(sellerId) {
 
 // Function to get seller products with status information
 // This endpoint returns ALL products (DRAFT, ACTIVE, OUT_OF_STOCK) for seller management
-export async function getSellerProducts(sellerId) {
-  try {
-    console.log('🔍 SellerService: Fetching seller products for ID:', sellerId);
-    
-    // Use the products endpoint - this returns ALL products regardless of status
-    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
-    console.log('✅ SellerService: Seller products fetched successfully:', response.data);
-    
-    // The response should be an array of products directly
-    const products = Array.isArray(response.data) ? response.data : [];
-    console.log('✅ SellerService: Products extracted:', products.length);
-    
-    // Log product details to debug the missing name issue
-    console.log('🔍 SellerService: Sample product structure:', products[0]);
-    console.log('🔍 SellerService: Product fields:', products[0] ? Object.keys(products[0]) : 'No products');
-    
-    return products;
-  } catch (error) {
-    console.error('❌ SellerService: Failed to fetch seller products:', error);
-    throw new Error(error.response?.data?.message || 'Failed to fetch seller products.');
+export async function getSellerProducts(sellerId, retryCount = 0) {
+  const requestKey = `seller-products-${sellerId}`;
+  
+  // If there's already a pending request for this seller, wait for it
+  if (pendingRequests.has(requestKey)) {
+    console.log('⏳ SellerService: Waiting for pending request...');
+    return pendingRequests.get(requestKey);
   }
+  
+  const requestPromise = (async () => {
+    try {
+      console.log('🔍 SellerService: Fetching seller products for ID:', sellerId);
+      
+      // Validate sellerId before making the request
+      if (!sellerId) {
+        throw new Error('Seller ID is required');
+      }
+      
+      // Use the products endpoint - this returns ALL products regardless of status
+      const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
+      console.log('✅ SellerService: Seller products fetched successfully:', response.data);
+      
+      // The response should be an array of products directly
+      const products = Array.isArray(response.data) ? response.data : [];
+      console.log('✅ SellerService: Products extracted:', products.length);
+      
+      // Log product details to debug the missing name issue
+      console.log('🔍 SellerService: Sample product structure:', products[0]);
+      console.log('🔍 SellerService: Product fields:', products[0] ? Object.keys(products[0]) : 'No products');
+      
+      return products;
+    } catch (error) {
+      console.error('❌ SellerService: Failed to fetch seller products:', error);
+      
+      // Retry logic for network errors
+      if (retryCount < 2 && (
+        error.code === 'ECONNABORTED' || 
+        error.code === 'ERR_NETWORK' ||
+        error.response?.status >= 500 ||
+        error.message.includes('timeout')
+      )) {
+        console.log(`🔄 SellerService: Retrying request (attempt ${retryCount + 1}/2)`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        return getSellerProducts(sellerId, retryCount + 1);
+      }
+      
+      throw new Error(error.response?.data?.message || 'Failed to fetch seller products.');
+    } finally {
+      // Clean up the pending request
+      pendingRequests.delete(requestKey);
+    }
+  })();
+  
+  pendingRequests.set(requestKey, requestPromise);
+  return requestPromise;
 }
 
 // Function to get a single product by ID for editing
@@ -1196,19 +1233,54 @@ export async function deleteCategory(categoryId) {
 }
 
 // Seller Orders Functions
-export const getSellerOrders = async (sellerId) => {
-  try {
-    console.log('📦 SellerService: Fetching seller orders for seller:', sellerId);
-    console.log('📦 SellerService: Full URL:', `/orders/${sellerId}/seller`);
-    const response = await api.get(`/orders/${sellerId}/seller`);
-    console.log('✅ SellerService: Seller orders fetched successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('❌ SellerService: Failed to fetch seller orders:', error);
-    console.error('❌ SellerService: Error details:', error.response?.data);
-    console.error('❌ SellerService: Status:', error.response?.status);
-    throw new Error(error.response?.data?.message || 'Failed to fetch seller orders');
+export const getSellerOrders = async (sellerId, retryCount = 0) => {
+  const requestKey = `seller-orders-${sellerId}`;
+  
+  // If there's already a pending request for this seller, wait for it
+  if (pendingRequests.has(requestKey)) {
+    console.log('⏳ SellerService: Waiting for pending orders request...');
+    return pendingRequests.get(requestKey);
   }
+  
+  const requestPromise = (async () => {
+    try {
+      console.log('📦 SellerService: Fetching seller orders for seller:', sellerId);
+      console.log('📦 SellerService: Full URL:', `/orders/${sellerId}/seller`);
+      
+      // Validate sellerId before making the request
+      if (!sellerId) {
+        throw new Error('Seller ID is required');
+      }
+      
+      const response = await api.get(`/orders/${sellerId}/seller`);
+      console.log('✅ SellerService: Seller orders fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ SellerService: Failed to fetch seller orders:', error);
+      console.error('❌ SellerService: Error details:', error.response?.data);
+      console.error('❌ SellerService: Status:', error.response?.status);
+      
+      // Retry logic for network errors
+      if (retryCount < 2 && (
+        error.code === 'ECONNABORTED' || 
+        error.code === 'ERR_NETWORK' ||
+        error.response?.status >= 500 ||
+        error.message.includes('timeout')
+      )) {
+        console.log(`🔄 SellerService: Retrying orders request (attempt ${retryCount + 1}/2)`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+        return getSellerOrders(sellerId, retryCount + 1);
+      }
+      
+      throw new Error(error.response?.data?.message || 'Failed to fetch seller orders');
+    } finally {
+      // Clean up the pending request
+      pendingRequests.delete(requestKey);
+    }
+  })();
+  
+  pendingRequests.set(requestKey, requestPromise);
+  return requestPromise;
 };
 
 export const getOrderDetails = async (orderId) => {
