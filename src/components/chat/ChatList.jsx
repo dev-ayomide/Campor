@@ -3,6 +3,7 @@ import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../context/AuthContext';
 import { ChatListSkeleton } from '../common';
 import { socketService } from '../../services/socketService';
+import { findExistingChat, checkChatExists } from '../../utils/chatUtils';
 
 const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   const { conversations, loadConversations, searchConversations, loading } = useChat();
@@ -13,31 +14,47 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   const [isConnected, setIsConnected] = useState(false);
   const searchTimeoutRef = useRef(null);
 
-  // Algorithm to check existing chats and handle message button clicks
+  // Improved algorithm to check existing chats and handle message button clicks
   const handleMessageSeller = async (orderSeller) => {
     const sellerUserId = orderSeller.seller.userId;
     const sellerCatalogueName = orderSeller.seller.catalogueName;
     
     console.log('🔍 Checking for existing chat with seller:', sellerUserId, sellerCatalogueName);
     
-    // Check if there's an existing chat with this seller
-    const existingChat = conversations.find(conv => {
-      // Check if this is a regular chat (not order-type)
-      if (conv.type === 'order') return false;
+    try {
+      // Step 1: Check loaded conversations first (fast)
+      const existingChat = findExistingChat(conversations, sellerUserId);
       
-      // Check if the participant is this seller
-      return conv.participant.id === sellerUserId;
-    });
-    
-    if (existingChat) {
-      console.log('✅ Found existing chat:', existingChat);
-      console.log('👤 Navigating to existing chat with seller name:', existingChat.participant.name);
-      // Navigate to existing chat - show seller's actual name (like "Daniel")
-      onConversationSelect(existingChat.id);
-    } else {
+      if (existingChat) {
+        console.log('✅ Found existing chat in loaded conversations:', existingChat);
+        console.log('👤 Navigating to existing chat with seller name:', existingChat.participant.name);
+        // Navigate to existing chat - show seller's actual name (like "Daniel")
+        onConversationSelect(existingChat.id);
+        return;
+      }
+      
+      // Step 2: Check API for existing chat (comprehensive)
+      console.log('🔍 No chat in loaded conversations, checking API...');
+      const existingChatId = await checkChatExists(sellerUserId);
+      
+      if (existingChatId) {
+        console.log('✅ Found existing chat via API:', existingChatId);
+        console.log('👤 Navigating to existing chat from API');
+        // Navigate to existing chat from API
+        onConversationSelect(existingChatId);
+        return;
+      }
+      
+      // Step 3: No existing chat found, start new chat
       console.log('🆕 No existing chat found, starting new chat');
       console.log('🏪 Starting new chat with catalog name:', sellerCatalogueName);
       // Start new chat - pass seller info in structured format: seller-userId::catalogueName
+      onConversationSelect(`seller-${sellerUserId}::${sellerCatalogueName}`);
+      
+    } catch (error) {
+      console.error('❌ Error checking for existing chat:', error);
+      // Fallback: start new chat if there's any error
+      console.log('🔄 Fallback: Starting new chat due to error');
       onConversationSelect(`seller-${sellerUserId}::${sellerCatalogueName}`);
     }
   };

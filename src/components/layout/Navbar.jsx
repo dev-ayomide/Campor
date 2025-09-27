@@ -147,8 +147,51 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   to={isSeller ? "/seller/dashboard" : "/seller/onboarding"} 
                   className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <svg className="w-5 h-5" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Market stall icon">
+                    <defs>
+                      <filter id="inner-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feOffset dx="0" dy="6" result="off"/>
+                        <feGaussianBlur in="off" stdDeviation="8" result="blur"/>
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" result="composite"/>
+                        <feBlend in="SourceGraphic" in2="composite" mode="normal"/>
+                      </filter>
+                    </defs>
+                    <g transform="translate(64,64) scale(0.875)" fill="none" strokeLinejoin="round" strokeLinecap="round">
+                      <rect x="168" y="40" rx="16" ry="16" width="688" height="96" fill="#5A5B5D" stroke="#3E3E40" strokeWidth="6"/>
+                      <path d="M128 168
+                               L896 168
+                               C912 168 944 178 964 206
+                               C988 238 988 314 964 350
+                               C944 378 912 388 896 388
+                               L128 388
+                               C112 388 80 378 60 350
+                               C36 314 36 238 60 206
+                               C80 178 112 168 128 168 Z"
+                            fill="#4E4F51" stroke="#3A3A3B" strokeWidth="6"/>
+                      <g transform="translate(0,0)" fill="#6A6B6D" stroke="#3A3A3B" strokeWidth="4">
+                        <path d="M180 176 L300 176 L260 360 L220 360 Z" />
+                        <path d="M320 176 L420 176 L380 360 L340 360 Z" />
+                        <path d="M460 176 L560 176 L520 360 L480 360 Z" />
+                        <path d="M600 176 L700 176 L660 360 L620 360 Z" />
+                        <path d="M740 176 L860 176 L820 360 L780 360 Z" />
+                      </g>
+                      <path d="M140 388
+                               C188 444 244 444 292 388
+                               C340 444 396 444 444 388
+                               C492 444 548 444 596 388
+                               C644 444 700 444 748 388
+                               L896 388"
+                            fill="#4E4F51" stroke="#3A3A3B" strokeWidth="6" opacity="0.95"/>
+                      <rect x="200" y="420" width="96" height="320" rx="12" ry="12" fill="#5A5B5D" stroke="#3A3A3B" strokeWidth="6"/>
+                      <rect x="728" y="420" width="96" height="320" rx="12" ry="12" fill="#5A5B5D" stroke="#3A3A3B" strokeWidth="6"/>
+                      <rect x="320" y="440" width="384" height="248" rx="6" ry="6" fill="#6A6B6D" stroke="#3A3A3B" strokeWidth="6"/>
+                      <rect x="152" y="732" width="720" height="144" rx="20" ry="20" fill="#4E4F51" stroke="#2F2F30" strokeWidth="6"/>
+                      <rect x="112" y="892" width="800" height="36" rx="18" ry="18" fill="#3E3E40" stroke="#2B2B2C" strokeWidth="4"/>
+                      <g stroke="#2E2E30" strokeWidth="2" fill="none">
+                        <rect x="168" y="40" rx="16" ry="16" width="688" height="96"/>
+                        <path d="M128 168 L896 168 C912 168 944 178 964 206 C988 238 988 314 964 350 C944 378 912 388 896 388 L128 388 C112 388 80 378 60 350 C36 314 36 238 60 206 C80 178 112 168 128 168 Z"/>
+                      </g>
+                    </g>
                   </svg>
                   {isSeller ? "Seller Dashboard" : "Sell"}
                 </Link>

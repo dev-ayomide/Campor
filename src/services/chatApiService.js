@@ -114,9 +114,20 @@ class ChatApiService {
         headers: this.getAuthHeaders()
       });
 
+      // Handle 404 as a normal case (chat doesn't exist)
+      if (response.status === 404) {
+        console.log('🔍 No existing chat found with user:', userId);
+        return null;
+      }
+
       const result = await this.handleResponse(response);
       return result.data;
     } catch (error) {
+      // If it's a 404, that's normal - chat doesn't exist
+      if (error.message && error.message.includes('404')) {
+        console.log('🔍 No existing chat found with user:', userId);
+        return null;
+      }
       console.error('Failed to get chat with user:', error);
       throw error;
     }
