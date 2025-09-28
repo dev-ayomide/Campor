@@ -692,7 +692,7 @@ export default function MarketplacePage() {
               {/* Categories */}
               <div className="p-4 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">CATEGORIES</h3>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                   {categoriesLoading ? (
                     <div className="py-2">
                       <CategoryListSkeleton />

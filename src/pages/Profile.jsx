@@ -6,6 +6,7 @@ import { getUserOrders } from '../services/ordersService';
 import { getWishlist, removeFromWishlist } from '../services/wishlistService';
 import { addToCart, getCart } from '../services/cartService';
 import { ProfileSkeleton } from '../components/common';
+import { Eye } from 'lucide-react';
 import profileImage from '../assets/images/profile.png';
 import productImage from '../assets/images/product.png';
 
@@ -295,6 +296,30 @@ export default function ProfilePage() {
     }
   };
 
+  const handleViewOrderDetails = (order) => {
+    navigate(`/orders/${order.id}`);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+      case 'SUCCESS':
+      case 'RELEASED':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'CANCELLED':
+      case 'FAILED':
+      case 'REFUNDED':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'SHIPPED':
+      case 'IN_PROGRESS':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PENDING':
+      default:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    }
+  };
+
   if (loading && !profileLoaded) {
     return <ProfileSkeleton />;
   }
@@ -425,6 +450,7 @@ export default function ProfilePage() {
                               <th className="text-left py-4 text-sm font-medium text-gray-600">Date</th>
                               <th className="text-left py-4 text-sm font-medium text-gray-600">Status</th>
                               <th className="text-left py-4 text-sm font-medium text-gray-600">Total</th>
+                              <th className="text-center py-4 text-sm font-medium text-gray-600">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -440,13 +466,7 @@ export default function ProfilePage() {
                                 </td>
                                 <td className="py-6 text-gray-600">{new Date(order.createdAt).toLocaleString()}</td>
                                 <td className="py-6">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    order.orderStatus === 'DELIVERED'
-                                      ? 'bg-green-100 text-green-800'
-                                      : order.orderStatus === 'CANCELLED'
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-yellow-100 text-yellow-800'
-                                  }`}>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.orderStatus)}`}>
                                     {order.orderStatus}
                                   </span>
                                 </td>
@@ -466,6 +486,15 @@ export default function ProfilePage() {
                                     </div>
                                   )}
                                 </td>
+                                <td className="py-6 text-center">
+                                  <button
+                                    onClick={() => handleViewOrderDetails(order)}
+                                    className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="View order details"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -483,13 +512,7 @@ export default function ProfilePage() {
                                   <p className="text-xs text-gray-500">Settlement: {order.settlementCode}</p>
                                 )}
                               </div>
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                order.orderStatus === 'DELIVERED'
-                                  ? 'bg-green-100 text-green-800'
-                                  : order.orderStatus === 'CANCELLED'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.orderStatus)}`}>
                                 {order.orderStatus}
                               </span>
                             </div>
@@ -516,6 +539,17 @@ export default function ProfilePage() {
                                 ))}
                               </div>
                             )}
+                            
+                            {/* View Details Button */}
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <button
+                                onClick={() => handleViewOrderDetails(order)}
+                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Full Details
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>

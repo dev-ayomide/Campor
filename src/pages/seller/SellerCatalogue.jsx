@@ -149,7 +149,7 @@ export default function SellerCatalogue() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen" style={{ backgroundColor: '#F7F5F0' }}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header Skeleton */}
           <div className="mb-8">

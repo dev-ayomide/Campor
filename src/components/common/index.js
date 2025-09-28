@@ -28,3 +28,4 @@ export {
   OrderItemSkeleton,
   SellerDashboardSkeleton
 } from './SkeletonLoader';
+export { default as OrderDetailsModal } from './OrderDetailsModal';

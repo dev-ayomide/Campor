@@ -5,7 +5,7 @@ export default function MainLayout({ children }) {
   const location = useLocation();
   const isMarketplace = location.pathname === '/marketplace';
   const isSellerCatalogue = location.pathname.includes('/seller/') && location.pathname.includes('/catalogue');
-  const isOrdersPage = location.pathname === '/orders';
+  const isOrdersPage = location.pathname === '/orders' || location.pathname.startsWith('/orders/');
   const isCartPage = location.pathname === '/cart';
   const isWishlistPage = location.pathname === '/wishlist';
   const isTermsPage = location.pathname === '/terms';

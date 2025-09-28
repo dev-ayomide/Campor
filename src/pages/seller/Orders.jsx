@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { getSellerOrders, updateOrderStatus, getOrderDetails } from '../../services/ordersService';
+import { getSellerOrders } from '../../services/ordersService';
 import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter } from '../../components/common';
+import { useChat } from '../../contexts/ChatContext';
+import { chatApiService } from '../../services/chatApiService';
 import productImage from '../../assets/images/product.png';
 
 export default function SellerOrdersPage() {
   const { user } = useAuth();
+  const chatContext = useChat();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -80,36 +83,81 @@ export default function SellerOrdersPage() {
     setFilteredOrders(filtered);
   }, [orders, searchTerm, statusFilter]);
 
-  const handleStatusUpdate = async (orderId, newStatus) => {
+  const handleMessageCustomer = async (orderSeller) => {
     try {
-      await updateOrderStatus(orderId, newStatus);
-      setOrders(prev => prev.map(orderSeller => 
-        orderSeller.orderId === orderId 
-          ? { 
-              ...orderSeller, 
-              status: newStatus,
-              order: { ...orderSeller.order, orderStatus: newStatus }
-            } 
-          : orderSeller
-      ));
-      console.log('✅ Order status updated successfully');
+      console.log('🔍 ===== COMPLETE ORDER DATA STRUCTURE =====');
+      console.log('🔍 Full orderSeller object:', JSON.stringify(orderSeller, null, 2));
+      console.log('🔍 orderSeller keys:', Object.keys(orderSeller));
+      
+      if (orderSeller.order) {
+        console.log('🔍 orderSeller.order:', JSON.stringify(orderSeller.order, null, 2));
+        console.log('🔍 orderSeller.order keys:', Object.keys(orderSeller.order));
+        
+        if (orderSeller.order.user) {
+          console.log('🔍 orderSeller.order.user:', JSON.stringify(orderSeller.order.user, null, 2));
+          console.log('🔍 orderSeller.order.user keys:', Object.keys(orderSeller.order.user));
+        }
+      }
+      
+      console.log('🔍 ===== END DATA STRUCTURE =====');
+      
+      // Try multiple possible locations for customer information
+      // Based on the actual data structure, we need to get userId from the order
+      const customerUserId = orderSeller.order?.userId || 
+                            orderSeller.order?.user?.id || 
+                            orderSeller.userId ||
+                            orderSeller.customerId;
+                            
+      const customerName = orderSeller.order?.user?.name || 
+                          orderSeller.order?.customerName ||
+                          orderSeller.customerName ||
+                          'Customer';
+      
+      console.log('🔍 Extracted customerUserId:', customerUserId);
+      console.log('🔍 Extracted customerName:', customerName);
+      console.log('🔍 Available user data:', orderSeller.order?.user);
+      
+      if (!customerUserId) {
+        console.error('❌ No customer user ID found for order');
+        console.error('❌ Available orderSeller keys:', Object.keys(orderSeller));
+        console.error('❌ Available order keys:', orderSeller.order ? Object.keys(orderSeller.order) : 'No order data');
+        
+        // Show a more helpful error message
+        alert(`Unable to find customer information for this order.\n\nBACKEND ISSUE: The order data is missing the customer's userId field.\n\nCurrent data structure:\n- Customer name: ${customerName}\n- Missing: userId field\n\nPlease ask the backend team to include userId in the order.user object.\n\nCheck console for complete data structure.`);
+        return;
+      }
+
+      // Check if chat context is available
+      if (!chatContext) {
+        console.log('⚠️ Chat context not available, navigating to chat page');
+        // Navigate to chat page with customer ID as parameter
+        window.location.href = `/chat?sellerId=${customerUserId}`;
+        return;
+      }
+
+      console.log('🔍 Checking for existing chat with customer:', customerUserId);
+      
+      // Check if chat already exists
+      const existingChat = await chatApiService.getChatWithUser(customerUserId);
+      
+      if (existingChat) {
+        console.log('✅ Found existing chat with customer:', existingChat.id);
+        chatContext.setSelectedConversationId(existingChat.id);
+      } else {
+        console.log('🆕 No existing chat found, starting new chat with customer');
+        // Start new chat - the chatApiService will handle creating the chat
+        chatContext.setSelectedConversationId(`customer-${customerUserId}::${customerName}`);
+      }
+      
+      // Navigate to chat page
+      window.location.href = '/chat';
+      
     } catch (err) {
-      console.error('❌ Failed to update order status:', err);
-      setError(err.message);
+      console.error('❌ Failed to start chat with customer:', err);
+      alert('Unable to start chat with customer. Please try again.');
     }
   };
 
-  const handleViewOrderDetails = async (orderId) => {
-    try {
-      const orderDetails = await getOrderDetails(orderId);
-      console.log('✅ Order details fetched:', orderDetails);
-      // You can implement a modal or navigate to a details page here
-      alert(`Order Details:\n\nOrder ID: ${orderDetails.id}\nStatus: ${orderDetails.orderStatus}\nTotal: ₦${parseFloat(orderDetails.totalPrice).toLocaleString()}\nItems: ${orderDetails.items?.length || 0}`);
-    } catch (err) {
-      console.error('❌ Failed to fetch order details:', err);
-      setError(err.message);
-    }
-  };
 
   // Retry function for failed requests
   const retryFetch = async () => {
@@ -309,7 +357,7 @@ export default function SellerOrdersPage() {
                                     <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
                                     <div className="flex-1">
                                       <div className="font-medium text-gray-900">{item.product?.name}</div>
-                                      <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                      <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.product?.price || item.price || 0).toLocaleString()}</div>
                                     </div>
                                   </div>
                                 ))}
@@ -327,32 +375,13 @@ export default function SellerOrdersPage() {
                           </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                              {(orderSeller.status || orderSeller.order?.orderStatus) === 'PENDING' && (
-                                <button 
-                                  onClick={() => handleStatusUpdate(orderSeller.orderId, 'CONFIRMED')}
-                                  className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                                  title="Confirm Order"
-                                >
-                                  Confirm
-                                </button>
-                              )}
-                              {(orderSeller.status || orderSeller.order?.orderStatus) === 'CONFIRMED' && (
-                                <button 
-                                  onClick={() => handleStatusUpdate(orderSeller.orderId, 'PROCESSING')}
-                                  className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
-                                  title="Mark as Processing"
-                                >
-                                  Process
-                                </button>
-                              )}
                         <button 
-                          onClick={() => handleViewOrderDetails(orderSeller.orderId)}
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" 
-                          title="View Order Details"
+                          onClick={() => handleMessageCustomer(orderSeller)}
+                          className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                          title="Message Customer"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                           </svg>
                         </button>
                       </div>

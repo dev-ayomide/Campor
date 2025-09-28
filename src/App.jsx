@@ -17,6 +17,7 @@ import { Cart } from './pages/cart';
 import { Wishlist } from './pages/wishlist';
 import Profile from './pages/Profile';
 import UserOrders from './pages/UserOrders';
+import OrderDetails from './pages/OrderDetails';
 import CategoryPage from './pages/categories/CategoryPage';
 import { 
   Onboarding, 
@@ -77,6 +78,11 @@ export default function App() {
         <Route path="/orders" element={
           <RequireAuth>
             <MainLayout><UserOrders /></MainLayout>
+          </RequireAuth>
+        } />
+        <Route path="/orders/:orderId" element={
+          <RequireAuth>
+            <MainLayout><OrderDetails /></MainLayout>
           </RequireAuth>
         } />
         
