@@ -6,14 +6,23 @@ import { useSearchParams } from 'react-router-dom';
 
 const ChatContent = () => {
   const { user } = useAuth();
-  const { selectedConversationId, setSelectedConversationId, conversations } = useChat();
+  const { selectedConversationId, setSelectedConversationId, conversations, markAsRead } = useChat();
   const [showChatWindow, setShowChatWindow] = useState(false);
   const [searchParams] = useSearchParams();
   const sellerId = searchParams.get('sellerId');
 
-  const handleConversationSelect = (conversationId) => {
+  const handleConversationSelect = async (conversationId) => {
     setSelectedConversationId(conversationId);
     setShowChatWindow(true);
+    
+    // Mark messages as read when conversation is selected (only for real chat IDs, not seller-* IDs)
+    if (conversationId && !conversationId.startsWith('seller-')) {
+      try {
+        await markAsRead(conversationId);
+      } catch (error) {
+        console.error('Failed to mark messages as read:', error);
+      }
+    }
   };
 
   const handleBackToList = () => {

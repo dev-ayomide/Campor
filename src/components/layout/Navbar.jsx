@@ -3,7 +3,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useState } from 'react';
-import MobileSellerMenu from './MobileSellerMenu';
 import AcceptOrder from '../seller/AcceptOrder';
 import { ShoppingBagIcon, ChatIcon, ProfileIcon } from '../common';
 
@@ -12,6 +11,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
   const { getItemCount } = useCart();
   const { getItemCount: getWishlistCount } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSellerNavOpen, setIsSellerNavOpen] = useState(false);
   const [isAcceptOrderModalOpen, setIsAcceptOrderModalOpen] = useState(false);
   const location = useLocation();
   
@@ -46,19 +46,8 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 alt="Campor Logo" 
                 className="w-6 h-6 mr-3 object-contain"
               />
-              <span className="text-xl font-bold text-gray-900 mr-12">Campor</span>
+              <span className="text-xl font-bold text-gray-900">Campor</span>
             </Link>
-            {/* Dynamic Page Title - only show on seller pages and desktop */}
-            {isSellerPage && (
-              <span className="hidden md:block text-xl font-bold text-gray-900">
-                {location.pathname === '/seller/dashboard' && 'Seller Dashboard'}
-                {location.pathname.startsWith('/seller/products') && 'Products Management'}
-                {location.pathname === '/seller/orders' && 'Orders Management'}
-                {location.pathname === '/seller/customers' && 'Customers Management'}
-                {location.pathname === '/seller/analytics' && 'Analytics'}
-                {location.pathname === '/seller/settings' && 'Settings'}
-              </span>
-            )}
           </div>
 
           {/* Desktop Navigation - Show different navigation based on sign-in status */}
@@ -88,7 +77,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 href="#faq" 
                 className="text-gray-700 hover:text-gray-900 font-medium transition-colors cursor-pointer"
               >
-                Client Stories
+                FAQs
               </a>
             </>
           ) : (
@@ -305,11 +294,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
             </button>
           )}
           
-          {/* Seller Sidebar Menu Button (only on seller pages) */}
+          {/* Seller Sidebar Menu Button (only on seller pages and desktop) */}
           {isSellerPage && onSellerMenuToggle && (
             <button
               onClick={onSellerMenuToggle}
-              className="flex items-center justify-center w-10 h-10"
+              className="hidden lg:flex items-center justify-center w-10 h-10"
             >
               <img 
                 src="/nav-icon.svg" 
@@ -319,11 +308,10 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
             </button>
           )}
           
-          {/* Regular Mobile Menu Button (only on non-seller pages) */}
-          {!isSellerPage && (
+          {/* Mobile Menu Button - Show for all pages on mobile */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center justify-center w-10 h-10"
+            className="lg:hidden flex items-center justify-center w-10 h-10"
             >
               <img 
                 src="/nav-icon.svg" 
@@ -331,12 +319,11 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                 className="w-10 h-10"
               />
             </button>
-          )}
         </div>
       </div>
 
-      {/* Mobile Menu (only show on non-seller pages) */}
-      {!isSellerPage && (
+      {/* Mobile Menu - Show for all pages */}
+      {isMenuOpen && (
         <>
           {/* Overlay */}
           {isMenuOpen && (
@@ -377,7 +364,173 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 py-6">
-              {!isSignedIn ? (
+              <div className="relative overflow-hidden h-full">
+                {/* Main Menu */}
+                <div className={`transition-all duration-300 ease-in-out ${!isSellerNavOpen ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0 absolute inset-0'}`}>
+                  {isSellerPage ? (
+                    // Seller page navigation
+                    <>
+                      {/* Back to Marketplace */}
+                      <Link 
+                        to="/marketplace" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Marketplace
+                      </Link>
+
+                      {/* Seller Navigation Items */}
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide border-b border-gray-100 mb-4">
+                        Seller Dashboard
+                      </div>
+                      
+                      <Link 
+                        to="/seller/dashboard" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <svg className="w-4 h-4 mr-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Market stall icon">
+                          <defs>
+                            <filter id="inner-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                              <feOffset dx="0" dy="6" result="off"></feOffset>
+                              <feGaussianBlur in="off" stdDeviation="8" result="blur"></feGaussianBlur>
+                              <feComposite in="SourceGraphic" in2="blur" operator="over" result="composite"></feComposite>
+                              <feBlend in="SourceGraphic" in2="composite" mode="normal"></feBlend>
+                            </filter>
+                          </defs>
+                          <g transform="translate(64,64) scale(0.875)" fill="none" strokeLinejoin="round" strokeLinecap="round">
+                            <rect x="168" y="40" rx="16" ry="16" width="688" height="96" fill="#5A5B5D" stroke="#3E3E40" strokeWidth="6"></rect>
+                            <path d="M128 168 L896 168 C912 168 944 178 964 206 C988 238 988 314 964 350 C944 378 912 388 896 388 L128 388 C112 388 80 378 60 350 C36 314 36 238 60 206 C80 178 112 168 128 168 Z" fill="#4E4F51" stroke="#3A3A3B" strokeWidth="6"></path>
+                            <g transform="translate(0,0)" fill="#6A6B6D" stroke="#3A3A3B" strokeWidth="4">
+                              <path d="M180 176 L300 176 L260 360 L220 360 Z"></path>
+                              <path d="M320 176 L420 176 L380 360 L340 360 Z"></path>
+                              <path d="M460 176 L560 176 L520 360 L480 360 Z"></path>
+                              <path d="M600 176 L700 176 L660 360 L620 360 Z"></path>
+                              <path d="M740 176 L860 176 L820 360 L780 360 Z"></path>
+                            </g>
+                            <path d="M140 388 C188 444 244 444 292 388 C340 444 396 444 444 388 C492 444 548 444 596 388 C644 444 700 444 748 388 L896 388" fill="#4E4F51" stroke="#3A3A3B" strokeWidth="6" opacity="0.95"></path>
+                            <rect x="200" y="420" width="96" height="320" rx="12" ry="12" fill="#5A5B5D" stroke="#3A3A3B" strokeWidth="6"></rect>
+                            <rect x="728" y="420" width="96" height="320" rx="12" ry="12" fill="#5A5B5D" stroke="#3A3A3B" strokeWidth="6"></rect>
+                            <rect x="320" y="440" width="384" height="248" rx="6" ry="6" fill="#6A6B6D" stroke="#3A3A3B" strokeWidth="6"></rect>
+                            <rect x="152" y="732" width="720" height="144" rx="20" ry="20" fill="#4E4F51" stroke="#2F2F30" strokeWidth="6"></rect>
+                            <rect x="112" y="892" width="800" height="36" rx="18" ry="18" fill="#3E3E40" stroke="#2B2B2C" strokeWidth="4"></rect>
+                            <g stroke="#2E2E30" strokeWidth="2" fill="none">
+                              <rect x="168" y="40" rx="16" ry="16" width="688" height="96"></rect>
+                              <path d="M128 168 L896 168 C912 168 944 178 964 206 C988 238 988 314 964 350 C944 378 912 388 896 388 L128 388 C112 388 80 378 60 350 C36 314 36 238 60 206 C80 178 112 168 128 168 Z"></path>
+                            </g>
+                          </g>
+                        </svg>
+                        Dashboard
+                      </Link>
+                      
+                      <Link 
+                        to="/seller/products" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <img 
+                          src="/products-icon.svg" 
+                          alt="Products" 
+                          className="w-4 h-4 mr-3" 
+                        />
+                        Products
+                      </Link>
+                      
+                      <Link 
+                        to="/seller/orders" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <img 
+                          src="/orders-icon.svg" 
+                          alt="Orders" 
+                          className="w-4 h-4 mr-3" 
+                        />
+                        Orders
+                      </Link>
+                      
+                      <Link 
+                        to="/seller/customers" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <img 
+                          src="/customers.svg" 
+                          alt="Customers" 
+                          className="w-4 h-4 mr-3" 
+                        />
+                        Customers
+                      </Link>
+                      
+                      <Link 
+                        to="/seller/analytics" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <img 
+                          src="/analytics-icon.svg" 
+                          alt="Analytics" 
+                          className="w-4 h-4 mr-3" 
+                        />
+                        Analytics
+                      </Link>
+                      
+                      <Link 
+                        to="/seller/settings" 
+                        className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <img 
+                          src="/settings.svg" 
+                          alt="Settings" 
+                          className="w-4 h-4 mr-3" 
+                        />
+                        Settings
+                      </Link>
+
+                      {/* General Section */}
+                      <div className="border-t border-gray-100 mt-4 pt-4">
+                        <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide mb-2">
+                          General
+                        </div>
+                        <Link 
+                          to="/chat" 
+                          className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <ChatIcon className="w-4 h-4 mr-3" />
+                          Chat
+                        </Link>
+                        <Link 
+                          to="/profile" 
+                          className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <ProfileIcon className="w-4 h-4 mr-3" />
+                          Me
+                        </Link>
+                      </div>
+
+                      {/* Logout */}
+                      <div className="border-t border-gray-100 mt-4 pt-4">
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsMenuOpen(false);
+                          }}
+                          className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors rounded-lg"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  ) : !isSignedIn ? (
                 // Mobile navigation for non-signed-in users
                 <>
                   <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide border-b border-gray-100 mb-4">
@@ -409,7 +562,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4 cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Client Stories
+                    FAQs
                   </a>
                   <div className="border-t border-gray-100 pt-4">
                     <Link 
@@ -440,15 +593,10 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Home
-                  </Link>
-                  
-                  <Link 
-                    to="/marketplace" 
-                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Market Place
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Marketplace
                   </Link>
                   
                   <Link 
@@ -456,36 +604,78 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <ChatIcon className="w-4 h-4 mr-3" />
                     Chat
                   </Link>
                   
                   {/* Dynamic Sell/Seller Dashboard button */}
                   {!isSellerPage && (
+                    <>
+                      {isSeller ? (
+                        <button
+                          onClick={() => setIsSellerNavOpen(true)}
+                          className="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2 group"
+                        >
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-3" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Market stall icon">
+                              <defs>
+                                <filter id="inner-shadow-2" x="-50%" y="-50%" width="200%" height="200%">
+                                  <feOffset dx="0" dy="6" result="off"></feOffset>
+                                  <feGaussianBlur in="off" stdDeviation="8" result="blur"></feGaussianBlur>
+                                  <feComposite in="SourceGraphic" in2="blur" operator="over" result="composite"></feComposite>
+                                  <feBlend in="SourceGraphic" in2="composite" mode="normal"></feBlend>
+                                </filter>
+                              </defs>
+                              <g transform="translate(64,64) scale(0.875)" fill="none" strokeLinejoin="round" strokeLinecap="round">
+                                <rect x="168" y="40" rx="16" ry="16" width="688" height="96" fill="#5A5B5D" stroke="#3E3E40" strokeWidth="6"></rect>
+                                <path d="M128 168 L896 168 C912 168 944 178 964 206 C988 238 988 314 964 350 C944 378 912 388 896 388 L128 388 C112 388 80 378 60 350 C36 314 36 238 60 206 C80 178 112 168 128 168 Z" fill="#4E4F51" stroke="#3A3A3B" strokeWidth="6"></path>
+                                <g transform="translate(0,0)" fill="#6A6B6D" stroke="#3A3A3B" strokeWidth="4">
+                                  <path d="M180 176 L300 176 L260 360 L220 360 Z"></path>
+                                  <path d="M320 176 L420 176 L380 360 L340 360 Z"></path>
+                                  <path d="M460 176 L560 176 L520 360 L480 360 Z"></path>
+                                  <path d="M600 176 L700 176 L660 360 L620 360 Z"></path>
+                                  <path d="M740 176 L860 176 L820 360 L780 360 Z"></path>
+                                </g>
+                                <path d="M140 388 C188 444 244 444 292 388 C340 444 396 444 444 388 C492 444 548 444 596 388 C644 444 700 444 748 388 L896 388" fill="#4E4F51" stroke="#3A3A3B" strokeWidth="6" opacity="0.95"></path>
+                                <rect x="200" y="420" width="96" height="320" rx="12" ry="12" fill="#5A5B5D" stroke="#3A3A3B" strokeWidth="6"></rect>
+                                <rect x="728" y="420" width="96" height="320" rx="12" ry="12" fill="#5A5B5D" stroke="#3A3A3B" strokeWidth="6"></rect>
+                                <rect x="320" y="440" width="384" height="248" rx="6" ry="6" fill="#6A6B6D" stroke="#3A3A3B" strokeWidth="6"></rect>
+                                <rect x="152" y="732" width="720" height="144" rx="20" ry="20" fill="#4E4F51" stroke="#2F2F30" strokeWidth="6"></rect>
+                                <rect x="112" y="892" width="800" height="36" rx="18" ry="18" fill="#3E3E40" stroke="#2B2B2C" strokeWidth="4"></rect>
+                                <g stroke="#2E2E30" strokeWidth="2" fill="none">
+                                  <rect x="168" y="40" rx="16" ry="16" width="688" height="96"></rect>
+                                  <path d="M128 168 L896 168 C912 168 944 178 964 206 C988 238 988 314 964 350 C944 378 912 388 896 388 L128 388 C112 388 80 378 60 350 C36 314 36 238 60 206 C80 178 112 168 128 168 Z"></path>
+                                </g>
+                              </g>
+                            </svg>
+                            <span>Seller Dashboard</span>
+                          </div>
+                          <svg className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      ) : (
                     <Link 
-                      to={isSeller ? "/seller/dashboard" : "/seller/onboarding"} 
+                          to="/seller/onboarding" 
                       className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {isSeller ? "Seller Dashboard" : "Sell"}
+                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Sell
                     </Link>
+                      )}
+                    </>
                   )}
                   
-                  {/* Back to Marketplace link (only show on seller pages) */}
-                  {isSellerPage && (
-                    <Link 
-                      to="/marketplace" 
-                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Back to Marketplace
-                    </Link>
-                  )}
                   
                   <Link 
                     to="/profile" 
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <ProfileIcon className="w-4 h-4 mr-3" />
                     Profile
                   </Link>
                   
@@ -496,6 +686,9 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                       className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
+                      <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                      </svg>
                       Wishlist
                     </Link>
                   )}
@@ -507,6 +700,7 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                       className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
+                      <ShoppingBagIcon className="w-4 h-4 mr-3" />
                       Cart
                     </Link>
                   )}
@@ -517,6 +711,9 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
                     Orders
                   </Link>
                   
@@ -536,17 +733,117 @@ export default function Navbar({ variant = 'default', onSellerMenuToggle, isSell
                   </div>
                 </>
               )}
+                </div>
+
+                {/* Seller Menu */}
+                <div className={`transition-all duration-300 ease-in-out ${isSellerNavOpen ? 'transform translate-x-0 opacity-100' : 'transform translate-x-full opacity-0 absolute inset-0'}`}>
+                  {/* Back button */}
+                  <button
+                    onClick={() => setIsSellerNavOpen(false)}
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="text-sm font-medium">Back</span>
+                  </button>
+
+                  {/* Seller Navigation Items */}
+                  <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase tracking-wide border-b border-gray-100 mb-4">
+                    Seller Dashboard
+                  </div>
+                  
+                  <Link 
+                    to="/seller/dashboard" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSellerNavOpen(false);
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                  
+                  <Link 
+                    to="/seller/products" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSellerNavOpen(false);
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    Products
+                  </Link>
+                  
+                  <Link 
+                    to="/seller/orders" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSellerNavOpen(false);
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Orders
+                  </Link>
+                  
+                  <Link 
+                    to="/seller/customers" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSellerNavOpen(false);
+                    }}
+                  >
+                    <img 
+                      src="/customers.svg" 
+                      alt="Customers" 
+                      className="w-4 h-4 mr-3" 
+                    />
+                    Customers
+                  </Link>
+                  
+                  <Link 
+                    to="/seller/analytics" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSellerNavOpen(false);
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analytics
+                  </Link>
+                  
+                  <Link 
+                    to="/seller/settings" 
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsSellerNavOpen(false);
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Settings
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </>
-      )}
-
-      {/* Mobile Seller Menu (only show on seller pages) */}
-      {isSellerPage && (
-        <MobileSellerMenu 
-          isOpen={isSellerMenuOpen} 
-          onClose={() => setIsSellerMenuOpen && setIsSellerMenuOpen(false)} 
-        />
       )}
 
       {/* Accept Order Modal */}

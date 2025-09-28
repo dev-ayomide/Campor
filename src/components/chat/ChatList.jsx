@@ -422,21 +422,21 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                       )}
                     </div>
                     
-                    {/* Message Preview */}
-                    {conversation.lastMessage && (
-                      <p className="text-sm text-gray-600 mb-2 truncate">
-                        {conversation.lastMessage.content}
-                      </p>
-                    )}
-                    
-                    {/* Unread Count */}
-                    {conversation.unreadCount > 0 && (
-                      <div className="flex justify-end">
-                        <div className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                          {conversation.unreadCount}
+                    {/* Message Preview and Unread Count */}
+                    <div className="flex items-center justify-between">
+                      {conversation.lastMessage && (
+                        <p className="text-sm text-gray-600 truncate flex-1 mr-2">
+                          {conversation.lastMessage.content}
+                        </p>
+                      )}
+                      
+                      {/* Unread Count Badge */}
+                      {conversation.unreadCount > 0 && (
+                        <div className="bg-blue-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center font-medium px-1 flex-shrink-0">
+                          {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
                   </div>

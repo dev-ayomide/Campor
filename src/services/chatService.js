@@ -153,9 +153,10 @@ export const chatService = {
   // Mark messages as read
   markAsRead: async (conversationId) => {
     try {
-      // For now, we'll just return true since the API doesn't have a mark as read endpoint
-      // This could be implemented later if needed
-      return true;
+      // Use the new API endpoint to mark messages as read
+      const result = await chatApiService.markChatAsRead(conversationId);
+      console.log('✅ Messages marked as read:', result);
+      return result;
     } catch (error) {
       console.error('Failed to mark as read:', error);
       return false;

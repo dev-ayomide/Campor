@@ -166,6 +166,22 @@ class ChatApiService {
     }
   }
 
+  // Mark chat messages as read
+  async markChatAsRead(chatId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/read/${chatId}`, {
+        method: 'PATCH',
+        headers: this.getAuthHeaders()
+      });
+
+      const result = await this.handleResponse(response);
+      return result.data;
+    } catch (error) {
+      console.error('Failed to mark chat as read:', error);
+      throw error;
+    }
+  }
+
   // Transform API chat data to match our component structure
   transformChatData(apiChat, currentUserId) {
     const otherUser = apiChat.senderId === currentUserId ? apiChat.receiver : apiChat.sender;
@@ -194,9 +210,10 @@ class ChatApiService {
         content: lastMessage.content,
         timestamp: lastMessage.sentAt,
         senderId: lastMessage.senderId,
-        senderName: lastMessage.senderId === currentUserId ? 'You' : otherUser.name
+        senderName: lastMessage.senderId === currentUserId ? 'You' : otherUser.name,
+        read: lastMessage.read || false
       } : null,
-      unreadCount: 0, // Not provided in API, might need to be added
+      unreadCount: apiChat.unreadCount || 0,
       updatedAt: apiChat.updatedAt,
       conversationType: 'general' // Will be determined based on context
     };
@@ -262,7 +279,8 @@ class ChatApiService {
       timestamp: apiMessage.sentAt,
       senderId: apiMessage.senderId,
       senderName: apiMessage.senderId === currentUserId ? 'You' : 'Other User',
-      isFromCurrentUser: apiMessage.senderId === currentUserId
+      isFromCurrentUser: apiMessage.senderId === currentUserId,
+      read: apiMessage.read || false
     };
   }
 

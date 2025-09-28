@@ -116,6 +116,14 @@ export default function SellerOrdersPage() {
       console.log('🔍 Extracted customerUserId:', customerUserId);
       console.log('🔍 Extracted customerName:', customerName);
       console.log('🔍 Available user data:', orderSeller.order?.user);
+      console.log('🔍 Current seller userId:', user?.id);
+      
+      // Check if seller is trying to message themselves
+      if (customerUserId === user?.id) {
+        console.log('⚠️ Seller trying to message themselves - blocking');
+        alert('You cannot message yourself. This order was placed by you.');
+        return;
+      }
       
       if (!customerUserId) {
         console.error('❌ No customer user ID found for order');
@@ -375,15 +383,41 @@ export default function SellerOrdersPage() {
                           </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleMessageCustomer(orderSeller)}
-                          className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
-                          title="Message Customer"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                        </button>
+                        {(() => {
+                          const customerUserId = orderSeller.order?.userId || orderSeller.order?.user?.id;
+                          const isOwnOrder = customerUserId === user?.id;
+                          
+                          if (isOwnOrder) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                  Your Order
+                                </span>
+                                <button 
+                                  disabled
+                                  className="p-2 text-gray-300 cursor-not-allowed" 
+                                  title="Cannot message yourself"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <button 
+                              onClick={() => handleMessageCustomer(orderSeller)}
+                              className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                              title="Message Customer"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                            </button>
+                          );
+                        })()}
                       </div>
                     </td>
                   </tr>
