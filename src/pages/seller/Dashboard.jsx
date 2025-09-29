@@ -104,17 +104,24 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   
   // Get status color for orders - use same pattern as Orders page
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+      case 'SUCCESS':
+      case 'RELEASED':
       case 'CONFIRMED':
-        return 'bg-green-100 text-green-800';
-      case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
+      case 'FAILED':
+      case 'REFUNDED':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'SHIPPED':
+      case 'IN_PROGRESS':
+      case 'PROCESSING':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PENDING':
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
   };
 
@@ -208,10 +215,12 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 </p>
                 <p className="text-sm text-gray-500 font-medium">From {totalOrders} orders</p>
               </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
+              <div className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center">
+                <img 
+                  src="/price-icon.svg" 
+                  alt="Revenue" 
+                  className="w-6 h-6" 
+                />
               </div>
             </div>
           </div>
@@ -223,10 +232,12 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 <p className="text-3xl font-bold text-gray-900">{totalOrders}</p>
                 <p className="text-sm text-gray-500 font-medium">All time orders</p>
               </div>
-              <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+              <div className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center">
+                <img 
+                  src="/orders-icon.svg" 
+                  alt="Orders" 
+                  className="w-6 h-6" 
+                />
               </div>
             </div>
           </div>
@@ -238,10 +249,12 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 <p className="text-3xl font-bold text-gray-900">{totalProducts}</p>
                 <p className="text-sm text-gray-500 font-medium">In your catalogue</p>
               </div>
-              <div className="w-12 h-12 bg-yellow-50 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+              <div className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center">
+                <img 
+                  src="/products-icon.svg" 
+                  alt="Products" 
+                  className="w-6 h-6" 
+                />
               </div>
             </div>
           </div>
@@ -253,7 +266,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 <p className="text-3xl font-bold text-gray-900">{uniqueCustomers}</p>
                 <p className="text-sm text-gray-500 font-medium">Unique customers</p>
               </div>
-              <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center">
                 <img 
                   src="/customers.svg" 
                   alt="Customers" 
@@ -332,7 +345,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-gray-900 text-sm">₦{parseFloat(orderSeller.amountDue || orderSeller.order?.totalPrice || 0).toLocaleString()}</p>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${getStatusColor(orderSeller.status || orderSeller.order?.orderStatus)}`}>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border mt-1 ${getStatusColor(orderSeller.status || orderSeller.order?.orderStatus)}`}>
                             {(orderSeller.status || orderSeller.order?.orderStatus)?.toLowerCase() || 'pending'}
                           </span>
                         </div>

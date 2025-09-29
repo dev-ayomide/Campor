@@ -175,7 +175,7 @@ const ViewProduct = ({ toggleMobileMenu }) => {
   }
 
   const status = getProductStatus(product);
-  const sales = product._count?.orderItems || 0;
+  const sales = product.soldQuantity || product._count?.orderItems || 0;
 
   return (
     <SellerLayout>

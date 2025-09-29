@@ -198,17 +198,24 @@ export default function SellerOrdersPage() {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toUpperCase()) {
+      case 'DELIVERED':
+      case 'COMPLETED':
+      case 'SUCCESS':
+      case 'RELEASED':
       case 'CONFIRMED':
-        return 'bg-green-100 text-green-800';
-      case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
+      case 'FAILED':
+      case 'REFUNDED':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'SHIPPED':
+      case 'IN_PROGRESS':
+      case 'PROCESSING':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'PENDING':
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
   };
 
@@ -237,7 +244,12 @@ export default function SellerOrdersPage() {
             { value: 'PENDING', label: 'Pending' },
             { value: 'CONFIRMED', label: 'Confirmed' },
             { value: 'PROCESSING', label: 'Processing' },
-            { value: 'CANCELLED', label: 'Cancelled' }
+            { value: 'SHIPPED', label: 'Shipped' },
+            { value: 'DELIVERED', label: 'Delivered' },
+            { value: 'COMPLETED', label: 'Completed' },
+            { value: 'CANCELLED', label: 'Cancelled' },
+            { value: 'FAILED', label: 'Failed' },
+            { value: 'REFUNDED', label: 'Refunded' }
           ]}
           onRefresh={() => window.location.reload()}
           searchPlaceholder="Search by order code, customer name..."
@@ -276,7 +288,12 @@ export default function SellerOrdersPage() {
                 <option value="PENDING">Pending</option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="PROCESSING">Processing</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
+                <option value="FAILED">Failed</option>
+                <option value="REFUNDED">Refunded</option>
               </select>
               
               {/* Export Button */}
@@ -373,7 +390,7 @@ export default function SellerOrdersPage() {
                             )}
                           </td>
                     <td className="py-4 px-6">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(orderSeller.status || orderSeller.order?.orderStatus)}`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(orderSeller.status || orderSeller.order?.orderStatus)}`}>
                               {orderSeller.status || orderSeller.order?.orderStatus}
                       </span>
                     </td>

@@ -407,28 +407,30 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                                   </div>
                                 </td>
                                 <td className="py-4 px-4">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-[120px]">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(status)}`}>
                                       {getStatusDisplayName(status)}
                                     </span>
-                                    {status === 'DRAFT' && (
-                                      <button 
-                                        onClick={() => handlePublishProduct(product.id)}
-                                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-                                        title="Publish Product"
-                                      >
-                                        Publish
-                                      </button>
-                                    )}
-                                    {status === 'ACTIVE' && (
-                                      <button 
-                                        onClick={() => handleUnpublishProduct(product.id)}
-                                        className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
-                                        title="Unpublish Product"
-                                      >
-                                        Unpublish
-                                      </button>
-                                    )}
+                                    <div className="flex flex-col sm:flex-row gap-1">
+                                      {status === 'DRAFT' && (
+                                        <button 
+                                          onClick={() => handlePublishProduct(product.id)}
+                                          className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors whitespace-nowrap"
+                                          title="Publish Product"
+                                        >
+                                          Publish
+                                        </button>
+                                      )}
+                                      {status === 'ACTIVE' && (
+                                        <button 
+                                          onClick={() => handleUnpublishProduct(product.id)}
+                                          className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors whitespace-nowrap"
+                                          title="Unpublish Product"
+                                        >
+                                          Unpublish
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
                                 <td className="py-4 px-4 text-gray-900">{sales.toLocaleString()}</td>
