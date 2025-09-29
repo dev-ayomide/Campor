@@ -30,10 +30,8 @@ export function debounce(func, wait) {
 // Advanced search with Algolia
 export async function advancedSearch(params) {
   try {
-    console.log('🔍 SearchService: Algolia advanced search with params:', params);
     
     const filterString = buildAlgoliaFilters(params.filters);
-    console.log('🔍 SearchService: Built Algolia filter string for search:', filterString);
     
     const searchParams = {
       indexName: 'productIndex',
@@ -54,7 +52,6 @@ export async function advancedSearch(params) {
     const nbHits = results[0]?.nbHits || 0;
     const nbPages = results[0]?.nbPages || 0;
     
-    console.log('✅ SearchService: Algolia search completed successfully:', { hits: hits.length, nbHits, nbPages });
     
     return {
       data: {
@@ -68,12 +65,6 @@ export async function advancedSearch(params) {
       }
     };
   } catch (error) {
-    console.error('❌ SearchService: Algolia search failed:', error);
-    console.error('❌ SearchService: Error details:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    });
     throw new Error('Search failed. Please try again.');
   }
 }
@@ -81,10 +72,8 @@ export async function advancedSearch(params) {
 // Get products with Algolia filtering
 export async function getProductsWithFilters(filters = {}, page = 1, limit = 10) {
   try {
-    console.log('🔍 SearchService: Getting products with Algolia filters:', { filters, page, limit });
     
     const filterString = buildAlgoliaFilters(filters);
-    console.log('🔍 SearchService: Built Algolia filter string:', filterString);
     
     const searchParams = {
       indexName: 'productIndex',
@@ -104,7 +93,6 @@ export async function getProductsWithFilters(filters = {}, page = 1, limit = 10)
     const nbHits = results[0]?.nbHits || 0;
     const nbPages = results[0]?.nbPages || 0;
     
-    console.log('✅ SearchService: Products with Algolia filters fetched successfully:', { hits: hits.length, nbHits, nbPages });
     
     return {
       data: {
@@ -118,12 +106,6 @@ export async function getProductsWithFilters(filters = {}, page = 1, limit = 10)
       }
     };
   } catch (error) {
-    console.error('❌ SearchService: Failed to fetch products with Algolia filters:', error);
-    console.error('❌ SearchService: Error details:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    });
     throw new Error('Failed to fetch products.');
   }
 }

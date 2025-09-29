@@ -32,7 +32,6 @@ bankApi.interceptors.request.use(
  */
 export async function verifyBankAccount(accountNumber, bankCode) {
   try {
-    console.log('🔍 BankVerification: Verifying account...', { accountNumber, bankCode });
     
     // Validate inputs
     if (!accountNumber || !bankCode) {
@@ -55,7 +54,6 @@ export async function verifyBankAccount(accountNumber, bankCode) {
     });
     
     if (response.data.message === 'Account resolved successfully') {
-      console.log('✅ BankVerification: Account verified successfully:', response.data.data);
       return {
         success: true,
         data: {
@@ -69,7 +67,6 @@ export async function verifyBankAccount(accountNumber, bankCode) {
     }
     
   } catch (error) {
-    console.error('❌ BankVerification: Failed to verify account:', error);
     
     if (error.response?.status === 400) {
       return {
@@ -107,14 +104,12 @@ export async function verifyBankAccount(accountNumber, bankCode) {
  */
 export async function getBanksList(currency = 'NGN') {
   try {
-    console.log('🔍 BankVerification: Fetching banks list...', { currency });
     
     const response = await bankApi.get('/payments/banks/list', {
       params: { currency }
     });
     
     if (response.data.message === 'Banks retrieved successfully') {
-      console.log('✅ BankVerification: Banks retrieved successfully:', response.data.data);
       return {
         success: true,
         data: response.data.data
@@ -124,7 +119,6 @@ export async function getBanksList(currency = 'NGN') {
     }
     
   } catch (error) {
-    console.error('❌ BankVerification: Failed to fetch banks:', error);
     
     if (error.response?.status === 401) {
       return {

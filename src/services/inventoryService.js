@@ -68,7 +68,6 @@ export async function updateProductInventory(productId, newStockQuantity) {
     
     return response.data;
   } catch (error) {
-    console.error('❌ InventoryService: Failed to update product inventory:', error);
     throw new Error(error.response?.data?.message || 'Failed to update product inventory.');
   }
 }
@@ -80,14 +79,11 @@ export async function updateProductInventory(productId, newStockQuantity) {
  */
 export async function getInventoryHistory(productId) {
   try {
-    console.log('🔍 InventoryService: Fetching inventory history for product:', productId);
     
     const response = await api.get(`/products/${productId}/inventory/history`);
     
-    console.log('✅ InventoryService: Inventory history fetched successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ InventoryService: Failed to fetch inventory history:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch inventory history.');
   }
 }
@@ -100,7 +96,6 @@ export async function getInventoryHistory(productId) {
  */
 export async function restoreInventoryOnOrderCancellation(orderId, orderItems) {
   try {
-    console.log('🔍 InventoryService: Restoring inventory for cancelled order:', { orderId, orderItems });
     
     const payload = {
       orderId,
@@ -112,10 +107,8 @@ export async function restoreInventoryOnOrderCancellation(orderId, orderItems) {
     
     const response = await api.post('/inventory/restore', payload);
     
-    console.log('✅ InventoryService: Inventory restored successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ InventoryService: Failed to restore inventory:', error);
     throw new Error(error.response?.data?.message || 'Failed to restore inventory.');
   }
 }
@@ -128,14 +121,11 @@ export async function restoreInventoryOnOrderCancellation(orderId, orderItems) {
  */
 export async function getLowStockAlerts(sellerId, threshold = 5) {
   try {
-    console.log('🔍 InventoryService: Fetching low stock alerts for seller:', { sellerId, threshold });
     
     const response = await api.get(`/sellers/${sellerId}/inventory/alerts?threshold=${threshold}`);
     
-    console.log('✅ InventoryService: Low stock alerts fetched successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ InventoryService: Failed to fetch low stock alerts:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch low stock alerts.');
   }
 }
@@ -147,7 +137,6 @@ export async function getLowStockAlerts(sellerId, threshold = 5) {
  */
 export async function bulkUpdateInventory(inventoryUpdates) {
   try {
-    console.log('🔍 InventoryService: Bulk updating inventory:', inventoryUpdates);
     
     const payload = {
       updates: inventoryUpdates
@@ -155,10 +144,8 @@ export async function bulkUpdateInventory(inventoryUpdates) {
     
     const response = await api.post('/inventory/bulk-update', payload);
     
-    console.log('✅ InventoryService: Bulk inventory update successful:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ InventoryService: Failed to bulk update inventory:', error);
     throw new Error(error.response?.data?.message || 'Failed to bulk update inventory.');
   }
 }

@@ -17,7 +17,6 @@ export default function AdvancedSearchBox({ onSearch, placeholder = "Search prod
       try {
         setRecentSearches(JSON.parse(saved));
       } catch (error) {
-        console.error('Failed to parse recent searches:', error);
       }
     }
   }, []);
@@ -36,7 +35,6 @@ export default function AdvancedSearchBox({ onSearch, placeholder = "Search prod
         setSuggestions(results);
         setShowSuggestions(true);
       } catch (error) {
-        console.error('Search suggestions failed:', error);
         setSuggestions([]);
       } finally {
         setIsSearching(false);

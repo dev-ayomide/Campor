@@ -17,7 +17,6 @@ export default function CompleteOrderModal({ isOpen, onClose, onSubmit }) {
       setCompletionCode('');
       onClose();
     } catch (error) {
-      console.error('Error completing order:', error);
       alert('Failed to complete order. Please try again.');
     } finally {
       setLoading(false);
