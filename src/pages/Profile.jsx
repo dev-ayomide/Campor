@@ -7,8 +7,8 @@ import { getWishlist, removeFromWishlist } from '../services/wishlistService';
 import { addToCart, getCart } from '../services/cartService';
 import { ProfileSkeleton } from '../components/common';
 import { Eye } from 'lucide-react';
-import profileImage from '../assets/images/profile.png';
-import productImage from '../assets/images/product.png';
+const profileImage = '/profile.png';
+const productImage = '/product.png';
 
 export default function ProfilePage() {
   const { user, token, logout, updateUserProfile } = useContext(AuthContext);

@@ -9,7 +9,7 @@ import { WishlistProvider } from './contexts/WishlistContext';
 import { ScrollToTop } from './components/common';
 
 // Import the verify image
-import verifyImage from './assets/images/verifyscreen.png';
+const verifyImage = '/verifyscreen.png';
 
 // Import pages from new organized structure
 import { Landing, Marketplace, ProductDetail } from './pages/marketplace';

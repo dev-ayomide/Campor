@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getCategoryWithProducts, getCategories } from '../../services/categoryService';
 import { getAllProducts } from '../../services/authService';
 import { ProductGridSkeleton, CategoryListSkeleton } from '../../components/common';
-import productImage from '../../assets/images/product.png';
+const productImage = '/product.png';
 
 export default function CategoryPage() {
   const { categoryId } = useParams();

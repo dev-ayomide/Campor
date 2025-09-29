@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const { isSeller } = useAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -52,18 +54,20 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Want to sell section */}
-        <div className="text-center mb-12">
-          <p className="text-gray-300 text-lg mb-4">
-            Want to sell?{' '}
-            <Link 
-              to="/seller/onboarding" 
-              className="text-blue-400 hover:text-blue-300 font-medium transition-colors underline"
-            >
-              Become a seller today
-            </Link>
-          </p>
-        </div>
+        {/* Want to sell section - only show for non-sellers */}
+        {!isSeller && (
+          <div className="text-center mb-12">
+            <p className="text-gray-300 text-lg mb-4">
+              Want to sell?{' '}
+              <Link 
+                to="/seller/onboarding" 
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors underline"
+              >
+                Become a seller today
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* Bottom section - Company branding centered */}
         <div className="text-center">
@@ -93,7 +97,7 @@ export default function Footer() {
           </div>
           
           <p className="text-gray-500 text-sm">
-            Copyright © 2025 Campor
+            Copyright © {new Date().getFullYear()} Campor
           </p>
           <p className="text-gray-500 text-sm">
             All Rights Reserved.

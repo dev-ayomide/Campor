@@ -8,7 +8,7 @@ import WishlistButton from '../../components/wishlist/WishlistButton';
 import AddToCartButton from '../../components/cart/AddToCartButton';
 import { Heart, Trash2 } from 'lucide-react';
 import { ShoppingBagIcon } from '../../components/common';
-import productImage from '../../assets/images/product.png';
+const productImage = '/product.png';
 
 export default function WishlistPage() {
   const { user } = useAuth();

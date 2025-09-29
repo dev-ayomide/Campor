@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import heroImage from '../../assets/images/heroimage.png';
-import facilitateImage from '../../assets/images/image-fac.png';
+const heroImage = '/heroimage.png';
+const facilitateImage = '/image-fac.png';
 
 export default function LandingPage() {
   const [openFAQ, setOpenFAQ] = useState(null);
@@ -63,32 +63,48 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      question: "How do I verify my student account?",
-      answer: "Simply sign up using your official RUN email address (@run.edu.ng). Our system automatically verifies your student status through your institutional email, ensuring only verified students can access the platform."
+      question: "What is Campor?",
+      answer: "Campor is a student-to-student marketplace for Redeemer's University. It makes it easy for students to buy and sell items directly with each other in a safe and reliable way."
     },
     {
-      question: "Is Campor safe for transactions?",
-      answer: "Yes! Campor is designed with student safety in mind. All users are verified students, and we provide secure in-app payment options. You can also chat directly with sellers before making any transactions to build trust."
+      question: "Who can sell on Campor?",
+      answer: "Only current students of Redeemer's University can sell on Campor. Sellers must verify their identity with their official school email (which includes their matriculation number)."
     },
     {
-      question: "What payment methods do you accept?",
-      answer: "We accept multiple secure payment methods including debit/credit cards, bank transfers, and mobile money options. All payments are processed securely within the app to protect your financial information."
+      question: "How do buyers pay?",
+      answer: "When a buyer orders a product, payment is made through Campor. The money is held safely until the buyer confirms they have received the product."
     },
     {
-      question: "How do I start selling on Campor?",
-      answer: "After creating your account, simply click 'Sell' to complete our quick seller onboarding process. You'll be able to upload photos, set prices, and manage your listings through our easy-to-use seller dashboard."
+      question: "When do sellers get paid?",
+      answer: "Once the buyer confirms delivery and is satisfied with the product, they provide the settlement code to the seller, and Campor credits the seller immediately."
     },
     {
-      question: "What can I buy and sell on Campor?",
-      answer: "You can buy and sell textbooks, electronics, clothing, personal items, services, and more. We encourage student entrepreneurship while maintaining a safe, campus-focused marketplace. Prohibited items include illegal goods and non-student services."
+      question: "What happens if the seller doesn't deliver?",
+      answer: "If a seller fails to deliver the item, Campor refunds the buyer. The seller will not be paid and may face account suspension if they continuously fail to deliver items."
     },
     {
-      question: "How do I meet up with buyers or sellers?",
-      answer: "Once you've agreed on a purchase, you can arrange to meet on campus at convenient locations like the library, student center, or other safe campus areas. Our chat feature helps coordinate pickup times and locations."
+      question: "Is there a Campor fulfillment center?",
+      answer: "No. Campor does not store or ship products. Buyers and sellers complete exchanges directly, after a purchase is confirmed."
     },
     {
-      question: "What if I have a problem with a transaction?",
-      answer: "Our support team is here to help! You can report issues through the app, and we'll work to resolve disputes between students. Since everyone is verified, we can easily connect with both parties to find fair solutions."
+      question: "Can I buy from outside the university?",
+      answer: "No. Currently, Campor is only available for Redeemer's University students."
+    },
+    {
+      question: "How do I contact Campor Support?",
+      answer: "You can reach us at support@campor.live for help with orders, payments, or account issues."
+    },
+    {
+      question: "How long until I receive my money after delivery?",
+      answer: "Once delivery is confirmed via submission of the correct settlement code, Campor processes the payment to the seller."
+    },
+    {
+      question: "How is the exchange done since Campor doesn't handle shipping or warehousing?",
+      answer: "Campor does not store products or ship for sellers. Sellers and buyers arrange delivery or pickup directly once order is confirmed. The safe code & buyer confirmation ensure that the product was delivered as promised before the seller gets paid."
+    },
+    {
+      question: "Is there a fee to become a seller?",
+      answer: "No, there is no fee to register as a seller on Campor. Just verify your student status via your school email and matriculation number and you can list items for sale."
     }
   ];
 

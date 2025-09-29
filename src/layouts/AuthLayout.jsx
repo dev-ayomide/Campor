@@ -1,5 +1,5 @@
 
-import authImage from '../assets/images/authimage.png';
+const authImage = '/authimage.png';
 
 export default function AuthLayout({ children, heroImage }) {
   const imageToUse = heroImage || authImage;

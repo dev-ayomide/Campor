@@ -71,7 +71,7 @@ export default function Navbar({ variant = 'default' }) {
                 href="#core-features" 
                 className="text-gray-700 hover:text-gray-900 font-medium transition-colors cursor-pointer"
               >
-                Products
+                Why Choose Us
               </a>
               <a 
                 href="#faq" 
@@ -378,7 +378,7 @@ export default function Navbar({ variant = 'default' }) {
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-2 cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Products
+                    Why Choose Us
                   </a>
                   <a 
                     href="#faq" 

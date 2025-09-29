@@ -6,8 +6,8 @@ import { getSellerUserId, getSellerUserIdWithFallback } from '../../services/aut
 import { useCart } from '../../contexts/CartContext';
 import { CartSkeleton, ChatIcon } from '../../components/common';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import productImage from '../../assets/images/product.png';
-import profileImage from '../../assets/images/profile.png';
+const productImage = '/product.png';
+const profileImage = '/profile.png';
 
 export default function CartPage() {
   const { user } = useAuth();

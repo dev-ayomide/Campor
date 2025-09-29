@@ -6,7 +6,7 @@ import { getSellerOrders } from '../../services/ordersService';
 import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter } from '../../components/common';
 import { useChat } from '../../contexts/ChatContext';
 import { chatApiService } from '../../services/chatApiService';
-import productImage from '../../assets/images/product.png';
+const productImage = '/product.png';
 
 export default function SellerOrdersPage() {
   const { user } = useAuth();

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Eye, Package, User, Calendar, CreditCard, MapPin } from 'lucide-react';
-import productImage from '../../assets/images/product.png';
+const productImage = '/product.png';
 
 export default function OrderDetailsModal({ order, isOpen, onClose }) {
   if (!isOpen || !order) return null;

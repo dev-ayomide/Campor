@@ -6,8 +6,8 @@ import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
 import { ProductDetailSkeleton } from '../../components/common';
 import { Star, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
-import productImage from '../../assets/images/product.png';
-import profileImage from '../../assets/images/profile.png';
+const productImage = '/product.png';
+const profileImage = '/profile.png';
 
 export default function ProductDetailPage() {
   const { slug } = useParams();

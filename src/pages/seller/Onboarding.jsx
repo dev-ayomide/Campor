@@ -42,7 +42,6 @@ export default function SellerOnboardingPage() {
   const [accountVerified, setAccountVerified] = useState(false);
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
-  const [isManualEntry, setIsManualEntry] = useState(false);
   const debounceTimeoutRef = useRef(null);
 
   const steps = [
@@ -181,41 +180,16 @@ export default function SellerOnboardingPage() {
 
   // Handle account number blur
   const handleAccountNumberBlur = useCallback(() => {
-    if (bankDetails.accountNumber.length === 10 && bankDetails.bankCode && !accountVerified && !isManualEntry) {
+    if (bankDetails.accountNumber.length === 10 && bankDetails.bankCode && !accountVerified) {
       // Clear any existing timeout and resolve immediately
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       debouncedResolveAccount(bankDetails.accountNumber, bankDetails.bankCode);
     }
-  }, [bankDetails.accountNumber, bankDetails.bankCode, accountVerified, isManualEntry, debouncedResolveAccount]);
+  }, [bankDetails.accountNumber, bankDetails.bankCode, accountVerified, debouncedResolveAccount]);
 
-  // Handle manual entry toggle
-  const handleManualEntryToggle = useCallback(() => {
-    setIsManualEntry(!isManualEntry);
-    if (!isManualEntry) {
-      // Switching to manual entry - clear verification status
-      setAccountVerified(false);
-      setBankVerificationError(null);
-      setBankDetails(prev => ({ ...prev, accountName: '' }));
-    } else {
-      // Switching back to auto-verification - try to verify if we have valid details
-      if (bankDetails.accountNumber.length === 10 && bankDetails.bankCode) {
-        debouncedResolveAccount(bankDetails.accountNumber, bankDetails.bankCode);
-      }
-    }
-  }, [isManualEntry, bankDetails.accountNumber, bankDetails.bankCode, debouncedResolveAccount]);
 
-  // Handle manual account name change
-  const handleManualAccountNameChange = useCallback((e) => {
-    setBankDetails(prev => ({ ...prev, accountName: e.target.value }));
-    if (e.target.value.trim()) {
-      setAccountVerified(true);
-      setBankVerificationError(null);
-    } else {
-      setAccountVerified(false);
-    }
-  }, []);
 
   // Cleanup debounce timeout on unmount
   useEffect(() => {
@@ -498,11 +472,11 @@ export default function SellerOnboardingPage() {
                   disabled={isLoadingBanks}
                   className="w-full flex items-center justify-between px-4 py-3 sm:py-4 bg-white border border-gray-300 rounded-xl text-sm text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
                 >
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center min-w-0 flex-1">
+                    <svg className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                    <span className="truncate">
+                    <span className="truncate text-left">
                       {isLoadingBanks ? 'Loading banks...' : bankDetails.bankName || 'Select Bank'}
                     </span>
                   </div>
@@ -636,23 +610,14 @@ export default function SellerOnboardingPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Account Name <span className="text-red-500">*</span>
                 {bankDetails.accountName && (
                   <span className="ml-2 text-xs text-green-600 font-medium">
-                      ✓ {isManualEntry ? 'Entered' : 'Verified'}
+                    ✓ Verified
                   </span>
                 )}
               </label>
-                <button
-                  type="button"
-                  onClick={handleManualEntryToggle}
-                  className="text-xs text-blue-600 hover:text-blue-800 underline"
-                >
-                  {isManualEntry ? 'Switch to Auto' : 'Enter Manually'}
-                </button>
-              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -662,27 +627,24 @@ export default function SellerOnboardingPage() {
                 <input
                   type="text"
                   value={bankDetails.accountName}
-                  onChange={isManualEntry ? handleManualAccountNameChange : undefined}
-                  readOnly={!isManualEntry}
-                  placeholder={isManualEntry ? "Enter account holder name" : "Account name (auto-filled after verification)"}
-                  className={`w-full pl-12 pr-4 py-3 sm:py-4 border rounded-xl transition-colors ${
-                    isManualEntry 
-                      ? 'bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500' 
-                      : bankDetails.accountName 
-                        ? 'bg-gray-50 border-green-300 text-gray-600' 
-                        : 'bg-gray-50 border-gray-300 text-gray-600'
+                  readOnly
+                  placeholder="Account name (auto-filled after verification)"
+                  className={`w-full pl-12 pr-12 py-3 sm:py-4 border rounded-xl transition-colors ${
+                    bankDetails.accountName 
+                      ? 'bg-gray-50 border-green-300 text-gray-600' 
+                      : 'bg-gray-50 border-gray-300 text-gray-600'
                   }`}
                   required
                 />
+                {bankDetails.accountName && (
+                  <svg className="w-5 h-5 text-green-500 absolute right-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
               </div>
               {bankDetails.accountName && (
                 <p className="mt-1 text-xs text-green-600">
-                  {isManualEntry ? 'Account name entered manually' : 'Account name verified successfully'}
-                </p>
-              )}
-              {isManualEntry && (
-                <p className="mt-1 text-xs text-blue-600">
-                  You can manually enter the account holder name
+                  Account name verified successfully
                 </p>
               )}
             </div>

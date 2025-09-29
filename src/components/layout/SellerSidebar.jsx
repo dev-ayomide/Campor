@@ -114,7 +114,7 @@ export default function SellerSidebar({ onMobileClose, isMobile = false }) {
   };
 
   return (
-    <div className="fixed left-0 top-0 w-64 h-screen bg-white flex flex-col overflow-hidden z-40">
+    <div className="fixed left-0 top-0 w-64 h-screen bg-transparent border-r border-gray-200 shadow-lg flex flex-col overflow-hidden z-40">
       {/* Navigation */}
       <nav className="flex-1 pt-20 px-4 pb-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <ul className="space-y-2">
@@ -167,7 +167,7 @@ export default function SellerSidebar({ onMobileClose, isMobile = false }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-white">
+      <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-transparent">
         <button 
           onClick={handleLogout}
           className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

@@ -18,7 +18,6 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   const [accountVerified, setAccountVerified] = useState(false);
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
-  const [isManualEntry, setIsManualEntry] = useState(false);
   const debounceTimeoutRef = useRef(null);
 
   // Store Info Form Data
@@ -231,41 +230,16 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
   // Handle account number blur
   const handleAccountNumberBlur = useCallback(() => {
-    if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode && !accountVerified && !isManualEntry) {
+    if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode && !accountVerified) {
       // Clear any existing timeout and resolve immediately
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       debouncedResolveAccount(paymentInfo.accountNumber, paymentInfo.bankCode);
     }
-  }, [paymentInfo.accountNumber, paymentInfo.bankCode, accountVerified, isManualEntry, debouncedResolveAccount]);
+  }, [paymentInfo.accountNumber, paymentInfo.bankCode, accountVerified, debouncedResolveAccount]);
 
-  // Handle manual entry toggle
-  const handleManualEntryToggle = useCallback(() => {
-    setIsManualEntry(!isManualEntry);
-    if (!isManualEntry) {
-      // Switching to manual entry - clear verification status
-      setAccountVerified(false);
-      setAccountResolutionError(null);
-      setPaymentInfo(prev => ({ ...prev, accountName: '' }));
-    } else {
-      // Switching back to auto-verification - try to verify if we have valid details
-      if (paymentInfo.accountNumber.length === 10 && paymentInfo.bankCode) {
-        debouncedResolveAccount(paymentInfo.accountNumber, paymentInfo.bankCode);
-      }
-    }
-  }, [isManualEntry, paymentInfo.accountNumber, paymentInfo.bankCode, debouncedResolveAccount]);
 
-  // Handle manual account name change
-  const handleManualAccountNameChange = useCallback((e) => {
-    setPaymentInfo(prev => ({ ...prev, accountName: e.target.value }));
-    if (e.target.value.trim()) {
-      setAccountVerified(true);
-      setAccountResolutionError(null);
-    } else {
-      setAccountVerified(false);
-    }
-  }, []);
 
   const handleStoreInfoSubmit = async (e) => {
     e.preventDefault();
@@ -578,11 +552,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                     }}
                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-colors"
                   >
-                    <div className="flex items-center">
-                      <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <svg className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
                       </svg>
-                      <span className="truncate">
+                      <span className="truncate text-left">
                         {paymentInfo.bankName || 'Select Bank'}
                       </span>
                     </div>
@@ -721,37 +695,25 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
               {/* Account Name */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Account Name *
-                    {paymentInfo.accountName && (
-                      <span className="ml-2 text-xs text-green-600 font-medium">
-                        ✓ {isManualEntry ? 'Entered' : 'Verified'}
-                      </span>
-                    )}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleManualEntryToggle}
-                    className="text-xs text-blue-600 hover:text-blue-800 underline"
-                  >
-                    {isManualEntry ? 'Switch to Auto' : 'Enter Manually'}
-                  </button>
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Name *
+                  {paymentInfo.accountName && (
+                    <span className="ml-2 text-xs text-green-600 font-medium">
+                      ✓ Verified
+                    </span>
+                  )}
+                </label>
                 <div className="relative">
                   <input
                     type="text"
                     name="accountName"
                     value={paymentInfo.accountName}
-                    onChange={isManualEntry ? handleManualAccountNameChange : undefined}
-                    readOnly={!isManualEntry}
-                    placeholder={isManualEntry ? "Enter account holder name" : "Account holder name (auto-filled after verification)"}
-                    className={`w-full pl-12 pr-4 py-3 border rounded-lg transition-colors ${
-                      isManualEntry 
-                        ? 'bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500' 
-                        : paymentInfo.accountName 
-                          ? 'bg-gray-50 border-green-300 text-gray-600' 
-                          : 'bg-gray-50 border-gray-300 text-gray-600'
+                    readOnly
+                    placeholder="Account holder name (auto-filled after verification)"
+                    className={`w-full pl-12 pr-12 py-3 border rounded-lg transition-colors ${
+                      paymentInfo.accountName 
+                        ? 'bg-gray-50 border-green-300 text-gray-600' 
+                        : 'bg-gray-50 border-gray-300 text-gray-600'
                     }`}
                     required
                   />
@@ -765,7 +727,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {isManualEntry ? 'You can manually enter the account holder name' : 'This field is automatically filled after account verification'}
+                  This field is automatically filled after account verification
                 </p>
               </div>
 

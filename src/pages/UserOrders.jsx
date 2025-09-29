@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getUserOrders } from '../services/ordersService';
 import { OrderItemSkeleton } from '../components/common';
 import { Eye } from 'lucide-react';
-import productImage from '../assets/images/product.png';
+const productImage = '/product.png';
 
 export default function UserOrders() {
   const { user } = useAuth();

@@ -4,7 +4,7 @@ import MainLayout from '../layouts/MainLayout';
 import { useAuth } from '../context/AuthContext';
 import { getUserOrders } from '../services/ordersService';
 import { ArrowLeft, Calendar, CreditCard, Package, User, MapPin } from 'lucide-react';
-import productImage from '../assets/images/product.png';
+const productImage = '/product.png';
 
 export default function OrderDetails() {
   const { orderId } = useParams();
