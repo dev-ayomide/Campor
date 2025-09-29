@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AcceptOrder from '../seller/AcceptOrder';
 import { ShoppingBagIcon, ChatIcon, ProfileIcon } from '../common';
 
@@ -13,6 +13,7 @@ export default function Navbar({ variant = 'default' }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSellerNavOpen, setIsSellerNavOpen] = useState(false);
   const [isAcceptOrderModalOpen, setIsAcceptOrderModalOpen] = useState(false);
+  const [isInSellerContext, setIsInSellerContext] = useState(false);
   const location = useLocation();
   
   // Debug logging for seller status
@@ -24,6 +25,25 @@ export default function Navbar({ variant = 'default' }) {
   const isSellerPage = location.pathname.startsWith('/seller/') && 
     location.pathname !== '/seller/onboarding' && 
     !location.pathname.includes('/catalogue');
+
+  // Context-aware navigation: Detect seller context and manage state
+  useEffect(() => {
+    // Set seller context when navigating to seller pages
+    if (isSellerPage && isSeller) {
+      setIsInSellerContext(true);
+    } else if (!isSellerPage) {
+      // Reset seller context when leaving seller pages
+      setIsInSellerContext(false);
+      setIsSellerNavOpen(false);
+    }
+  }, [location.pathname, isSellerPage, isSeller]);
+
+  // Reset mobile menu states when menu closes
+  useEffect(() => {
+    if (!isMenuOpen) {
+      setIsSellerNavOpen(false);
+    }
+  }, [isMenuOpen]);
 
   // Handle complete order with inventory deduction
   // Handle Accept Order modal
@@ -346,8 +366,8 @@ export default function Navbar({ variant = 'default' }) {
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 py-6">
               <div className="relative overflow-hidden h-full">
-                {/* Main Menu */}
-                <div className={`transition-all duration-300 ease-in-out ${!isSellerNavOpen ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0 absolute inset-0'}`}>
+                {/* Main Menu - Show normal navigation when not in seller context */}
+                <div className={`transition-all duration-300 ease-in-out ${!isSellerNavOpen && !isInSellerContext ? 'transform translate-x-0 opacity-100' : 'transform -translate-x-full opacity-0 absolute inset-0'}`}>
               {!isSignedIn ? (
                 // Mobile navigation for non-signed-in users
                 <>
@@ -553,11 +573,19 @@ export default function Navbar({ variant = 'default' }) {
               )}
                 </div>
 
-                {/* Seller Menu */}
-                <div className={`transition-all duration-300 ease-in-out ${isSellerNavOpen ? 'transform translate-x-0 opacity-100' : 'transform translate-x-full opacity-0 absolute inset-0'}`}>
+                {/* Seller Menu - Show when in seller context or when seller nav is explicitly opened */}
+                <div className={`transition-all duration-300 ease-in-out ${isSellerNavOpen || isInSellerContext ? 'transform translate-x-0 opacity-100' : 'transform translate-x-full opacity-0 absolute inset-0'}`}>
                   {/* Back button */}
                   <button
-                    onClick={() => setIsSellerNavOpen(false)}
+                    onClick={() => {
+                      if (isInSellerContext) {
+                        // If we're in seller context, go back to normal navbar
+                        setIsInSellerContext(false);
+                      } else {
+                        // If seller nav was explicitly opened, just close it
+                        setIsSellerNavOpen(false);
+                      }
+                    }}
                     className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors rounded-lg mb-4"
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -577,6 +605,7 @@ export default function Navbar({ variant = 'default' }) {
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsSellerNavOpen(false);
+                      setIsInSellerContext(true); // Set seller context when navigating to dashboard
                     }}
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -591,6 +620,7 @@ export default function Navbar({ variant = 'default' }) {
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsSellerNavOpen(false);
+                      setIsInSellerContext(true);
                     }}
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -605,6 +635,7 @@ export default function Navbar({ variant = 'default' }) {
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsSellerNavOpen(false);
+                      setIsInSellerContext(true);
                     }}
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -619,6 +650,7 @@ export default function Navbar({ variant = 'default' }) {
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsSellerNavOpen(false);
+                      setIsInSellerContext(true);
                     }}
                   >
                     <img 
@@ -635,6 +667,7 @@ export default function Navbar({ variant = 'default' }) {
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsSellerNavOpen(false);
+                      setIsInSellerContext(true);
                     }}
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -649,6 +682,7 @@ export default function Navbar({ variant = 'default' }) {
                     onClick={() => {
                       setIsMenuOpen(false);
                       setIsSellerNavOpen(false);
+                      setIsInSellerContext(true);
                     }}
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
