@@ -106,7 +106,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <motion.h1 
-              className="text-4xl lg:text-6xl font-extrabold text-gray-900 mb-4"
+              className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight"
               variants={fadeInUp}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
@@ -124,34 +124,34 @@ export default function LandingPage() {
             
             {/* Social Proof */}
             <motion.div 
-              className="flex items-center gap-4 mb-8"
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-8"
               variants={fadeInUp}
               transition={{ duration: 0.8, delay: 0.5 }}
             >
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
                 <span className="font-medium">Verified RUN Students Only</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                 <span className="font-medium">Secure Payments</span>
               </div>
             </motion.div>
             
             {/* CTA Buttons */}
             <motion.div 
-              className="flex flex-row gap-2 mb-8"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-2 mb-8"
               variants={fadeInUp}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
               >
                 <Link
                   to="/auth"
-                  className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-transparent"
-                  style={{ minWidth: '0', minHeight: '0' }}
+                  className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-sm sm:text-base px-6 sm:px-6 py-3 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-transparent w-full"
                 >
                   <svg
                     className="w-5 h-5 mr-2"
@@ -173,11 +173,11 @@ export default function LandingPage() {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
               >
                 <Link
                   to="/marketplace"
-                  className="flex items-center justify-center bg-white border-2 border-gray-900 hover:border-gray-700 text-gray-900 rounded-full font-bold text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
-                  style={{ minWidth: '0', minHeight: '0' }}
+                  className="flex items-center justify-center bg-white border-2 border-gray-900 hover:border-gray-700 text-gray-900 rounded-full font-bold text-sm sm:text-base px-6 sm:px-6 py-3 sm:py-3 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 w-full"
                 >
                   Browse Campus Items
                 </Link>

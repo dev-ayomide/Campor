@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { 
   getCart, 
   addToCart, 
@@ -26,6 +27,7 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+  const { user, token } = useAuth();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -325,6 +327,19 @@ export const CartProvider = ({ children }) => {
     console.log('🔍 CartContext: Loading cart on mount...');
     loadCart();
   }, [loadCart]);
+
+  // Reload cart when user authentication state changes
+  useEffect(() => {
+    if (user && token) {
+      console.log('🔍 CartContext: User authenticated, reloading cart...');
+      loadCart(true); // Force reload to bypass cache
+    } else if (!user && !token) {
+      console.log('🔍 CartContext: User logged out, clearing cart...');
+      setCart([]);
+      setCartId(null);
+      setError(null);
+    }
+  }, [user, token, loadCart]);
 
   const value = {
     // State

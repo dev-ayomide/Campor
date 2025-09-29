@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { 
   getWishlist, 
   addToWishlist, 
@@ -19,6 +20,7 @@ export const useWishlist = () => {
 };
 
 export const WishlistProvider = ({ children }) => {
+  const { user, token } = useAuth();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -148,6 +150,18 @@ export const WishlistProvider = ({ children }) => {
     console.log('🔍 WishlistContext: Loading wishlist on mount...');
     loadWishlist();
   }, [loadWishlist]);
+
+  // Reload wishlist when user authentication state changes
+  useEffect(() => {
+    if (user && token) {
+      console.log('🔍 WishlistContext: User authenticated, reloading wishlist...');
+      loadWishlist(true); // Force reload to bypass cache
+    } else if (!user && !token) {
+      console.log('🔍 WishlistContext: User logged out, clearing wishlist...');
+      setWishlist([]);
+      setError(null);
+    }
+  }, [user, token, loadWishlist]);
 
   const value = {
     // State
