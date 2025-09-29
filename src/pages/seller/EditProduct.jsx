@@ -80,11 +80,6 @@ const EditProduct = ({ toggleMobileMenu }) => {
             });
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(productData.price || ''));
-              price: productData.price || '',
-              stockQuantity: productData.stockQuantity || '',
-              categoryId: productData.category?.id || productData.categoryId || '',
-              imageUrls: productData.imageUrls || []
-            });
             return;
           } else {
             setError('Product not found');
