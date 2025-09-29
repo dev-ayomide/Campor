@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts, deleteProduct, updateProductStatus, publishProduct, unpublishProduct } from '../../services/authService';
-import { SellerDashboardSkeleton, Breadcrumb, MobileSearchFilter } from '../../components/common';
+import { SellerDashboardSkeleton, Breadcrumb, MobileSearchFilter, ConfirmationModal } from '../../components/common';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -14,6 +14,28 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  
+  // Modal and notification states
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Yes',
+    confirmButtonColor: 'red'
+  });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Auto-dismiss success message
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -73,16 +95,30 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     setFilteredProducts(filtered);
   }, [products, searchTerm, statusFilter]);
 
-  const handleDeleteProduct = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await deleteProduct(productId);
-        setProducts(prev => prev.filter(p => p.id !== productId));
-        console.log('✅ Product deleted successfully');
-      } catch (err) {
-        console.error('❌ Failed to delete product:', err);
-        setError(err.message);
-      }
+  const handleDeleteProduct = (productId) => {
+    const product = products.find(p => p.id === productId);
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Delete Product',
+      message: `Are you sure you want to delete "${product?.name || 'this product'}"? This action cannot be undone.`,
+      onConfirm: () => confirmDeleteProduct(productId),
+      confirmText: 'Delete',
+      confirmButtonColor: 'red'
+    });
+  };
+
+  const confirmDeleteProduct = async (productId) => {
+    try {
+      setActionLoading(true);
+      await deleteProduct(productId);
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      setSuccessMessage('Product deleted successfully');
+      console.log('✅ Product deleted successfully');
+    } catch (err) {
+      console.error('❌ Failed to delete product:', err);
+      setError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -137,40 +173,76 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
 
   const handleStatusUpdate = async (productId, newStatus) => {
     try {
+      setActionLoading(true);
       await updateProductStatus(productId, newStatus);
       setProducts(prev => prev.map(product => 
         product.id === productId ? { ...product, status: newStatus } : product
       ));
+      setSuccessMessage('Product status updated successfully');
       console.log('✅ Product status updated successfully');
     } catch (err) {
       console.error('❌ Failed to update product status:', err);
       setError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handlePublishProduct = async (productId) => {
+  const handlePublishProduct = (productId) => {
+    const product = products.find(p => p.id === productId);
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Publish Product',
+      message: `Are you sure you want to publish "${product?.name || 'this product'}"? It will be visible to customers.`,
+      onConfirm: () => confirmPublishProduct(productId),
+      confirmText: 'Publish',
+      confirmButtonColor: 'green'
+    });
+  };
+
+  const confirmPublishProduct = async (productId) => {
     try {
+      setActionLoading(true);
       await publishProduct(productId);
       setProducts(prev => prev.map(product => 
         product.id === productId ? { ...product, status: 'ACTIVE' } : product
       ));
+      setSuccessMessage('Product published successfully');
       console.log('✅ Product published successfully');
     } catch (err) {
       console.error('❌ Failed to publish product:', err);
       setError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleUnpublishProduct = async (productId) => {
+  const handleUnpublishProduct = (productId) => {
+    const product = products.find(p => p.id === productId);
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Unpublish Product',
+      message: `Are you sure you want to unpublish "${product?.name || 'this product'}"? It will no longer be visible to customers.`,
+      onConfirm: () => confirmUnpublishProduct(productId),
+      confirmText: 'Unpublish',
+      confirmButtonColor: 'gray'
+    });
+  };
+
+  const confirmUnpublishProduct = async (productId) => {
     try {
+      setActionLoading(true);
       await unpublishProduct(productId);
       setProducts(prev => prev.map(product => 
         product.id === productId ? { ...product, status: 'DRAFT' } : product
       ));
+      setSuccessMessage('Product unpublished successfully');
       console.log('✅ Product unpublished successfully');
     } catch (err) {
       console.error('❌ Failed to unpublish product:', err);
       setError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -730,6 +802,47 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
             </button>
           </nav>
         </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          confirmText={confirmationModal.confirmText}
+          confirmButtonColor={confirmationModal.confirmButtonColor}
+        />
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{successMessage}</span>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="ml-2 text-green-600 hover:text-green-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Action Loading Overlay */}
+        {actionLoading && (
+          <div className="fixed inset-0 z-40 bg-black bg-opacity-25 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 flex items-center gap-3">
+              <svg className="w-5 h-5 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-gray-700">Processing...</span>
             </div>
           </div>
         )}
