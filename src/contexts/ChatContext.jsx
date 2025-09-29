@@ -22,17 +22,14 @@ export function ChatProvider({ children }) {
   // Load conversations with useCallback to prevent infinite re-renders
   const loadConversations = useCallback(async () => {
     try {
-      console.log('🔄 Loading conversations for role:', currentUserRole);
       setLoading(true);
       const data = await chatService.getConversations(currentUserRole);
-      console.log('📋 Loaded conversations:', data.length);
       setConversations(data);
       
       // Calculate total unread count
       const totalUnread = data.reduce((sum, conv) => sum + conv.unreadCount, 0);
       setUnreadCount(totalUnread);
     } catch (error) {
-      console.error('Failed to load conversations:', error);
     } finally {
       setLoading(false);
     }
@@ -44,12 +41,9 @@ export function ChatProvider({ children }) {
       const connectSocket = async () => {
         try {
           await socketService.connect(token);
-          console.log('✅ Socket connection established');
         } catch (error) {
-          console.error('❌ Failed to connect to socket:', error);
           // Retry connection after 3 seconds
           setTimeout(() => {
-            console.log('🔄 Retrying socket connection...');
             connectSocket();
           }, 3000);
         }
@@ -59,13 +53,11 @@ export function ChatProvider({ children }) {
       
       // Set up real-time event listeners
       socketService.on('new_message', (messageData) => {
-        console.log('📨 New message received in ChatContext:', messageData);
         // Only update conversation list, don't handle individual messages
         // Individual messages are handled in ChatWindow component
         setConversations(prev => 
           prev.map(conv => {
             if (conv.id === messageData.chatId) {
-              console.log('🔄 Updating conversation:', conv.id, 'with new message');
               return {
                 ...conv,
                 lastMessage: {
@@ -109,18 +101,15 @@ export function ChatProvider({ children }) {
       
       // Listen for conversation creation events
       socketService.on('conversation_created', () => {
-        console.log('🔄 Conversation created event received in ChatContext');
         loadConversations();
       });
       
       socketService.on('new_chat', (chatData) => {
-        console.log('🆕 New chat created event received in ChatContext:', chatData);
         loadConversations();
       });
 
       socketService.on('message_notification', (notificationData) => {
         // Handle message notification
-        console.log('🔔 New message notification:', notificationData);
         // Don't reload conversations here - let the new_message event handle updates
         // This prevents duplication and unnecessary API calls
       });

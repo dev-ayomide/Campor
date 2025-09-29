@@ -27,7 +27,6 @@ export default function OrderDetails() {
           setError('Order not found');
         }
       } catch (err) {
-        console.error('❌ Order Details: Failed to fetch order:', err);
         setError(err.message);
       } finally {
         setLoading(false);

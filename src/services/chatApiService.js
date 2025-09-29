@@ -2,8 +2,6 @@
 
 // Validate that API_BASE_URL is set
 if (!import.meta.env.VITE_API_BASE_URL) {
-  console.error('❌ VITE_API_BASE_URL environment variable is not set!');
-  console.error('Please set VITE_API_BASE_URL in your environment variables.');
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -41,16 +39,6 @@ class ChatApiService {
         ? JSON.parse(localStorage.getItem('campor_user')) 
         : null;
       
-      console.log('=== CHAT DEBUG INFO ===');
-      console.log('API_BASE_URL:', API_BASE_URL);
-      console.log('Full URL:', `${API_BASE_URL}/chat/send`);
-      console.log('Current user:', currentUser?.id, 'Current user type:', typeof currentUser?.id);
-      console.log('Receiver ID:', receiverId, 'Receiver ID type:', typeof receiverId);
-      console.log('Auth token exists:', !!localStorage.getItem('campor_token'));
-      console.log('Auth token (first 50 chars):', localStorage.getItem('campor_token')?.substring(0, 50) + '...');
-      console.log('Full auth token:', localStorage.getItem('campor_token'));
-      console.log('Auth headers:', this.getAuthHeaders());
-      console.log('========================');
       
       // Validate receiverId format
       if (!this.isValidUUID(receiverId)) {

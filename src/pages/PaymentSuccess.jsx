@@ -31,9 +31,6 @@ export default function PaymentSuccessPage() {
           throw new Error('Payment reference not found in URL');
         }
 
-        console.log('🔍 PaymentSuccess: Processing payment success:', {
-          reference: paymentRef
-        });
 
         // Verify payment with backend (which calls Paystack API)
         const verificationResult = await handlePaymentSuccess(paymentRef);
@@ -50,10 +47,8 @@ export default function PaymentSuccessPage() {
         await clearUserCart();
         clearCartCache();
 
-        console.log('✅ PaymentSuccess: Payment processed successfully');
 
       } catch (err) {
-        console.error('❌ PaymentSuccess: Error processing payment:', err);
         setError(err.message || 'Failed to process payment');
       } finally {
         setLoading(false);

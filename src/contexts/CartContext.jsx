@@ -54,7 +54,6 @@ export const CartProvider = ({ children }) => {
       setError(null);
       
       const cartData = await getCart(force);
-      console.log('🔍 CartContext: Raw cart data:', cartData);
       
       // Debug cart structure (removed since backend is fixed)
       
@@ -67,9 +66,7 @@ export const CartProvider = ({ children }) => {
         setCartId(normalizedCart[0].items[0].cartId);
       }
       
-      console.log('✅ Cart loaded successfully:', normalizedCart);
     } catch (err) {
-      console.error('❌ Failed to load cart:', err);
       // Don't set error for authentication issues, just set empty cart
       if (err.message !== 'User not authenticated') {
         setError(err.message);
@@ -90,7 +87,6 @@ export const CartProvider = ({ children }) => {
       // Only pass cartId if it exists and is not null/undefined
       const currentCartId = cartId && cartId !== 'temp-cart-id' ? cartId : null;
       
-      console.log('🔍 CartContext: Adding items with cartId:', currentCartId);
       const response = await addToCart(currentCartId, items);
       
       // Update cartId from response if provided
@@ -101,10 +97,8 @@ export const CartProvider = ({ children }) => {
       // Reload cart to get updated data
       await loadCart(true); // bypass cache right after add
       
-      console.log('✅ Items added to cart successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to add items to cart:', err);
       setError(err.message);
       throw err;
     } finally {
@@ -132,10 +126,8 @@ export const CartProvider = ({ children }) => {
       
       const response = await updateCartItemQuantity(itemId, quantity);
       
-      console.log('✅ Cart item quantity updated successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to update cart item quantity:', err);
       // Revert optimistic update on error
       await loadCart(true);
       setError(err.message);
@@ -161,10 +153,8 @@ export const CartProvider = ({ children }) => {
       
       const response = await removeFromCart(itemId);
       
-      console.log('✅ Item removed from cart successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to remove item from cart:', err);
       // Revert optimistic update on error
       await loadCart(true);
       setError(err.message);
@@ -186,10 +176,8 @@ export const CartProvider = ({ children }) => {
       setCart([]);
       setCartId(null);
       
-      console.log('✅ Cart cleared successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to clear cart:', err);
       setError(err.message);
       throw err;
     } finally {
@@ -217,10 +205,8 @@ export const CartProvider = ({ children }) => {
         await loadCart(true);
       }
       
-      console.log('✅ Cart fixed successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to fix cart:', err);
       setError(err.message);
       throw err;
     } finally {
@@ -293,7 +279,6 @@ export const CartProvider = ({ children }) => {
   // Get cart item count
   const getItemCount = useCallback(() => {
     const count = getCartItemCount(cart);
-    console.log('🔍 CartContext: Cart item count:', count, 'Cart data:', cart);
     return count;
   }, [cart]);
 
@@ -324,17 +309,14 @@ export const CartProvider = ({ children }) => {
 
   // Load cart on mount and when user changes
   useEffect(() => {
-    console.log('🔍 CartContext: Loading cart on mount...');
     loadCart();
   }, [loadCart]);
 
   // Reload cart when user authentication state changes
   useEffect(() => {
     if (user && token) {
-      console.log('🔍 CartContext: User authenticated, reloading cart...');
       loadCart(true); // Force reload to bypass cache
     } else if (!user && !token) {
-      console.log('🔍 CartContext: User logged out, clearing cart...');
       setCart([]);
       setCartId(null);
       setError(null);

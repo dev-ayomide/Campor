@@ -57,9 +57,7 @@ export default function SellerOnboardingPage() {
       try {
         const response = await bankResolutionService.getBanksList();
         setBanksList(response.data || []);
-        console.log('✅ Banks list fetched successfully:', response.data?.length || 0, 'banks');
       } catch (error) {
-        console.error('❌ Failed to fetch banks list:', error);
         setError('Failed to load banks list. Please refresh the page.');
       } finally {
         setIsLoadingBanks(false);
@@ -114,7 +112,6 @@ export default function SellerOnboardingPage() {
         }));
         setAccountVerified(true);
         setBankVerificationError(null);
-        console.log('✅ Account resolved successfully:', response.data);
       } else {
         setBankDetails(prev => ({
           ...prev,
@@ -124,7 +121,6 @@ export default function SellerOnboardingPage() {
         setAccountVerified(false);
       }
     } catch (error) {
-      console.error('❌ Account resolution failed:', error);
       setBankDetails(prev => ({
         ...prev,
         accountName: ''
@@ -273,7 +269,6 @@ export default function SellerOnboardingPage() {
     setError(null);
     
     try {
-      console.log('Testing seller endpoint connectivity...');
       const result = await testSellerEndpoint();
       
       if (result.success) {
@@ -282,7 +277,6 @@ export default function SellerOnboardingPage() {
         setError(`❌ Connection test failed: ${result.error}`);
       }
     } catch (error) {
-      console.error('Connection test failed:', error);
       setError(`❌ Connection test failed: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -349,11 +343,9 @@ export default function SellerOnboardingPage() {
         accountName: bankDetails.accountName
       };
       
-      console.log('Seller registration data:', sellerData);
       
       // Call the API to register seller with all data
       const response = await registerSeller(sellerData);
-      console.log('Seller registration successful:', response);
       
       // Update user's seller status in context
       completeSellersOnboarding(response);
@@ -361,7 +353,6 @@ export default function SellerOnboardingPage() {
       // Navigate to seller dashboard
       navigate('/seller/dashboard');
     } catch (error) {
-      console.error('Seller registration failed:', error);
       
       // Parse and format API error messages to be user-friendly
       let userFriendlyError = 'Registration failed. Please try again.';

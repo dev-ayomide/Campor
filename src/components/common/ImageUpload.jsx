@@ -33,24 +33,18 @@ export default function ImageUpload({
       setUploading(true);
       
       const fileArray = Array.from(files);
-      console.log('🔍 ImageUpload: Uploading files:', fileArray.map(f => f.name));
       
       const uploadResults = await uploadMultipleImages(fileArray, uploadOptions);
-      console.log('🔍 ImageUpload: Upload results:', uploadResults);
       
       // Notify parent component of changes
       if (onImagesChange) {
         const newImageUrls = uploadResults.map(result => result.url);
-        console.log('🔍 ImageUpload: New URLs:', newImageUrls);
-        console.log('🔍 ImageUpload: Current images:', images);
         
         const allImageUrls = [...images, ...newImageUrls];
-        console.log('🔍 ImageUpload: All URLs:', allImageUrls);
         
         onImagesChange(allImageUrls);
       }
     } catch (err) {
-      console.error('Failed to upload images:', err);
       setError(err.message);
     } finally {
       setUploading(false);
@@ -71,7 +65,6 @@ export default function ImageUpload({
         onImagesChange(newImages);
       }
     } catch (err) {
-      console.error('Failed to remove image:', err);
     }
   };
 
@@ -178,7 +171,6 @@ export default function ImageUpload({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {allImages.map((image, index) => {
               const imageUrl = typeof image === 'string' ? image : image.url;
-              console.log(`🔍 ImageUpload: Preview ${index + 1}:`, imageUrl);
               
               return (
                 <div key={`${imageUrl}-${index}`} className="relative group">
@@ -187,7 +179,6 @@ export default function ImageUpload({
                     alt={`Preview ${index + 1}`}
                     className="w-full h-32 object-cover rounded-lg border border-gray-200"
                     onError={(e) => {
-                      console.error(`🔍 ImageUpload: Failed to load image ${index + 1}:`, imageUrl);
                       e.target.style.display = 'none';
                     }}
                   />

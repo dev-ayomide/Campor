@@ -10,25 +10,20 @@ export async function getCategories(useCache = true) {
   try {
     // Check cache first
     if (useCache && categoriesCache && categoriesCacheTime && (Date.now() - categoriesCacheTime < CACHE_DURATION)) {
-      console.log('🔍 CategoryService: Using cached categories');
       return { data: categoriesCache };
     }
 
-    console.log('🔍 CategoryService: Fetching fresh categories...');
     const response = await getCategoriesOnly();
     
     // Update cache
     categoriesCache = response;
     categoriesCacheTime = Date.now();
     
-    console.log('✅ CategoryService: Categories fetched and cached:', categoriesCache);
     return { data: response };
   } catch (error) {
-    console.error('❌ CategoryService: Failed to fetch categories:', error);
     
     // Return cached data if available, even if expired
     if (categoriesCache) {
-      console.log('⚠️ CategoryService: Using expired cache due to error');
       return { data: categoriesCache };
     }
     
@@ -39,12 +34,9 @@ export async function getCategories(useCache = true) {
 // Get categories with products
 export async function getCategoriesWithProducts() {
   try {
-    console.log('🔍 CategoryService: Fetching categories with products...');
     const response = await getAllCategories();
-    console.log('✅ CategoryService: Categories with products fetched:', response.data);
     return response;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to fetch categories with products:', error);
     throw error;
   }
 }
@@ -52,12 +44,9 @@ export async function getCategoriesWithProducts() {
 // Get single category with products
 export async function getCategoryWithProducts(categoryId) {
   try {
-    console.log('🔍 CategoryService: Fetching category with products:', categoryId);
     const response = await getCategoryById(categoryId);
-    console.log('✅ CategoryService: Category with products fetched:', response);
     return response;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to fetch category with products:', error);
     throw error;
   }
 }
@@ -65,17 +54,14 @@ export async function getCategoryWithProducts(categoryId) {
 // Create new categories (Admin only)
 export async function createNewCategories(categoryNames) {
   try {
-    console.log('🔍 CategoryService: Creating new categories:', categoryNames);
     const response = await createCategories(categoryNames);
     
     // Clear cache to force refresh
     categoriesCache = null;
     categoriesCacheTime = null;
     
-    console.log('✅ CategoryService: Categories created successfully:', response.data);
     return response;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to create categories:', error);
     throw error;
   }
 }
@@ -83,17 +69,14 @@ export async function createNewCategories(categoryNames) {
 // Update category (Admin only)
 export async function updateCategoryData(categoryId, categoryData) {
   try {
-    console.log('🔍 CategoryService: Updating category:', { categoryId, categoryData });
     const response = await updateCategory(categoryId, categoryData);
     
     // Clear cache to force refresh
     categoriesCache = null;
     categoriesCacheTime = null;
     
-    console.log('✅ CategoryService: Category updated successfully:', response.data);
     return response;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to update category:', error);
     throw error;
   }
 }
@@ -101,24 +84,20 @@ export async function updateCategoryData(categoryId, categoryData) {
 // Delete category (Admin only)
 export async function deleteCategoryData(categoryId) {
   try {
-    console.log('🔍 CategoryService: Deleting category:', categoryId);
     const response = await deleteCategory(categoryId);
     
     // Clear cache to force refresh
     categoriesCache = null;
     categoriesCacheTime = null;
     
-    console.log('✅ CategoryService: Category deleted successfully:', response.data);
     return response;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to delete category:', error);
     throw error;
   }
 }
 
 // Clear categories cache
 export function clearCategoriesCache() {
-  console.log('🔍 CategoryService: Clearing categories cache');
   categoriesCache = null;
   categoriesCacheTime = null;
 }

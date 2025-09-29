@@ -39,27 +39,20 @@ const EditProduct = ({ toggleMobileMenu }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('🔍 EditProduct: Fetching data for product ID:', productId);
         
         // Fetch categories using the correct endpoint
         try {
-          console.log('🔍 EditProduct: Fetching categories...');
           const categoriesData = await getCategoriesOnly();
-          console.log('🔍 EditProduct: Categories response:', categoriesData);
           
           // The API returns { data: [...] } structure
         const categoriesList = categoriesData.data || categoriesData || [];
-          console.log('🔍 EditProduct: Categories list:', categoriesList);
           
           if (Array.isArray(categoriesList)) {
             setCategories(categoriesList);
-            console.log('✅ EditProduct: Categories loaded:', categoriesList.length);
           } else {
-            console.error('❌ EditProduct: Categories is not an array:', categoriesList);
             setCategories([]);
           }
         } catch (categoryError) {
-          console.error('❌ EditProduct: Failed to fetch categories:', categoryError);
           setCategories([]);
         }
         
@@ -70,19 +63,12 @@ const EditProduct = ({ toggleMobileMenu }) => {
         }
         
         try {
-          console.log('🔍 EditProduct: Fetching seller products for seller ID:', user.seller.id);
           const products = await getSellerProducts(user.seller.id);
-          console.log('🔍 EditProduct: Seller products:', products);
           
           const productData = products.find(p => p.id === productId);
-          console.log('🔍 EditProduct: Found product:', productData);
           
           if (productData) {
             setCurrentProduct(productData);
-            console.log('🔍 EditProduct: Product data structure:', productData);
-            console.log('🔍 EditProduct: Product data keys:', Object.keys(productData));
-            console.log('🔍 EditProduct: Product description:', productData.description);
-            console.log('🔍 EditProduct: Product createdAt:', productData.createdAt);
             
             setFormData({
               name: productData.name || '',

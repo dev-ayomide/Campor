@@ -32,11 +32,6 @@ export default function CatalogueCoverUpload({
     setError(null);
 
     try {
-      console.log('🔍 CatalogueCoverUpload: Starting cover upload...', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      });
 
       // Upload to Cloudinary with catalogue-specific folder
       const result = await uploadImage(file, {
@@ -44,13 +39,11 @@ export default function CatalogueCoverUpload({
         tags: 'catalogue-cover'
       });
 
-      console.log('✅ CatalogueCoverUpload: Cover uploaded successfully:', result);
       
       // Update parent component with the new cover URL
       onCoverChange(result.url);
       
     } catch (err) {
-      console.error('❌ CatalogueCoverUpload: Failed to upload cover:', err);
       setError(err.message);
     } finally {
       setUploading(false);

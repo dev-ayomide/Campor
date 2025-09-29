@@ -73,7 +73,6 @@ export default function MarketplacePage() {
         return catalogueData.seller.user.profilePicture;
       }
     } catch (error) {
-      console.log('Failed to fetch seller profile picture:', error);
     }
     return null;
   };
@@ -122,22 +121,17 @@ export default function MarketplacePage() {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      console.log('🔍 Marketplace: Fetching categories from backend API...');
       const response = await getCategories();
       
-      console.log('🔍 Marketplace: Raw categories response:', response);
       
       if (response.data && Array.isArray(response.data)) {
         // Add 'All' option at the beginning and keep full category objects
         const categoriesWithAll = [{ id: 'all', name: 'All' }, ...response.data];
         setCategories(categoriesWithAll);
-        console.log('✅ Marketplace: Categories loaded successfully from backend:', categoriesWithAll);
       } else {
-        console.warn('⚠️ Marketplace: No categories found in response, using default');
         setCategories([{ id: 'all', name: 'All' }, { id: 'electronics', name: 'Electronics' }, { id: 'clothing', name: 'Clothing' }, { id: 'books', name: 'Books' }, { id: 'accessories', name: 'Accessories' }]);
       }
     } catch (err) {
-      console.error('❌ Marketplace: Failed to fetch categories from backend:', err);
       // Keep 'All' option even if categories fail to load
       setCategories([{ id: 'all', name: 'All' }, { id: 'electronics', name: 'Electronics' }, { id: 'clothing', name: 'Clothing' }, { id: 'books', name: 'Books' }, { id: 'accessories', name: 'Accessories' }]);
     } finally {
@@ -159,7 +153,6 @@ export default function MarketplacePage() {
       filters.price = selectedPrice;
     }
     
-    console.log('🔍 Marketplace: Built Algolia filters:', filters);
     return filters;
   };
 
@@ -199,7 +192,6 @@ export default function MarketplacePage() {
       // Use provided filters or build from current state
       const activeFilters = filters || buildFilters();
       
-      console.log('🔍 Marketplace: Fetching products from Algolia with filters:', activeFilters);
       const response = await getAllProductsAlgolia(page, 10, activeFilters);
       
       if (response?.data) {
@@ -212,11 +204,9 @@ export default function MarketplacePage() {
           totalItems: 0,
           itemsPerPage: 10
         });
-        console.log('✅ Marketplace: Products loaded and sorted successfully from Algolia');
       }
     } catch (err) {
-      console.error('❌ Marketplace: Failed to fetch products from Algolia:', err);
-      setError(err.message || 'Failed to load products. Please try again.');
+      setError('Unable to load products at the moment. Please try again.');
       // Fallback to empty products array
       setProducts([]);
     } finally {
@@ -279,7 +269,6 @@ export default function MarketplacePage() {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Marketplace: Searching with Algolia for:', searchQuery);
       const response = await searchProductsAlgolia(searchQuery, 1, 10, buildFilters());
       
       if (response.data) {
@@ -292,11 +281,9 @@ export default function MarketplacePage() {
           totalItems: 0,
           itemsPerPage: 10
         });
-        console.log('✅ Marketplace: Algolia search completed and sorted successfully');
       }
     } catch (err) {
-      console.error('❌ Marketplace: Algolia search failed:', err);
-      setError(err.message || 'Search failed. Please try again.');
+      setError('Search is temporarily unavailable. Please try again.');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -355,17 +342,14 @@ export default function MarketplacePage() {
       setCartLoading(true);
       setCartMessage('');
       
-      console.log('🔍 Marketplace: Adding product to cart via CartContext:', { productId, quantity });
       await addProductToCart(productId, quantity);
       
       setCartMessage('Product added to cart successfully!');
       setTimeout(() => setCartMessage(''), 3000);
       
-      console.log('✅ Marketplace: Product added to cart successfully');
       
     } catch (err) {
-      console.error('❌ Marketplace: Failed to add product to cart:', err);
-      setCartMessage(err.message || 'Failed to add product to cart. Please try again.');
+      setCartMessage('Unable to add item to cart. Please try again.');
       setTimeout(() => setCartMessage(''), 3000);
     } finally {
       setCartLoading(false);
@@ -405,14 +389,33 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Full Width Hero Section */}
-      <section className="relative bg-blue-900 text-white overflow-hidden w-full">
+      <section className="relative text-white overflow-hidden w-full">
         <div className="absolute inset-0">
-          <img 
-            src={marketplaceImage} 
-            alt="Marketplace" 
-            className="w-full h-full object-cover opacity-80"
-          />
-          <div className="absolute inset-0 bg-blue-900 bg-opacity-40"></div>
+          {/* Modern Gradient Background - Brand Consistent */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900"></div>
+          
+          {/* Animated Geometric Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Floating circles */}
+            <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full animate-pulse"></div>
+            <div className="absolute top-32 right-20 w-16 h-16 bg-blue-300/20 rounded-full animate-bounce" style={{animationDelay: '1s'}}></div>
+            <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-blue-400/20 rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
+            
+            {/* Geometric shapes */}
+            <div className="absolute top-1/4 right-1/3 w-8 h-8 bg-white/10 transform rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
+            <div className="absolute bottom-1/3 right-10 w-6 h-6 bg-blue-200/20 transform rotate-12 animate-pulse" style={{animationDelay: '3s'}}></div>
+            
+            {/* Subtle grid pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="w-full h-full" style={{
+                backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)',
+                backgroundSize: '20px 20px'
+              }}></div>
+            </div>
+          </div>
+          
+          {/* Overlay for better text contrast */}
+          <div className="absolute inset-0 bg-black/20"></div>
         </div>
         
         <div className="relative z-10 w-full px-4 py-8 lg:py-12">
@@ -996,10 +999,12 @@ export default function MarketplacePage() {
                               </div>
 
                               {/* Seller Info - Compact */}
-                              <Link 
-                                to={`/seller/${product.seller?.id}/catalogue`}
-                                className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group"
-                                onClick={(e) => e.stopPropagation()}
+                              <div 
+                                className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/seller/${product.seller?.id}/catalogue`);
+                                }}
                               >
                                 <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                                   {(product.seller?.user?.profilePicture || sellerProfilePictures[product.seller?.id]) ? (
@@ -1015,7 +1020,7 @@ export default function MarketplacePage() {
                                   )}
                                 </div>
                                 <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
-                              </Link>
+                              </div>
                             </div>
 
                             {/* Action Buttons - Bottom aligned */}
@@ -1058,10 +1063,12 @@ export default function MarketplacePage() {
                             </div>
 
                             {/* Seller Info */}
-                            <Link 
-                              to={`/seller/${product.seller?.id}/catalogue`}
-                              className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group"
-                              onClick={(e) => e.stopPropagation()}
+                            <div 
+                              className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/seller/${product.seller?.id}/catalogue`);
+                              }}
                             >
                               <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                                 {(product.seller?.user?.profilePicture || sellerProfilePictures[product.seller?.id]) ? (
@@ -1077,7 +1084,7 @@ export default function MarketplacePage() {
                                 )}
                               </div>
                               <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
-                            </Link>
+                            </div>
 
                             {/* Action Buttons */}
                             <div className="flex gap-3">

@@ -81,7 +81,6 @@ export async function uploadImage(file, options = {}) {
     };
 
   } catch (error) {
-    console.error('❌ CloudinaryService: Failed to upload image:', error);
     throw error;
   }
 }
@@ -105,7 +104,6 @@ export async function uploadMultipleImages(files, options = {}) {
     return results;
 
   } catch (error) {
-    console.error('❌ CloudinaryService: Failed to upload multiple images:', error);
     throw error;
   }
 }
@@ -117,7 +115,6 @@ export async function uploadMultipleImages(files, options = {}) {
  * @returns {Promise<Object>} Deletion result
  */
 export async function deleteImage(publicId) {
-  console.warn('⚠️ CloudinaryService: Image deletion should be handled server-side for security');
   return { success: false, message: 'Image deletion should be handled server-side' };
 }
 
@@ -128,7 +125,6 @@ export async function deleteImage(publicId) {
  * @returns {Promise<Object[]>} Array of deletion results
  */
 export async function deleteMultipleImages(publicIds) {
-  console.warn('⚠️ CloudinaryService: Image deletion should be handled server-side for security');
   return publicIds.map(publicId => ({ 
     publicId, 
     success: false, 

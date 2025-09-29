@@ -65,12 +65,6 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       if (newPaymentInfo.accountName && newPaymentInfo.accountNumber && newPaymentInfo.bankCode) {
         setAccountVerified(true);
       }
-      
-      console.log('🔄 Settings: Updated form state with latest seller data:', {
-        catalogueCover: user.seller.catalogueCover,
-        phoneNumber: user.seller.phoneNumber,
-        whatsappNumber: user.seller.whatsappNumber
-      });
     }
   }, [user?.seller]);
 
@@ -109,9 +103,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       try {
         const response = await bankResolutionService.getBanksList();
         setBanksList(response.data || []);
-        console.log('✅ Settings: Banks list fetched successfully');
       } catch (error) {
-        console.error('❌ Settings: Failed to fetch banks list:', error);
         setError('Failed to load banks list. Please refresh the page.');
       }
     };
@@ -191,12 +183,10 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
         }));
         setAccountVerified(true);
         setSuccess('Account name resolved successfully!');
-        console.log('✅ Account resolved:', response.data);
       }
     } catch (error) {
       setAccountResolutionError(error.message);
       setAccountVerified(false);
-      console.error('❌ Account resolution failed:', error);
     } finally {
       setResolvingAccount(false);
     }
@@ -268,19 +258,13 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       // Update seller data in context with latest information
       try {
         await updateSellerData(user.seller.id);
-        console.log('✅ Seller data updated in context');
         
         // Keep the form state with the updated values to prevent clearing
         // The form state already has the correct values from the user input
-        console.log('✅ Form state preserved with updated values');
       } catch (contextError) {
-        console.log('ℹ️ Context update failed, but data was saved to backend');
       }
       
-      console.log('✅ Store info updated successfully');
-      console.log('⚠️ Note: If changes don\'t appear in Dashboard, this is a backend issue');
     } catch (err) {
-      console.error('❌ Failed to update store info:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -312,17 +296,13 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       // Update seller data in context with latest information
       try {
         await updateSellerData(user.seller.id);
-        console.log('✅ Seller data updated in context');
         
         // Keep the form state with the updated values to prevent clearing
         // The form state already has the correct values from the user input
-        console.log('✅ Form state preserved with updated values');
       } catch (contextError) {
-        console.log('ℹ️ Context update failed, but data was saved to backend');
       }
       
       console.log('✅ Payment info updated successfully');
-      console.log('⚠️ Note: If changes don\'t appear in Dashboard, this is a backend issue');
     } catch (err) {
       console.error('❌ Failed to update payment info:', err);
       setError(err.message);
@@ -742,9 +722,9 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               <div className="pt-6">
                 <button
                   type="submit"
-                  disabled={loading || (!accountVerified && !isManualEntry)}
+                  disabled={loading || !accountVerified}
                   className={`w-full py-4 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center ${
-                    loading || (!accountVerified && !isManualEntry)
+                    loading || !accountVerified
                       ? 'bg-gray-400 text-white cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}

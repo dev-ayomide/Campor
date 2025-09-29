@@ -45,26 +45,18 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         
         // Wait for user context to be fully loaded
         if (!user) {
-          console.log('⏳ Products: Waiting for user context...');
           return;
         }
         
         if (!user.seller?.id) {
-          console.log('⚠️ Products: No seller ID available');
           setError('Seller information not found. Please complete seller registration.');
           return;
         }
         
-        console.log('🔍 Products: Fetching products for seller ID:', user.seller.id);
         const productsData = await getSellerProducts(user.seller.id);
         setProducts(productsData || []);
-        console.log('✅ Products: Fetched seller products:', productsData);
-        console.log('🔍 Products: Sample product structure:', productsData?.[0]);
-        console.log('🔍 Products: Product names:', productsData?.map(p => ({ id: p.id, name: p.name, status: p.status })));
-        console.log('🔍 Products: Available fields in first product:', productsData?.[0] ? Object.keys(productsData[0]) : 'No products');
         
       } catch (err) {
-        console.error('❌ Products: Failed to fetch products:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -113,9 +105,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
       await deleteProduct(productId);
       setProducts(prev => prev.filter(p => p.id !== productId));
       setSuccessMessage('Product deleted successfully');
-      console.log('✅ Product deleted successfully');
     } catch (err) {
-      console.error('❌ Failed to delete product:', err);
       setError(err.message);
     } finally {
       setActionLoading(false);

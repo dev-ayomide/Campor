@@ -16,11 +16,6 @@ export default function Navbar({ variant = 'default' }) {
   const location = useLocation();
   
   // Debug logging for seller status
-  console.log('🔍 Navbar: User:', user);
-  console.log('🔍 Navbar: isSeller:', isSeller);
-  console.log('🔍 Navbar: user.sellerCompleted:', user?.sellerCompleted);
-  console.log('🔍 Navbar: user.isSeller:', user?.isSeller);
-  console.log('🔍 Navbar: user.seller:', user?.seller);
   
   // Determine if user is signed in for navbar state
   const isSignedIn = !!user;

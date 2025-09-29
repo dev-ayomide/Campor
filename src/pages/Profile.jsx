@@ -47,9 +47,7 @@ export default function ProfilePage() {
         setLoading(true);
         setError(null);
         
-        console.log('🔍 Profile: Fetching user profile...');
         const userData = await getCurrentUser();
-        console.log('✅ Profile: User profile fetched:', userData);
         
         // Update account data with real user data
         setAccountData({
@@ -66,7 +64,6 @@ export default function ProfilePage() {
         setError(null);
         setLoading(false);
       } catch (err) {
-        console.error('❌ Profile: Failed to fetch user profile:', err);
         setError('Failed to load profile data. Please try again.');
         setProfileLoaded(false);
         setLoading(false);
@@ -130,7 +127,6 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Profile: Updating profile...');
       
       const updateData = {
         name: accountData.name
@@ -142,8 +138,6 @@ export default function ProfilePage() {
       
       const response = await updateUserProfile(updateData);
       
-      console.log('✅ Profile: Profile updated successfully');
-      console.log('🔍 Profile: Update response:', response);
       
       // Show success message
       setSuccessMessage('Profile updated successfully!');
@@ -160,16 +154,13 @@ export default function ProfilePage() {
         // Handle profile picture update
         if (profilePicture) {
           // We just uploaded a new picture, keep the local preview
-          console.log('🔍 Profile: Keeping local preview for newly uploaded image');
         } else if (response.user.profilePicture) {
           // Update with the server URL for existing pictures
           setProfilePicturePreview(response.user.profilePicture);
-          console.log('🔍 Profile: Updated profile picture from response:', response.user.profilePicture);
         }
       } else {
         // Fallback: fetch updated user data
         const updatedUserData = await getCurrentUser();
-        console.log('🔍 Profile: Fetched updated user data:', updatedUserData);
         
         setAccountData({
           name: updatedUserData.name || '',

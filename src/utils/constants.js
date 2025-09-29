@@ -1,7 +1,6 @@
 // Validate that API_BASE_URL is set
 if (!import.meta.env.VITE_API_BASE_URL) {
-  console.error('❌ VITE_API_BASE_URL environment variable is not set!');
-  console.error('Please set VITE_API_BASE_URL in your environment variables.');
+  // Environment variable not set - this is a development configuration issue
 }
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;

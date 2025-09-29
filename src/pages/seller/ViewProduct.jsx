@@ -22,30 +22,23 @@ const ViewProduct = ({ toggleMobileMenu }) => {
         
         // Wait for user context to be fully loaded
         if (!user) {
-          console.log('⏳ ViewProduct: Waiting for user context...');
           return;
         }
         
         if (!user.seller?.id) {
-          console.log('⚠️ ViewProduct: No seller ID available');
           setError('Seller information not found. Please complete seller registration.');
           return;
         }
         
-        console.log('🔍 ViewProduct: Fetching products for seller ID:', user.seller.id);
         const products = await getSellerProducts(user.seller.id);
         const foundProduct = products.find(p => p.id === productId);
         
         if (foundProduct) {
-          console.log('🔍 ViewProduct: Found product:', foundProduct);
-          console.log('🔍 ViewProduct: Product description:', foundProduct.description);
-          console.log('🔍 ViewProduct: Product createdAt:', foundProduct.createdAt);
           setProduct(foundProduct);
         } else {
           setError('Product not found');
         }
       } catch (err) {
-        console.error('❌ Failed to fetch product:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -66,18 +59,15 @@ const ViewProduct = ({ toggleMobileMenu }) => {
         return;
       }
       
-      console.log('🔍 ViewProduct: Retrying fetch for seller ID:', user.seller.id);
       const products = await getSellerProducts(user.seller.id);
       const foundProduct = products.find(p => p.id === productId);
       
       if (foundProduct) {
-        console.log('🔍 ViewProduct: Found product on retry:', foundProduct);
         setProduct(foundProduct);
       } else {
         setError('Product not found');
       }
     } catch (err) {
-      console.error('❌ ViewProduct: Retry failed:', err);
       setError(err.message);
     } finally {
       setLoading(false);

@@ -24,7 +24,6 @@ class SocketService {
       // Use the same URL as chat-demo for consistency
       const socketUrl = import.meta.env.VITE_SOCKET_URL || 'https://campor-aa1452bb8116.herokuapp.com';
       
-      console.log('🔌 Connecting to socket server:', socketUrl);
       
       this.socket = io(socketUrl, {
         auth: {
@@ -36,9 +35,6 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('✅ Socket connected:', this.socket.id);
-        console.log('🔌 Socket URL:', socketUrl);
-        console.log('🔑 Auth token:', token ? 'Present' : 'Missing');
         this.isConnected = true;
         // Emit user_online event when connected
         this.emit('user_online');
@@ -46,25 +42,21 @@ class SocketService {
       });
 
       this.socket.on('disconnect', () => {
-        console.log('❌ Socket disconnected');
         this.isConnected = false;
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('❌ Socket connection error:', error);
         this.isConnected = false;
         reject(error);
       });
 
       // Add reconnection logic
       this.socket.on('reconnect', () => {
-        console.log('🔄 Socket reconnected');
         this.isConnected = true;
         this.emit('user_online');
       });
 
       this.socket.on('reconnect_error', (error) => {
-        console.error('❌ Socket reconnection error:', error);
       });
     });
   }
@@ -81,15 +73,8 @@ class SocketService {
   // Emit an event to the server
   emit(event, data) {
     if (this.socket && this.isConnected && this.socket.connected) {
-      console.log('📤 Emitting socket event:', event, data);
       this.socket.emit(event, data);
     } else {
-      console.log('❌ Cannot emit event - socket not connected:', event, data);
-      console.log('Socket status:', {
-        socket: !!this.socket,
-        isConnected: this.isConnected,
-        socketConnected: this.socket?.connected
-      });
     }
   }
 

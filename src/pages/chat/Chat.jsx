@@ -20,7 +20,6 @@ const ChatContent = () => {
       try {
         await markAsRead(conversationId);
       } catch (error) {
-        console.error('Failed to mark messages as read:', error);
       }
     }
   };

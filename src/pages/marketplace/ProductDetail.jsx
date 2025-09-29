@@ -31,23 +31,14 @@ export default function ProductDetailPage() {
         setLoading(true);
         setError(null);
         
-        console.log('🔍 ProductDetail: Fetching product with slug:', slug);
         const response = await getProductBySlug(slug);
         
         if (response?.data) {
           setProduct(response.data);
-          console.log('✅ ProductDetail: Product fetched successfully:', response.data);
-          console.log('🔍 ProductDetail: Category data:', response.data.category);
-          console.log('🔍 ProductDetail: Full product structure:', JSON.stringify(response.data, null, 2));
           
           // Check if category exists and has required fields
           if (response.data.category) {
-            console.log('🔍 ProductDetail: Category ID:', response.data.category.id);
-            console.log('🔍 ProductDetail: Category name:', response.data.category.name);
-            console.log('🔍 ProductDetail: Category ID type:', typeof response.data.category.id);
           } else if (response.data.categoryId) {
-            console.log('🔍 ProductDetail: Found categoryId field:', response.data.categoryId);
-            console.log('🔍 ProductDetail: Attempting to fetch category details...');
             
             // Try to fetch category details if only categoryId is available
             try {

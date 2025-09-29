@@ -49,7 +49,6 @@ export function AuthProvider({ children }) {
       // Check if user is already a seller by trying to get seller profile
       try {
         const sellerProfile = await authService.getSellerProfile();
-        console.log('✅ AuthContext: User is already a seller:', sellerProfile);
         setUser({ 
           ...userData, 
           sellerCompleted: true, 
@@ -58,11 +57,9 @@ export function AuthProvider({ children }) {
         });
       } catch (sellerError) {
         // User is not a seller yet, this is normal
-        console.log('ℹ️ AuthContext: User is not a seller yet');
         setUser(userData);
       }
     } catch (err) {
-      console.error('Failed to fetch user profile:', err);
       // If token is invalid, clear it
       if (err.message.includes('Failed to fetch user profile')) {
         setToken(null);
@@ -77,23 +74,14 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      console.log('🔍 AuthContext: Starting login process');
       const data = await authService.login(email, password);
-      console.log('🔍 AuthContext: Login successful, setting user and token');
-      console.log('🔍 AuthContext: Full response data:', data);
-      console.log('🔍 AuthContext: User data:', data.user);
-      console.log('🔍 AuthContext: Token:', data.token);
-      console.log('🔍 AuthContext: Data type:', typeof data);
-      console.log('🔍 AuthContext: Data keys:', Object.keys(data || {}));
       
       // Check if we have user data
       if (data.user) {
         setUser(data.user);
         setToken(data.token);
-        console.log('🔍 AuthContext: User and token set successfully');
       } else if (data.token) {
         // We have a token but no user data, try to fetch user profile again
-        console.log('🔍 AuthContext: Token received but no user data, attempting to fetch profile');
         setToken(data.token);
         
         try {
@@ -102,7 +90,6 @@ export function AuthProvider({ children }) {
           // Check if user is already a seller
           try {
             const sellerProfile = await authService.getSellerProfile();
-            console.log('✅ AuthContext: User is already a seller:', sellerProfile);
             setUser({ 
               ...userData, 
               sellerCompleted: true, 
@@ -111,7 +98,6 @@ export function AuthProvider({ children }) {
             });
           } catch (sellerError) {
             // User is not a seller yet, this is normal
-            console.log('ℹ️ AuthContext: User is not a seller yet');
             setUser(userData);
           }
           

@@ -28,17 +28,12 @@ export default function AddProductPage({ toggleMobileMenu }) {
     const fetchCategories = async () => {
       try {
         const categoriesData = await getCategoriesOnly();
-        console.log('🔍 AddProduct: Raw categories response:', categoriesData);
         
         // Handle different response structures
         const categories = categoriesData.data || categoriesData || [];
-        console.log('🔍 AddProduct: Processed categories:', categories);
-        console.log('🔍 AddProduct: Is array?', Array.isArray(categories));
         
         setCategories(Array.isArray(categories) ? categories : []);
-        console.log('✅ AddProduct: Set categories state:', Array.isArray(categories) ? categories : []);
       } catch (err) {
-        console.error('❌ AddProduct: Failed to fetch categories:', err);
         setError('Failed to load categories');
         setCategories([]); // Set empty array as fallback
       }
@@ -70,13 +65,11 @@ export default function AddProductPage({ toggleMobileMenu }) {
   };
 
   const handleImagesChange = (imageUrls) => {
-    console.log('🔍 AddProduct: handleImagesChange called with:', imageUrls);
     setFormData(prev => {
       const newData = {
         ...prev,
         imageUrls
       };
-      console.log('🔍 AddProduct: Updated formData.imageUrls:', newData.imageUrls);
       return newData;
     });
     // Reset image index when images change
@@ -136,7 +129,6 @@ export default function AddProductPage({ toggleMobileMenu }) {
 
     try {
       // First verify seller exists in backend
-      console.log('🔍 AddProduct: Verifying seller exists in backend...');
       await verifySellerExists(user.seller.id);
       
       const productData = {
@@ -148,18 +140,11 @@ export default function AddProductPage({ toggleMobileMenu }) {
         imageUrls: formData.imageUrls
       };
 
-      console.log('🔍 AddProduct: Full user data:', JSON.stringify(user, null, 2));
-      console.log('🔍 AddProduct: Seller ID:', user.seller?.id);
-      console.log('🔍 AddProduct: Seller data:', JSON.stringify(user.seller, null, 2));
-      console.log('🔍 AddProduct: User role:', user.role);
-      console.log('🔍 AddProduct: Creating product as draft:', productData);
       
       await addProductToCatalogue(user.seller.id, productData);
-      console.log('✅ Product created successfully as draft');
       
       navigate('/seller/products');
     } catch (err) {
-      console.error('❌ Failed to create product:', err);
       
       // Provide more specific error messages
       if (err.message.includes('Unauthorized') || err.message.includes('403')) {

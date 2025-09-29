@@ -2,12 +2,7 @@
 // Uses environment variables for security
 // Make sure to set these in your .env file
 
-// Debug: Log environment variables (remove in production)
-console.log('🔍 Cloudinary Config Debug:', {
-  cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
-  nodeEnv: import.meta.env.MODE
-});
+// Debug: Log environment variables (removed for production)
 
 export const CLOUDINARY_CONFIG = {
   // Your Cloudinary cloud name (found in dashboard)

@@ -34,7 +34,6 @@ api.interceptors.request.use(
  */
 export async function deductInventoryOnOrderCompletion(orderId, orderItems) {
   try {
-    console.log('🔍 InventoryService: Deducting inventory for order:', { orderId, orderItems });
     
     const payload = {
       orderId,
@@ -46,10 +45,8 @@ export async function deductInventoryOnOrderCompletion(orderId, orderItems) {
     
     const response = await api.post('/inventory/deduct', payload);
     
-    console.log('✅ InventoryService: Inventory deducted successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ InventoryService: Failed to deduct inventory:', error);
     throw new Error(error.response?.data?.message || 'Failed to deduct inventory.');
   }
 }
@@ -62,7 +59,6 @@ export async function deductInventoryOnOrderCompletion(orderId, orderItems) {
  */
 export async function updateProductInventory(productId, newStockQuantity) {
   try {
-    console.log('🔍 InventoryService: Updating product inventory:', { productId, newStockQuantity });
     
     const payload = {
       stockQuantity: newStockQuantity
@@ -70,7 +66,6 @@ export async function updateProductInventory(productId, newStockQuantity) {
     
     const response = await api.patch(`/products/${productId}/inventory`, payload);
     
-    console.log('✅ InventoryService: Product inventory updated successfully:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ InventoryService: Failed to update product inventory:', error);

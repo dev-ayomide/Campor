@@ -16,14 +16,10 @@ export default function CategoryPage() {
   const [openDropdown, setOpenDropdown] = useState(null);
 
   useEffect(() => {
-    console.log('🔍 CategoryPage: useEffect triggered with categoryId:', categoryId);
-    console.log('🔍 CategoryPage: categoryId type:', typeof categoryId);
-    console.log('🔍 CategoryPage: categoryId is undefined?', categoryId === undefined);
     
     if (categoryId && categoryId !== 'undefined') {
       loadCategoryData();
     } else {
-      console.error('❌ CategoryPage: Invalid categoryId:', categoryId);
       setError(`Invalid category ID: "${categoryId}". Please check the URL and try again.`);
       setLoading(false);
     }
@@ -31,10 +27,6 @@ export default function CategoryPage() {
 
   // Debug products state changes
   useEffect(() => {
-    console.log('🔍 CategoryPage: Products state changed:', {
-      productsLength: products.length,
-      products: products
-    });
   }, [products]);
 
   // Close dropdown when clicking outside
@@ -55,10 +47,6 @@ export default function CategoryPage() {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 CategoryPage: Loading category data for:', categoryId);
-      console.log('🔍 CategoryPage: CategoryId type:', typeof categoryId);
-      console.log('🔍 CategoryPage: CategoryId value:', JSON.stringify(categoryId));
-      console.log('🔍 CategoryPage: API Base URL:', import.meta.env.VITE_API_BASE_URL);
       
       let response;
       

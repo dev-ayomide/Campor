@@ -22,12 +22,10 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         
         // Wait for user context to be fully loaded
         if (!user) {
-          console.log('⏳ Dashboard: Waiting for user context...');
           return;
         }
         
         if (!user.seller?.id) {
-          console.log('⚠️ Dashboard: No seller ID available');
           setError('Seller information not found. Please complete seller registration.');
           return;
         }
@@ -35,13 +33,9 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         // Always use seller data from user context first (this has the latest updates)
         if (user?.seller) {
           setSellerData(user.seller);
-          console.log('✅ Dashboard: Using seller data from context:', user.seller);
-          console.log('✅ Dashboard: Seller name:', user.seller.catalogueName);
-          console.log('✅ Dashboard: Seller description:', user.seller.storeDescription);
         }
         
         // If we have a seller ID, fetch only products and orders (don't override seller profile)
-        console.log('🔍 Dashboard: Fetching data for seller ID:', user.seller.id);
         const [productsData, ordersData] = await Promise.all([
           getSellerProducts(user.seller.id),
           getSellerOrders(user.seller.id)
@@ -53,12 +47,8 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         // Handle orders data structure - getSellerOrders returns response.data directly
         const ordersArray = Array.isArray(ordersData) ? ordersData : (ordersData?.data || []);
         setOrders(ordersArray);
-        console.log('✅ Dashboard: Fetched products:', productsData?.length || 0);
-        console.log('✅ Dashboard: Fetched orders:', ordersArray.length);
-        console.log('🔍 Dashboard: Sample order structure:', ordersArray[0]);
         
       } catch (err) {
-        console.error('❌ Dashboard: Failed to fetch seller data:', err);
         setError(err.message);
       } finally {
         setLoading(false);

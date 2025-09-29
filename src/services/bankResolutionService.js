@@ -28,16 +28,13 @@ class BankResolutionService {
   // Get list of available banks
   async getBanksList(currency = 'NGN') {
     try {
-      console.log('🔍 BankService: Fetching banks list for currency:', currency);
       
       const response = await bankApi.get('/payments/banks/list', {
         params: { currency }
       });
       
-      console.log('✅ BankService: Banks list fetched successfully:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ BankService: Failed to fetch banks list:', error);
       throw new Error(error.response?.data?.message || 'Failed to fetch banks list.');
     }
   }
@@ -51,11 +48,9 @@ class BankResolutionService {
       
       if (timeSinceLastResolution < RESOLUTION_COOLDOWN) {
         const waitTime = RESOLUTION_COOLDOWN - timeSinceLastResolution;
-        console.log(`⏳ BankService: Rate limiting active, waiting ${waitTime}ms`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
       
-      console.log('🔍 BankService: Resolving account:', { accountNumber, bankCode });
       
       const response = await bankApi.get('/payments/account/resolve', {
         params: {
@@ -65,21 +60,8 @@ class BankResolutionService {
       });
       
       lastResolutionTime = Date.now();
-      console.log('✅ BankService: Account resolved successfully:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ BankService: Failed to resolve account:', error);
-      console.error('❌ BankService: Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          params: error.config?.params
-        }
-      });
       
       // Handle specific error cases
       if (error.response?.status === 400) {
@@ -91,7 +73,6 @@ class BankResolutionService {
         throw new Error('Rate limit exceeded. Please wait 5 seconds before trying again.');
       } else if (error.response?.status === 500) {
         const serverError = error.response?.data?.message || 'Server error occurred while resolving account.';
-        console.error('❌ BankService: Server error details:', error.response?.data);
         throw new Error(`Server error: ${serverError}. Please try again or contact support if the issue persists.`);
       } else if (error.response?.status === 404) {
         throw new Error('Bank resolution service not found. Please try again later.');
@@ -107,14 +88,11 @@ class BankResolutionService {
   // Update seller bank details
   async updateSellerBankDetails(sellerId, bankDetails) {
     try {
-      console.log('🔍 BankService: Updating seller bank details:', { sellerId, bankDetails });
       
       const response = await bankApi.patch(`/sellers/${sellerId}/bank-details`, bankDetails);
       
-      console.log('✅ BankService: Bank details updated successfully:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ BankService: Failed to update bank details:', error);
       
       // Handle specific error cases
       if (error.response?.status === 400) {

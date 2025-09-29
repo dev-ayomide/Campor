@@ -8,9 +8,7 @@ const WishlistButton = memo(({ productId, className = '', showText = false }) =>
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
   
-  console.log('🔍 WishlistButton: productId:', productId, 'type:', typeof productId);
   const isInWishlist = checkProductInWishlist(productId);
-  console.log('🔍 WishlistButton: isInWishlist:', isInWishlist);
   const isLoading = localLoading; // Only use local loading state
 
   const handleToggleWishlist = async (e) => {
@@ -31,7 +29,6 @@ const WishlistButton = memo(({ productId, className = '', showText = false }) =>
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
     } catch (error) {
-      console.error('Failed to toggle wishlist:', error);
       setError(true);
       setTimeout(() => setError(false), 3000);
     } finally {

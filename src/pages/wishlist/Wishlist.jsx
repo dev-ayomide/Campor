@@ -64,7 +64,6 @@ export default function WishlistPage() {
       await removeProductFromWishlist(productId);
       setSuccessMessage('Item removed from wishlist successfully');
     } catch (error) {
-      console.error('Failed to remove from wishlist:', error);
     } finally {
       setActionLoading(false);
     }
@@ -74,7 +73,6 @@ export default function WishlistPage() {
     try {
       await addProductToCart(productId, 1);
     } catch (error) {
-      console.error('Failed to add to cart:', error);
     }
   };
 

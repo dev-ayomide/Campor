@@ -65,7 +65,6 @@ export default function CartPage() {
     try {
       await updateItemQuantity(itemId, newQuantity);
     } catch (error) {
-      console.error('Failed to update quantity:', error);
       // Don't show error to user, just log it
     }
   };
@@ -102,7 +101,6 @@ export default function CartPage() {
       await removeItemFromCart(itemId);
       setSuccessMessage('Item removed from cart successfully');
     } catch (error) {
-      console.error('Failed to remove item:', error);
     } finally {
       setActionLoading(false);
     }
@@ -127,7 +125,6 @@ export default function CartPage() {
   const handleCheckoutSeller = (sellerId) => {
     const sellerItems = groupedItems[sellerId].items;
     const total = getSellerTotal(sellerItems);
-    console.log(`Checkout for ${groupedItems[sellerId].seller.name}: ${formatPrice(total)}`);
   };
 
   const handleFixCart = async () => {
@@ -135,7 +132,6 @@ export default function CartPage() {
       setFixingCart(true);
       await fixUserCart();
     } catch (error) {
-      console.error('Failed to fix cart:', error);
     } finally {
       setFixingCart(false);
     }
@@ -161,11 +157,9 @@ export default function CartPage() {
       if (url) {
         window.location.href = url;
       } else {
-        console.error('Payment initiation did not return authorization_url', res);
         alert('Unable to start payment. Please try again.');
       }
     } catch (e) {
-      console.error('Failed to initiate payment', e);
       alert(e.message || 'Failed to initiate payment');
     }
   };
@@ -176,7 +170,6 @@ export default function CartPage() {
       await clearUserCart();
       setSuccessMessage('Cart cleared successfully');
     } catch (error) {
-      console.error('Failed to clear cart:', error);
     } finally {
       setActionLoading(false);
     }
@@ -330,7 +323,6 @@ export default function CartPage() {
                             // Navigate to chat with seller's user ID
                             window.location.href = `/chat?sellerId=${sellerUserId}`;
                           } catch (error) {
-                            console.error('Failed to get seller user ID:', error);
                             // Show error message
                             alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                           }

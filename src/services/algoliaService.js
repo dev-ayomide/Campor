@@ -30,7 +30,6 @@ const buildAlgoliaFilters = (selectedCategory, selectedPrice) => {
   
   // Price filter - handle numeric price values properly
   if (selectedPrice && selectedPrice !== 'All Price') {
-    console.log('🔍 AlgoliaService: Processing price filter:', selectedPrice);
     
     // Handle predefined price ranges
     if (selectedPrice === '₦0.00 - 9,999.99') {
@@ -57,10 +56,8 @@ const buildAlgoliaFilters = (selectedCategory, selectedPrice) => {
       filters.push(`price:${minPrice} TO ${maxPrice}`);
     }
     
-    console.log('🔍 AlgoliaService: Added price filter:', filters[filters.length - 1]);
   }
   
-  console.log('🔍 AlgoliaService: Built filters:', filters);
   return filters.length > 0 ? filters.join(' AND ') : undefined;
 };
 
@@ -96,7 +93,6 @@ const transformHit = (hit) => ({
 // Search products with Algolia
 export const searchProductsAlgolia = async (query, page = 1, limit = 10, filters = {}) => {
   try {
-    console.log('🔍 AlgoliaService: Searching products with query:', query);
     
     const searchParams = {
       query,
@@ -115,7 +111,6 @@ export const searchProductsAlgolia = async (query, page = 1, limit = 10, filters
       highlightPostTag: '</mark>'
     };
     
-    console.log('🔍 AlgoliaService: Search params:', searchParams);
     
     const response = await searchClient.search([
       {
@@ -133,7 +128,6 @@ export const searchProductsAlgolia = async (query, page = 1, limit = 10, filters
       itemsPerPage: limit
     };
     
-    console.log('✅ AlgoliaService: Search successful, found', results.nbHits, 'products');
     
     return {
       data: {
@@ -142,7 +136,6 @@ export const searchProductsAlgolia = async (query, page = 1, limit = 10, filters
       }
     };
   } catch (error) {
-    console.error('❌ AlgoliaService: Search failed:', error);
     throw new Error('Search failed. Please try again.');
   }
 };
@@ -150,7 +143,6 @@ export const searchProductsAlgolia = async (query, page = 1, limit = 10, filters
 // Get all products with filters from Algolia
 export const getAllProductsAlgolia = async (page = 1, limit = 10, filters = {}) => {
   try {
-    console.log('🔍 AlgoliaService: Fetching all products with filters:', filters);
     
     const searchParams = {
       page: page - 1, // Algolia uses 0-based pagination
@@ -168,7 +160,6 @@ export const getAllProductsAlgolia = async (page = 1, limit = 10, filters = {}) 
       highlightPostTag: '</mark>'
     };
     
-    console.log('🔍 AlgoliaService: Search params:', searchParams);
     
     const response = await searchClient.search([
       {
@@ -186,7 +177,6 @@ export const getAllProductsAlgolia = async (page = 1, limit = 10, filters = {}) 
       itemsPerPage: limit
     };
     
-    console.log('✅ AlgoliaService: Products fetched successfully, found', results.nbHits, 'products');
     
     return {
       data: {
@@ -195,7 +185,6 @@ export const getAllProductsAlgolia = async (page = 1, limit = 10, filters = {}) 
       }
     };
   } catch (error) {
-    console.error('❌ AlgoliaService: Failed to fetch products:', error);
     throw new Error('Failed to load products. Please try again.');
   }
 };
@@ -203,7 +192,6 @@ export const getAllProductsAlgolia = async (page = 1, limit = 10, filters = {}) 
 // Get categories from Algolia
 export const getCategoriesAlgolia = async () => {
   try {
-    console.log('🔍 AlgoliaService: Fetching categories...');
     
     // Get all products to extract unique categories
     const response = await searchClient.search([
@@ -229,13 +217,11 @@ export const getCategoriesAlgolia = async () => {
     
     const categories = Array.from(categoryMap.values());
     
-    console.log('✅ AlgoliaService: Categories fetched successfully:', categories);
     
     return {
       data: categories
     };
   } catch (error) {
-    console.error('❌ AlgoliaService: Failed to fetch categories:', error);
     throw new Error('Failed to load categories. Please try again.');
   }
 };
@@ -249,12 +235,9 @@ export const debouncedSearch = debounce(async (query, callback) => {
   }
   
   try {
-    console.log('🔍 AlgoliaService: Debounced search for:', query);
     const result = await searchProductsAlgolia(query, 1, 10);
-    console.log('✅ AlgoliaService: Debounced search result:', result);
     callback(result);
   } catch (error) {
-    console.error('❌ AlgoliaService: Debounced search failed:', error);
     callback({ data: { products: [], pagination: { currentPage: 1, totalPages: 1, totalItems: 0, itemsPerPage: 10 } } });
   }
 }, 150); // Faster debounce for more responsive search

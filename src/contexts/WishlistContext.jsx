@@ -32,18 +32,12 @@ export const WishlistProvider = ({ children }) => {
       setError(null);
       
       const wishlistData = await getWishlist(force);
-      console.log('🔍 WishlistContext: Raw wishlist data:', wishlistData);
-      console.log('🔍 WishlistContext: Data type:', typeof wishlistData);
-      console.log('🔍 WishlistContext: Is array:', Array.isArray(wishlistData));
       
       // Ensure wishlist is always an array
       const normalizedWishlist = Array.isArray(wishlistData) ? wishlistData : [];
       setWishlist(normalizedWishlist);
       
-      console.log('✅ Wishlist loaded successfully:', normalizedWishlist);
-      console.log('🔍 WishlistContext: First item structure:', normalizedWishlist[0]);
     } catch (err) {
-      console.error('❌ Failed to load wishlist:', err);
       // Don't set error for authentication issues, just set empty wishlist
       if (err.message !== 'User not authenticated') {
         setError(err.message);
@@ -84,10 +78,8 @@ export const WishlistProvider = ({ children }) => {
         return [...prevWishlist, newItem];
       });
       
-      console.log('✅ Product added to wishlist successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to add product to wishlist:', err);
       setError(err.message);
       throw err;
     }
@@ -108,10 +100,8 @@ export const WishlistProvider = ({ children }) => {
         });
       });
       
-      console.log('✅ Product removed from wishlist successfully:', response);
       return response;
     } catch (err) {
-      console.error('❌ Failed to remove product from wishlist:', err);
       setError(err.message);
       throw err;
     }
@@ -141,23 +131,19 @@ export const WishlistProvider = ({ children }) => {
   // Get wishlist count
   const getItemCount = useCallback(() => {
     const count = getWishlistCount(wishlist);
-    console.log('🔍 WishlistContext: Wishlist count:', count, 'Wishlist data:', wishlist);
     return count;
   }, [wishlist]);
 
   // Load wishlist on mount
   useEffect(() => {
-    console.log('🔍 WishlistContext: Loading wishlist on mount...');
     loadWishlist();
   }, [loadWishlist]);
 
   // Reload wishlist when user authentication state changes
   useEffect(() => {
     if (user && token) {
-      console.log('🔍 WishlistContext: User authenticated, reloading wishlist...');
       loadWishlist(true); // Force reload to bypass cache
     } else if (!user && !token) {
-      console.log('🔍 WishlistContext: User logged out, clearing wishlist...');
       setWishlist([]);
       setError(null);
     }

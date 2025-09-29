@@ -192,9 +192,6 @@ export default function SearchResults({
         {products.map((product, index) => {
           // Debug: Log product structure to identify key issues
           if (index === 0) {
-            console.log('🔍 SearchResults: First product structure:', product);
-            console.log('🔍 SearchResults: Product ID:', product.id);
-            console.log('🔍 SearchResults: Product keys:', Object.keys(product));
           }
           
           return (

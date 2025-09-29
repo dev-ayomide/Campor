@@ -294,7 +294,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           : msg
       ));
     } catch (error) {
-      console.error('Error retrying message:', error);
       // Show failure after delay
       setTimeout(() => {
         setMessages(prev => prev.map(msg => 
@@ -333,26 +332,22 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       const data = await chatService.getConversation(conversationId);
       setConversation(data);
     } catch (error) {
-      console.error('Failed to load conversation:', error);
     }
   };
 
   const loadMessages = useCallback(async () => {
     try {
       const data = await chatService.getMessages(conversationId);
-      console.log('📋 Loaded messages from API:', data);
       setMessages(data);
       
       // Mark messages as read
       markAsRead(conversationId);
     } catch (error) {
-      console.error('Failed to load messages:', error);
     } finally {
     }
   }, [conversationId, markAsRead]);
 
   useEffect(() => {
-    console.log('🔄 ChatWindow: useEffect triggered for conversationId:', conversationId);
     if (conversationId) {
       // Handle seller-specific conversations from orders
       if (conversationId.startsWith('seller-')) {
@@ -370,7 +365,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           catalogueName = 'Seller';
         }
         
-        console.log('🔍 ChatWindow: Handling seller conversation for user ID:', userId, 'catalog:', catalogueName);
         
         // Only set conversation if it's not already initialized
         if (!conversation) {
@@ -394,7 +388,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         // Set up socket listeners for seller conversations
         const handleNewMessage = (messageData) => {
-          console.log('📨 New message received for seller conversation:', messageData);
           // Reload messages to get the complete message data
           setTimeout(() => {
             // For seller conversations, we need to load messages differently
@@ -403,7 +396,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         };
 
         const handleMessageNotification = (notificationData) => {
-          console.log('🔔 Message notification received for seller conversation:', notificationData);
           // Handle notifications for seller conversations
           if (notificationData.senderId !== currentUser.id) {
             // Reload messages when we get a notification
@@ -433,7 +425,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       
         // Set up real-time message listeners (like chat-demo)
       const handleNewMessage = (messageData) => {
-        console.log('📨 New message received:', messageData);
         
           // Update delivery status for pending messages and add new messages
         setMessages(prev => {

@@ -45,9 +45,7 @@ export default function UserOrders() {
         setLoading(true);
         const ordersData = await getUserOrders();
         setOrders(ordersData || []);
-        console.log('✅ User Orders: Fetched orders:', ordersData);
       } catch (err) {
-        console.error('❌ User Orders: Failed to fetch orders:', err);
         setError(err.message);
       } finally {
         setLoading(false);

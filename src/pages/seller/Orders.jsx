@@ -30,31 +30,24 @@ export default function SellerOrdersPage() {
         
         // Wait for user context to be fully loaded
         if (!user) {
-          console.log('⏳ Orders: Waiting for user context...');
           return;
         }
         
         if (!user.seller?.id) {
-          console.log('⚠️ Orders: No seller ID available');
           setError('Seller information not found. Please complete seller registration.');
           return;
         }
         
-        console.log('🔍 Orders: Fetching orders for seller ID:', user.seller.id);
         const ordersData = await getSellerOrders(user.seller.id);
-        console.log('✅ Orders: Raw API response:', ordersData);
         
         // Handle new data structure - API returns array of OrderSeller objects
         if (Array.isArray(ordersData)) {
           setOrders(ordersData);
-          console.log('✅ Orders: Processed seller orders:', ordersData.length);
         } else {
-          console.log('⚠️ Orders: Unexpected data structure:', ordersData);
           setOrders([]);
         }
         
       } catch (err) {
-        console.error('❌ Orders: Failed to fetch orders:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -89,21 +82,12 @@ export default function SellerOrdersPage() {
 
   const handleMessageCustomer = async (orderSeller) => {
     try {
-      console.log('🔍 ===== COMPLETE ORDER DATA STRUCTURE =====');
-      console.log('🔍 Full orderSeller object:', JSON.stringify(orderSeller, null, 2));
-      console.log('🔍 orderSeller keys:', Object.keys(orderSeller));
-      
       if (orderSeller.order) {
-        console.log('🔍 orderSeller.order:', JSON.stringify(orderSeller.order, null, 2));
-        console.log('🔍 orderSeller.order keys:', Object.keys(orderSeller.order));
         
         if (orderSeller.order.user) {
-          console.log('🔍 orderSeller.order.user:', JSON.stringify(orderSeller.order.user, null, 2));
-          console.log('🔍 orderSeller.order.user keys:', Object.keys(orderSeller.order.user));
         }
       }
       
-      console.log('🔍 ===== END DATA STRUCTURE =====');
       
       // Try multiple possible locations for customer information
       // Based on the actual data structure, we need to get userId from the order

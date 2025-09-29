@@ -39,7 +39,6 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
     } catch (error) {
-      console.error('Failed to add to cart:', error);
     } finally {
       setLoading(false);
     }
@@ -64,7 +63,6 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       const itemId = cartItem.id || cartItem.cartItemId || cartItem.itemId;
       
       if (!itemId) {
-        console.log('🔍 AddToCartButton: Old cart item detected, refreshing cart...');
         // This is an old cart item, refresh the cart to get proper structure
         await loadCart(true); // Force refresh
         return; // Don't throw error, just return silently
@@ -72,7 +70,6 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       
       await updateItemQuantity(itemId, quantity + 1);
     } catch (error) {
-      console.error('Failed to increase quantity:', error);
       // Don't show error to user, just log it
     } finally {
       setLoading(false);
@@ -92,7 +89,6 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
       const itemId = cartItem.id || cartItem.cartItemId || cartItem.itemId;
       
       if (!itemId) {
-        console.log('🔍 AddToCartButton: Old cart item detected, refreshing cart...');
         // This is an old cart item, refresh the cart to get proper structure
         await loadCart(true); // Force refresh
         return; // Don't throw error, just return silently
@@ -104,7 +100,6 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
         await updateItemQuantity(itemId, quantity - 1);
       }
     } catch (error) {
-      console.error('Failed to decrease quantity:', error);
       // Don't show error to user, just log it
     } finally {
       setLoading(false);
@@ -120,7 +115,6 @@ export default function AddToCartButton({ productId, className = '', sellerId = 
         // Navigate to chat with seller's user ID
         window.location.href = `/chat?sellerId=${sellerUserId}`;
       } catch (error) {
-        console.error('Failed to get seller user ID:', error);
         // Show error message
         alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
       }

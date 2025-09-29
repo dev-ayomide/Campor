@@ -20,7 +20,6 @@ export default function ProductCard({ product }) {
             setSellerProfilePicture(catalogueData.seller.user.profilePicture);
           }
         } catch (error) {
-          console.log('Failed to fetch seller profile picture:', error);
         }
       }
     };

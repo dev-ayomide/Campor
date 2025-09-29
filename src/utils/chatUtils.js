@@ -27,7 +27,6 @@ export const checkChatExists = async (targetUserId) => {
     const chat = await chatApiService.getChatWithUser(targetUserId);
     return chat ? chat.id : null;
   } catch (error) {
-    console.log('🔍 No existing chat found with user:', targetUserId);
     return null; // Chat doesn't exist
   }
 };

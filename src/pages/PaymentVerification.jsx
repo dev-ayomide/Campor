@@ -31,7 +31,6 @@ export default function PaymentVerificationPage() {
           throw new Error('Payment reference not found in URL');
         }
 
-        console.log('🔍 PaymentVerification: Verifying payment with reference:', reference);
 
         // Call backend verification API
         const verificationResult = await verifyPayment(reference);
@@ -47,19 +46,16 @@ export default function PaymentVerificationPage() {
               await clearUserCart();
               clearCartCache();
             } catch (cartError) {
-              console.warn('Failed to clear cart (user may not be authenticated):', cartError);
               // Don't fail the entire verification if cart clearing fails
             }
           }
           
-          console.log('✅ PaymentVerification: Payment verified successfully');
         } else {
           setVerificationStatus('failed');
           setError('Payment verification failed. Please contact support if you were charged.');
         }
 
       } catch (err) {
-        console.error('❌ PaymentVerification: Error verifying payment:', err);
         setVerificationStatus('failed');
         setError(err.message || 'Failed to verify payment. Please contact support.');
       } finally {

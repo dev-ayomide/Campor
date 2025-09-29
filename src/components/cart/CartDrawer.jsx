@@ -34,7 +34,6 @@ export default function CartDrawer({ isOpen, onClose }) {
       setUpdatingItem(itemId);
       await updateItemQuantity(itemId, newQuantity);
     } catch (error) {
-      console.error('Failed to update quantity:', error);
     } finally {
       setUpdatingItem(null);
     }
@@ -44,7 +43,6 @@ export default function CartDrawer({ isOpen, onClose }) {
     try {
       await removeItemFromCart(itemId);
     } catch (error) {
-      console.error('Failed to remove item:', error);
     }
   };
 
@@ -53,7 +51,6 @@ export default function CartDrawer({ isOpen, onClose }) {
       try {
         await clearUserCart();
       } catch (error) {
-        console.error('Failed to clear cart:', error);
       }
     }
   };
@@ -63,7 +60,6 @@ export default function CartDrawer({ isOpen, onClose }) {
       setFixingCart(true);
       await fixUserCart();
     } catch (error) {
-      console.error('Failed to fix cart:', error);
     } finally {
       setFixingCart(false);
     }
@@ -71,12 +67,10 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   const handleCheckout = async () => {
     if (!user || !user.email || !user.cart?.id) {
-      console.error('❌ PaymentService: Missing user data for payment');
-      return;
+        return;
     }
 
     if (cart.length === 0) {
-      console.error('❌ PaymentService: Cart is empty');
       return;
     }
 
@@ -85,9 +79,6 @@ export default function CartDrawer({ isOpen, onClose }) {
       
       const { totalPrice } = getCartTotals();
       
-      console.log('🔍 PaymentService: Initiating payment for user:', user.email);
-      console.log('🔍 PaymentService: Cart ID:', user.cart.id);
-      console.log('🔍 PaymentService: Total amount:', totalPrice);
       
       // Initiate payment
       const paymentResponse = await initiatePayment(
@@ -96,7 +87,6 @@ export default function CartDrawer({ isOpen, onClose }) {
         user.cart.id
       );
       
-      console.log('✅ PaymentService: Payment initiated, redirecting to:', paymentResponse.authorization_url);
       
       // Redirect to payment URL
       if (paymentResponse.authorization_url) {
@@ -106,7 +96,6 @@ export default function CartDrawer({ isOpen, onClose }) {
       }
       
     } catch (error) {
-      console.error('❌ PaymentService: Checkout failed:', error);
       alert(error.message || 'Failed to process checkout. Please try again.');
     } finally {
       setProcessingPayment(false);

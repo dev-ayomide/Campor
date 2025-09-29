@@ -48,9 +48,7 @@ export default function SellerCatalogue() {
         setSellerData(data.seller);
         setProducts(data.products || []);
         
-        console.log('✅ Seller Catalogue: Data fetched successfully:', data);
       } catch (err) {
-        console.error('❌ Seller Catalogue: Failed to fetch data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -103,7 +101,6 @@ export default function SellerCatalogue() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy link:', err);
     }
   };
 
@@ -282,7 +279,6 @@ export default function SellerCatalogue() {
                             // Navigate to chat with seller's user ID
                             navigate(`/chat?sellerId=${sellerUserId}`);
                           } catch (error) {
-                            console.error('Failed to get seller user ID:', error);
                             // Show error message
                             alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                           }

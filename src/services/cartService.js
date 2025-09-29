@@ -48,12 +48,10 @@ const setCachedCart = (cart) => {
 // Get user cart
 export async function getCart(force = false) {
   try {
-    console.log('🔍 CartService: Fetching user cart...');
     
     // Check cache first (unless forced)
     const cachedCart = getCachedCart();
     if (cachedCart && !force) {
-      console.log('✅ CartService: Returning cached cart');
       return cachedCart;
     }
     
@@ -62,19 +60,11 @@ export async function getCart(force = false) {
     // Cache the response
     setCachedCart(response.data);
     
-    console.log('✅ CartService: Cart fetched successfully:', response.data);
-    console.log('🔍 CartService: Cart structure:', {
-      isArray: Array.isArray(response.data),
-      length: response.data?.length,
-      firstItem: response.data?.[0]
-    });
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to fetch cart:', error);
     
     // If it's an authentication error (401), return empty cart instead of throwing
     if (error.response?.status === 401) {
-      console.log('🔍 CartService: User not authenticated, returning empty cart');
       return [];
     }
     
@@ -85,7 +75,6 @@ export async function getCart(force = false) {
 // Add items to cart (inventory validation handled by backend webhook)
 export async function addToCart(cartId, items) {
   try {
-    console.log('🔍 CartService: Adding items to cart:', { cartId, items });
     
     // Note: Inventory validation is handled by backend webhook after payment
     // Frontend allows adding to cart, backend will handle stock validation
@@ -105,10 +94,8 @@ export async function addToCart(cartId, items) {
     // Clear cache to force refresh
     clearCartCache();
     
-    console.log('✅ CartService: Items added to cart successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to add items to cart:', error);
     throw new Error(error.response?.data?.message || 'Failed to add items to cart.');
   }
 }
@@ -116,7 +103,6 @@ export async function addToCart(cartId, items) {
 // Update cart item quantity (inventory validation handled by backend webhook)
 export async function updateCartItemQuantity(itemId, quantity) {
   try {
-    console.log('🔍 CartService: Updating cart item quantity:', { itemId, quantity });
     
     // Note: Inventory validation is handled by backend webhook after payment
     // Frontend allows quantity updates, backend will handle stock validation
@@ -132,10 +118,8 @@ export async function updateCartItemQuantity(itemId, quantity) {
     // Clear cache to force refresh
     clearCartCache();
     
-    console.log('✅ CartService: Cart item quantity updated successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to update cart item quantity:', error);
     throw new Error(error.response?.data?.message || 'Failed to update cart item quantity.');
   }
 }
@@ -143,17 +127,14 @@ export async function updateCartItemQuantity(itemId, quantity) {
 // Remove item from cart
 export async function removeFromCart(itemId) {
   try {
-    console.log('🔍 CartService: Removing item from cart:', itemId);
     
     const response = await api.delete(`${API_ENDPOINTS.CART.REMOVE_ITEM}/${itemId}`);
     
     // Clear cache to force refresh
     clearCartCache();
     
-    console.log('✅ CartService: Item removed from cart successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to remove item from cart:', error);
     throw new Error(error.response?.data?.message || 'Failed to remove item from cart.');
   }
 }
@@ -161,17 +142,14 @@ export async function removeFromCart(itemId) {
 // Clear entire cart
 export async function clearCart() {
   try {
-    console.log('🔍 CartService: Clearing cart...');
     
     const response = await api.delete(API_ENDPOINTS.CART.CLEAR);
     
     // Clear cache
     clearCartCache();
     
-    console.log('✅ CartService: Cart cleared successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to clear cart:', error);
     throw new Error(error.response?.data?.message || 'Failed to clear cart.');
   }
 }
@@ -179,17 +157,14 @@ export async function clearCart() {
 // Fix cart items (remove out-of-stock items and adjust quantities)
 export async function fixCart(cartId) {
   try {
-    console.log('🔍 CartService: Fixing cart:', cartId);
     
     const response = await api.post(`${API_ENDPOINTS.CART.FIX}/${cartId}/fix`);
     
     // Clear cache to force refresh
     clearCartCache();
     
-    console.log('✅ CartService: Cart fixed successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to fix cart:', error);
     throw new Error(error.response?.data?.message || 'Failed to fix cart.');
   }
 }
@@ -220,29 +195,23 @@ export function calculateCartTotals(cart) {
 
 // Helper function to get cart item count
 export function getCartItemCount(cart) {
-  console.log('🔍 CartService: getCartItemCount called with:', cart);
   
   if (!cart || !Array.isArray(cart)) {
-    console.log('🔍 CartService: Cart is empty or not array, returning 0');
     return 0;
   }
   
   const count = cart.reduce((count, sellerGroup) => {
-    console.log('🔍 CartService: Processing seller group:', sellerGroup);
     if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
       const groupCount = sellerGroup.items.reduce((itemCount, item) => {
         // Use effectiveQuantity if available (for stock validation), otherwise use quantity
         const effectiveQty = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity || 0;
-        console.log('🔍 CartService: Processing item:', item, 'effectiveQuantity:', effectiveQty);
         return itemCount + effectiveQty;
       }, 0);
-      console.log('🔍 CartService: Group count:', groupCount);
       return count + groupCount;
     }
     return count;
   }, 0);
   
-  console.log('🔍 CartService: Total cart count:', count);
   return count;
 }
 
@@ -280,7 +249,6 @@ export function getCartItemByProductId(cart, productId) {
 export function clearCartCache() {
   cartCache = null;
   cartCacheTime = null;
-  console.log('🔍 CartService: Cart cache cleared');
 }
 
 // ===== INVENTORY VALIDATION FUNCTIONS =====
@@ -291,7 +259,6 @@ export function clearCartCache() {
  */
 export async function validateInventory(items) {
   try {
-    console.log('🔍 CartService: Validating inventory for items:', items);
     
     for (const item of items) {
       const { productId, quantity } = item;
@@ -318,12 +285,9 @@ export async function validateInventory(items) {
         throw new Error(`Only ${product.stockQuantity} units of "${product.name}" are available. You requested ${quantity} units.`);
       }
       
-      console.log(`✅ CartService: Inventory validation passed for product ${productId}: ${quantity}/${product.stockQuantity}`);
     }
     
-    console.log('✅ CartService: All inventory validations passed');
   } catch (error) {
-    console.error('❌ CartService: Inventory validation failed:', error);
     throw error;
   }
 }
@@ -335,7 +299,6 @@ export async function validateInventory(items) {
  */
 export async function validateCartItemInventory(itemId, quantity) {
   try {
-    console.log('🔍 CartService: Validating inventory for cart item update:', { itemId, quantity });
     
     if (!quantity || quantity <= 0) {
       throw new Error('Invalid quantity provided');
@@ -382,9 +345,7 @@ export async function validateCartItemInventory(itemId, quantity) {
       throw new Error(`Only ${product.stockQuantity} units of "${product.name}" are available. You requested ${quantity} units.`);
     }
     
-    console.log(`✅ CartService: Cart item inventory validation passed: ${quantity}/${product.stockQuantity}`);
   } catch (error) {
-    console.error('❌ CartService: Cart item inventory validation failed:', error);
     throw error;
   }
 }
@@ -397,7 +358,6 @@ export async function validateCartItemInventory(itemId, quantity) {
  */
 export async function checkProductAvailability(productId, quantity = 1) {
   try {
-    console.log('🔍 CartService: Checking product availability:', { productId, quantity });
     
     const productResponse = await api.get(`${API_ENDPOINTS.PRODUCTS.BY_SLUG}/${productId}`);
     const product = productResponse.data;
@@ -432,7 +392,6 @@ export async function checkProductAvailability(productId, quantity = 1) {
       message: `${product.stockQuantity} units available`
     };
   } catch (error) {
-    console.error('❌ CartService: Failed to check product availability:', error);
     return {
       available: false,
       stockQuantity: 0,

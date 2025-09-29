@@ -15,7 +15,6 @@ export const chatService = {
         throw new Error('User not authenticated');
       }
 
-      console.log('🔍 ChatService: Raw API response:', response);
 
       // Handle the new structure with chats and orders
       const { chats = [], orders = [] } = response;
@@ -46,7 +45,6 @@ export const chatService = {
         );
       }
     } catch (error) {
-      console.error('Failed to get conversations:', error);
       return [];
     }
   },
@@ -65,7 +63,6 @@ export const chatService = {
         timestamp: message.sentAt
       }));
     } catch (error) {
-      console.error('Failed to get messages:', error);
       return [];
     }
   },
@@ -84,7 +81,6 @@ export const chatService = {
         timestamp: message.sentAt
       };
     } catch (error) {
-      console.error('Failed to send message:', error);
       throw error;
     }
   },
@@ -92,10 +88,8 @@ export const chatService = {
   // Search conversations
   searchConversations: async (query, conversations = [], currentUserRole = 'buyer') => {
     try {
-      console.log('🔍 ChatService: Searching with query:', query, 'role:', currentUserRole);
       
       if (!query.trim()) {
-        console.log('🔍 ChatService: Empty query, returning all conversations');
         return conversations;
       }
 
@@ -107,10 +101,8 @@ export const chatService = {
         return nameMatch || messageMatch || productMatch;
       });
       
-      console.log('🔍 ChatService: Filtered results:', filtered.length);
       return filtered;
     } catch (error) {
-      console.error('Failed to search conversations:', error);
       return [];
     }
   },
@@ -145,7 +137,6 @@ export const chatService = {
       
       return allConversations.find(conv => conv.id === conversationId);
     } catch (error) {
-      console.error('Failed to get conversation:', error);
       throw error;
     }
   },

@@ -36,7 +36,6 @@ export default function AcceptOrder({ isOpen, onClose }) {
       setSuccess('Order details retrieved successfully');
 
     } catch (err) {
-      console.error('❌ AcceptOrder: Failed to get order details:', err);
       setError(err.message || 'Failed to retrieve order details');
     } finally {
       setLoading(false);
@@ -55,15 +54,12 @@ export default function AcceptOrder({ isOpen, onClose }) {
       setError('');
       setSuccess('');
 
-      console.log('🔍 AcceptOrder: Initiating transfer for order seller:', orderData.orderSellers[0].id);
       const transfer = await initiateTransferToSeller(orderData.orderSellers[0].id);
       
       setTransferData(transfer);
       setSuccess('Transfer initiated successfully! Your payment is being processed.');
-      console.log('✅ AcceptOrder: Transfer initiated:', transfer);
 
     } catch (err) {
-      console.error('❌ AcceptOrder: Failed to initiate transfer:', err);
       setError(err.message || 'Failed to initiate transfer');
     } finally {
       setTransferLoading(false);

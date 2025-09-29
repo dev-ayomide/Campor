@@ -23,13 +23,10 @@ export default function CategoryManager() {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 CategoryManager: Loading categories...');
       
       const response = await getCategories();
       setCategories(response.data);
-      console.log('✅ CategoryManager: Categories loaded:', response.data);
     } catch (error) {
-      console.error('❌ CategoryManager: Failed to load categories:', error);
       setError('Failed to load categories. Please try again.');
     } finally {
       setLoading(false);
@@ -42,7 +39,6 @@ export default function CategoryManager() {
 
     try {
       setError(null);
-      console.log('🔍 CategoryManager: Creating category:', newCategoryName);
       
       await createNewCategories([newCategoryName.trim()]);
       setSuccess(`Category "${newCategoryName}" created successfully!`);
@@ -52,7 +48,6 @@ export default function CategoryManager() {
       // Reload categories
       await loadCategories();
     } catch (error) {
-      console.error('❌ CategoryManager: Failed to create category:', error);
       setError(error.message || 'Failed to create category. Please try again.');
     }
   };
@@ -63,7 +58,6 @@ export default function CategoryManager() {
 
     try {
       setError(null);
-      console.log('🔍 CategoryManager: Updating category:', { id: editingCategory.id, name: editCategoryName });
       
       await updateCategoryData(editingCategory.id, { name: editCategoryName.trim() });
       setSuccess(`Category updated to "${editCategoryName}" successfully!`);
@@ -73,7 +67,6 @@ export default function CategoryManager() {
       // Reload categories
       await loadCategories();
     } catch (error) {
-      console.error('❌ CategoryManager: Failed to update category:', error);
       setError(error.message || 'Failed to update category. Please try again.');
     }
   };
@@ -85,7 +78,6 @@ export default function CategoryManager() {
 
     try {
       setError(null);
-      console.log('🔍 CategoryManager: Deleting category:', categoryId);
       
       await deleteCategoryData(categoryId);
       setSuccess(`Category "${categoryName}" deleted successfully!`);
@@ -93,7 +85,6 @@ export default function CategoryManager() {
       // Reload categories
       await loadCategories();
     } catch (error) {
-      console.error('❌ CategoryManager: Failed to delete category:', error);
       setError(error.message || 'Failed to delete category. Please try again.');
     }
   };
