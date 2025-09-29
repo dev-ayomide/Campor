@@ -80,10 +80,6 @@ const EditProduct = ({ toggleMobileMenu }) => {
             });
             // Set formatted price for display
             setFormattedPrice(formatPriceInput(productData.price || ''));
-            console.log('✅ EditProduct: Form data populated successfully');
-            console.log('🔍 EditProduct: Final form data:', {
-              name: productData.name || '',
-              description: productData.description || '',
               price: productData.price || '',
               stockQuantity: productData.stockQuantity || '',
               categoryId: productData.category?.id || productData.categoryId || '',
@@ -94,11 +90,9 @@ const EditProduct = ({ toggleMobileMenu }) => {
             setError('Product not found');
           }
         } catch (productsError) {
-          console.log('⚠️ EditProduct: Failed to fetch seller products:', productsError.message);
           setError('Failed to load product data: ' + productsError.message);
         }
       } catch (err) {
-        console.error('❌ EditProduct: Error fetching data:', err);
         setError('Failed to load product data: ' + err.message);
       } finally {
         setLoading(false);
@@ -160,11 +154,6 @@ const EditProduct = ({ toggleMobileMenu }) => {
         imageUrls: formData.imageUrls // All image URLs (existing + new)
       };
 
-      console.log('🔍 EditProduct: Submitting product data:', {
-        ...productData,
-        imageUrlsCount: productData.imageUrls?.length || 0
-      });
-
       await updateProductInCatalogue(productId, productData);
       
       setSuccess('Product updated successfully!');
@@ -175,7 +164,6 @@ const EditProduct = ({ toggleMobileMenu }) => {
       }, 2000);
       
     } catch (err) {
-      console.error('Error updating product:', err);
       setError(err.message || 'Failed to update product');
     } finally {
       setLoading(false);

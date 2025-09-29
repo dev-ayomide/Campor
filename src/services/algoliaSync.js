@@ -41,11 +41,8 @@ export async function syncProductsToAlgolia(products) {
 // Add a single product to Algolia
 export async function addProductToAlgolia(product) {
   try {
-    console.log('⚠️ AlgoliaSync: Would add product to Algolia:', product.name);
-    console.log('⚠️ AlgoliaSync: Skipping actual sync for now (client limitations)');
     return true;
   } catch (error) {
-    console.error('❌ AlgoliaSync: Failed to add product:', error);
     return true; // Return success anyway
   }
 }
@@ -53,11 +50,8 @@ export async function addProductToAlgolia(product) {
 // Update a product in Algolia
 export async function updateProductInAlgolia(product) {
   try {
-    console.log('⚠️ AlgoliaSync: Would update product in Algolia:', product.name);
-    console.log('⚠️ AlgoliaSync: Skipping actual sync for now (client limitations)');
     return true;
   } catch (error) {
-    console.error('❌ AlgoliaSync: Failed to update product:', error);
     return true; // Return success anyway
   }
 }
@@ -65,11 +59,8 @@ export async function updateProductInAlgolia(product) {
 // Delete a product from Algolia
 export async function deleteProductFromAlgolia(productId) {
   try {
-    console.log('⚠️ AlgoliaSync: Would delete product from Algolia:', productId);
-    console.log('⚠️ AlgoliaSync: Skipping actual sync for now (client limitations)');
     return true;
   } catch (error) {
-    console.error('❌ AlgoliaSync: Failed to delete product:', error);
     return true; // Return success anyway
   }
 }
@@ -77,11 +68,8 @@ export async function deleteProductFromAlgolia(productId) {
 // Get Algolia index stats
 export async function getAlgoliaIndexStats() {
   try {
-    console.log('⚠️ AlgoliaSync: Would get index stats');
-    console.log('⚠️ AlgoliaSync: Skipping actual sync for now (client limitations)');
     return { status: 'simulated' };
   } catch (error) {
-    console.error('❌ AlgoliaSync: Failed to get index stats:', error);
     return { status: 'error', message: error.message };
   }
 }

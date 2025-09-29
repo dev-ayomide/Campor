@@ -176,7 +176,6 @@ export default function ProfilePage() {
       setProfilePicture(null);
       
     } catch (err) {
-      console.error('❌ Profile: Failed to update profile:', err);
       setError(err.message || 'Failed to update profile. Please try again.');
       setSuccessMessage(null);
     } finally {
@@ -230,7 +229,6 @@ export default function ProfilePage() {
         setUploadingImage(true);
         // Compress the image to reduce file size
         const compressedFile = await compressImage(file);
-        console.log('🔍 Original file size:', file.size, 'Compressed size:', compressedFile.size);
         
         setProfilePicture(compressedFile);
         const reader = new FileReader();
@@ -242,7 +240,6 @@ export default function ProfilePage() {
         // Clear any previous errors
         setError(null);
       } catch (error) {
-        console.error('Error compressing image:', error);
         setError('Failed to process image. Please try a different file.');
       } finally {
         setUploadingImage(false);
@@ -257,7 +254,6 @@ export default function ProfilePage() {
       const data = await getWishlist();
       setWishlistItems(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to remove from wishlist:', error);
       setWishlistError(error.message || 'Failed to remove item from wishlist');
     }
   };
@@ -282,7 +278,6 @@ export default function ProfilePage() {
       setWishlistItems(Array.isArray(data) ? data : []);
       
     } catch (error) {
-      console.error('Failed to add to cart:', error);
       setWishlistError(error.message || 'Failed to add item to cart');
     }
   };

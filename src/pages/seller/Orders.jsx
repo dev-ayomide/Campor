@@ -100,24 +100,14 @@ export default function SellerOrdersPage() {
                           orderSeller.order?.customerName ||
                           orderSeller.customerName ||
                           'Customer';
-      
-      console.log('🔍 Extracted customerUserId:', customerUserId);
-      console.log('🔍 Extracted customerName:', customerName);
-      console.log('🔍 Available user data:', orderSeller.order?.user);
-      console.log('🔍 Current seller userId:', user?.id);
-      
+
       // Check if seller is trying to message themselves
       if (customerUserId === user?.id) {
-        console.log('⚠️ Seller trying to message themselves - blocking');
         alert('You cannot message yourself. This order was placed by you.');
         return;
       }
       
       if (!customerUserId) {
-        console.error('❌ No customer user ID found for order');
-        console.error('❌ Available orderSeller keys:', Object.keys(orderSeller));
-        console.error('❌ Available order keys:', orderSeller.order ? Object.keys(orderSeller.order) : 'No order data');
-        
         // Show a more helpful error message
         alert(`Unable to find customer information for this order.\n\nBACKEND ISSUE: The order data is missing the customer's userId field.\n\nCurrent data structure:\n- Customer name: ${customerName}\n- Missing: userId field\n\nPlease ask the backend team to include userId in the order.user object.\n\nCheck console for complete data structure.`);
         return;
@@ -125,22 +115,17 @@ export default function SellerOrdersPage() {
 
       // Check if chat context is available
       if (!chatContext) {
-        console.log('⚠️ Chat context not available, navigating to chat page');
         // Navigate to chat page with customer ID as parameter
         window.location.href = `/chat?sellerId=${customerUserId}`;
         return;
       }
 
-      console.log('🔍 Checking for existing chat with customer:', customerUserId);
-      
       // Check if chat already exists
       const existingChat = await chatApiService.getChatWithUser(customerUserId);
       
       if (existingChat) {
-        console.log('✅ Found existing chat with customer:', existingChat.id);
         chatContext.setSelectedConversationId(existingChat.id);
       } else {
-        console.log('🆕 No existing chat found, starting new chat with customer');
         // Start new chat - the chatApiService will handle creating the chat
         chatContext.setSelectedConversationId(`customer-${customerUserId}::${customerName}`);
       }
@@ -149,7 +134,6 @@ export default function SellerOrdersPage() {
       window.location.href = '/chat';
       
     } catch (err) {
-      console.error('❌ Failed to start chat with customer:', err);
       alert('Unable to start chat with customer. Please try again.');
     }
   };
@@ -167,18 +151,14 @@ export default function SellerOrdersPage() {
       }
       
       const ordersData = await getSellerOrders(user.seller.id);
-      console.log('✅ Orders: Raw API response:', ordersData);
       
       // Handle new data structure - API returns array of OrderSeller objects
       if (Array.isArray(ordersData)) {
         setOrders(ordersData);
-        console.log('✅ Orders: Processed seller orders:', ordersData.length);
       } else {
-        console.log('⚠️ Orders: Unexpected data structure:', ordersData);
         setOrders([]);
       }
     } catch (err) {
-      console.error('❌ Orders: Failed to fetch orders:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -336,7 +316,6 @@ export default function SellerOrdersPage() {
       }, 5000);
 
     } catch (error) {
-      console.error('Export failed:', error);
       alert('Export failed. Please try again.');
     } finally {
       setExportLoading(false);

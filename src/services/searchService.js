@@ -117,7 +117,6 @@ export async function instantSearch(query, limit = 10) {
       return { data: [] };
     }
     
-    console.log('🔍 SearchService: Algolia instant search for:', query);
     
     const { results } = await searchClient.search([
       {
@@ -129,10 +128,8 @@ export async function instantSearch(query, limit = 10) {
     
     const hits = results[0]?.hits || [];
     
-    console.log('✅ SearchService: Algolia instant search completed:', { hits: hits.length });
     return { data: hits };
   } catch (error) {
-    console.error('❌ SearchService: Algolia instant search failed:', error);
     return { data: [] };
   }
 }
@@ -147,7 +144,6 @@ export async function getSearchSuggestions(query, limit = 5) {
     const response = await instantSearch(query, limit);
     return response.data || [];
   } catch (error) {
-    console.error('❌ SearchService: Failed to get Algolia search suggestions:', error);
     return [];
   }
 }
@@ -190,7 +186,6 @@ export function buildAlgoliaFilters(filters) {
   
   // Only return filters if there are any valid ones
   const filterString = filterParts.join(' AND ');
-  console.log('🔍 SearchService: Built filter string:', filterString, 'from filters:', filters);
   
   return filterString || undefined; // Return undefined if no filters
 }
@@ -239,7 +234,6 @@ export function buildFilters(filters) {
     filterObj.minRating = filters.minRating;
   }
   
-  console.log('🔍 SearchService: Built backend filter object:', filterObj);
   return filterObj;
 }
 
@@ -266,7 +260,6 @@ export function parsePriceRange(priceRangeString) {
     return { min, max };
   }
   
-  console.warn('⚠️ SearchService: Could not parse price range:', priceRangeString);
   return { min: 0, max: Infinity };
 }
 

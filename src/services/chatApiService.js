@@ -54,13 +54,13 @@ class ChatApiService {
         })
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
+
+
 
       const result = await this.handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Failed to send message:', error);
+
       
       // Provide more specific error handling for foreign key constraint
       if (error.message.includes('Foreign key constraint violated')) {
@@ -89,7 +89,7 @@ class ChatApiService {
         return false;
       }
     } catch (error) {
-      console.error('Failed to check if user exists:', error);
+
       return false;
     }
   }
@@ -104,7 +104,7 @@ class ChatApiService {
 
       // Handle 404 as a normal case (chat doesn't exist)
       if (response.status === 404) {
-        console.log('🔍 No existing chat found with user:', userId);
+
         return null;
       }
 
@@ -113,10 +113,10 @@ class ChatApiService {
     } catch (error) {
       // If it's a 404, that's normal - chat doesn't exist
       if (error.message && error.message.includes('404')) {
-        console.log('🔍 No existing chat found with user:', userId);
+
         return null;
       }
-      console.error('Failed to get chat with user:', error);
+
       throw error;
     }
   }
@@ -133,7 +133,7 @@ class ChatApiService {
       // Return the data structure with chats and orders
       return result.data || { chats: [], orders: [] };
     } catch (error) {
-      console.error('Failed to get chats:', error);
+
       throw error;
     }
   }
@@ -149,7 +149,7 @@ class ChatApiService {
       const result = await this.handleResponse(response);
       return result.data || [];
     } catch (error) {
-      console.error('Failed to get chat messages:', error);
+
       throw error;
     }
   }
@@ -165,7 +165,7 @@ class ChatApiService {
       const result = await this.handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Failed to mark chat as read:', error);
+
       throw error;
     }
   }

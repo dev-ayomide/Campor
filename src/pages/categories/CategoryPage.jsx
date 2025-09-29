@@ -55,14 +55,14 @@ export default function CategoryPage() {
       
       if (isUUID) {
         // This is a valid UUID, use it directly with the API
-        console.log('🔍 CategoryPage: Valid UUID detected, fetching category directly:', categoryId);
+
         response = await getCategoryWithProducts(categoryId);
       } else {
         // This might be a category name, try to find the category first
-        console.log('🔍 CategoryPage: Non-UUID detected, treating as category name:', categoryId);
+
         
         const categoriesResponse = await getCategories();
-        console.log('🔍 CategoryPage: Categories response:', categoriesResponse);
+
         
         if (!categoriesResponse || !categoriesResponse.data || !Array.isArray(categoriesResponse.data)) {
           throw new Error('Failed to fetch categories list');
@@ -77,17 +77,17 @@ export default function CategoryPage() {
           throw new Error(`Category '${categoryId}' not found`);
         }
         
-        console.log('🔍 CategoryPage: Found category:', category);
+
         response = await getCategoryWithProducts(category.id);
       }
       
-      console.log('🔍 CategoryPage: Raw response from getCategoryWithProducts:', response);
+
       
       // Debug the response structure thoroughly
-      console.log('🔍 CategoryPage: Raw response:', response);
-      console.log('🔍 CategoryPage: Response type:', typeof response);
-      console.log('🔍 CategoryPage: Response has data property:', 'data' in response);
-      console.log('🔍 CategoryPage: Response.data:', response.data);
+
+
+
+
       
       // Based on API documentation, the response structure is:
       // { "data": { "id": "string", "name": "string", "products": [...] } }
@@ -101,18 +101,18 @@ export default function CategoryPage() {
         throw new Error('Invalid category data: missing required fields (id, name)');
       }
       
-      console.log('🔍 CategoryPage: Category data:', categoryData);
-      console.log('🔍 CategoryPage: Category data.products:', categoryData.products);
-      console.log('🔍 CategoryPage: Category data.products type:', typeof categoryData.products);
-      console.log('🔍 CategoryPage: Category data.products length:', categoryData.products?.length);
+
+
+
+
       
       setCategory(categoryData);
       setProducts(categoryData.products || []);
       
-      console.log('✅ CategoryPage: Category data loaded:', categoryData);
-      console.log('✅ CategoryPage: Products set:', categoryData.products || []);
+
+
     } catch (error) {
-      console.error('❌ CategoryPage: Failed to load category data:', error);
+
       setError(error.message || 'Failed to load category data. Please try again.');
     } finally {
       setLoading(false);
@@ -120,7 +120,7 @@ export default function CategoryPage() {
   };
 
   const handleSortChange = (newSortBy) => {
-    console.log('🔍 CategoryPage: Sorting products, current count:', products.length);
+
     setSortBy(newSortBy);
     // Implement sorting logic here
     const sortedProducts = [...products];

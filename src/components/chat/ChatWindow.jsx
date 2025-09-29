@@ -442,7 +442,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       };
 
       const handleMessageNotification = (notificationData) => {
-        console.log('🔔 Message notification received:', notificationData);
         // Only handle notifications for the current chat
         if (notificationData.chatId === conversationId && notificationData.senderId !== currentUser.id) {
           // Reload messages to get the new message (like demo)
@@ -456,7 +455,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         // Listen for conversation creation events
         const handleConversationCreated = () => {
-          console.log('🔄 Conversation created, reloading conversation list');
           // Trigger conversation list reload
           if (window.dispatchEvent) {
             window.dispatchEvent(new CustomEvent('conversationCreated'));
@@ -467,7 +465,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         // Listen for new chat creation (when a new conversation is established)
         const handleNewChat = (chatData) => {
-          console.log('🆕 New chat created:', chatData);
           // Trigger conversation list reload
           if (window.dispatchEvent) {
             window.dispatchEvent(new CustomEvent('conversationCreated'));
@@ -557,7 +554,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const userId = conversationId.includes('::') 
           ? conversationId.split('::')[0].replace('seller-', '')
           : conversationId.replace('seller-', '');
-        console.log('Creating conversation with seller user ID:', userId);
         
         // Optimistically add the message immediately - appears as sent (like chat-demo)
         const optimisticMessage = {
@@ -574,11 +570,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           deliveryStatus: 'sent' // Start as 'sent' for instant feel
         };
         
-        console.log('🚀 Adding optimistic message:', optimisticMessage);
         setMessages([optimisticMessage]);
         
         const sentMessage = await sendMessage(null, messageContent, userId);
-        console.log('📤 Sent message response:', sentMessage);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
@@ -600,8 +594,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
       } else if (sellerId && !conversationId) {
         // Creating new conversation with seller - Optimistic update (like chat-demo)
-        console.log('Creating conversation with sellerId:', sellerId);
-        
         // Optimistically add the message immediately - appears as sent
         const optimisticMessage = {
           tempId,
@@ -617,11 +609,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           deliveryStatus: 'sent' // Start as 'sent' for instant feel
         };
         
-        console.log('🚀 Adding optimistic message:', optimisticMessage);
         setMessages([optimisticMessage]);
         
         const sentMessage = await sendMessage(null, messageContent, sellerId);
-        console.log('📤 Sent message response:', sentMessage);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
@@ -658,12 +648,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         };
         
         // Add message immediately for smooth UX
-        console.log('🚀 Adding optimistic message to existing conversation:', optimisticMessage);
         setMessages(prev => [...prev, optimisticMessage]);
         
         const receiverId = conversation.participant.id;
         const sentMessage = await sendMessage(conversationId, messageContent, receiverId);
-        console.log('📤 Sent message response (existing conversation):', sentMessage);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
@@ -675,8 +663,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         stopTyping(receiverId);
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
-      
       // Show failure state instead of removing message (like chat-demo)
       setTimeout(() => {
         setMessages(prev => prev.map(msg => 
@@ -713,7 +699,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         hour12: false 
       });
     } catch (error) {
-      console.error('Error formatting time:', error, 'timestamp:', timestamp);
       return 'Just now';
     }
   };
@@ -743,7 +728,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         });
       }
     } catch (error) {
-      console.error('Error formatting date:', error, 'timestamp:', timestamp);
       return 'Today';
     }
   };

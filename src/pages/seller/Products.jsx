@@ -169,9 +169,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         product.id === productId ? { ...product, status: newStatus } : product
       ));
       setSuccessMessage('Product status updated successfully');
-      console.log('✅ Product status updated successfully');
+
     } catch (err) {
-      console.error('❌ Failed to update product status:', err);
+
       setError(err.message);
     } finally {
       setActionLoading(false);
@@ -198,9 +198,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         product.id === productId ? { ...product, status: 'ACTIVE' } : product
       ));
       setSuccessMessage('Product published successfully');
-      console.log('✅ Product published successfully');
+
     } catch (err) {
-      console.error('❌ Failed to publish product:', err);
+
       setError(err.message);
     } finally {
       setActionLoading(false);
@@ -227,9 +227,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
         product.id === productId ? { ...product, status: 'DRAFT' } : product
       ));
       setSuccessMessage('Product unpublished successfully');
-      console.log('✅ Product unpublished successfully');
+
     } catch (err) {
-      console.error('❌ Failed to unpublish product:', err);
+
       setError(err.message);
     } finally {
       setActionLoading(false);
@@ -249,9 +249,9 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
       
       const productsData = await getSellerProducts(user.seller.id);
       setProducts(productsData || []);
-      console.log('✅ Inventory refreshed successfully');
+
     } catch (err) {
-      console.error('❌ Failed to refresh inventory:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);

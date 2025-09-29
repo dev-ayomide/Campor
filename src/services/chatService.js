@@ -146,10 +146,8 @@ export const chatService = {
     try {
       // Use the new API endpoint to mark messages as read
       const result = await chatApiService.markChatAsRead(conversationId);
-      console.log('✅ Messages marked as read:', result);
       return result;
     } catch (error) {
-      console.error('Failed to mark as read:', error);
       return false;
     }
   }

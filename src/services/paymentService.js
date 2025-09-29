@@ -55,7 +55,7 @@ api.interceptors.response.use(
  */
 export async function initiatePayment(email, amount, cartId) {
   try {
-    console.log('🔍 PaymentService: Initiating payment...', { email, amount, cartId });
+
     
     // Validate required parameters
     if (!email) {
@@ -79,15 +79,15 @@ export async function initiatePayment(email, amount, cartId) {
       }
     };
     
-    console.log('🔍 PaymentService: Payment payload:', payload);
+
     
     const response = await api.post(API_ENDPOINTS.PAYMENTS.INITIATE, payload);
     
-    console.log('✅ PaymentService: Payment initiated successfully:', response.data);
+
     
     return response.data;
   } catch (error) {
-    console.error('❌ PaymentService: Failed to initiate payment:', error);
+
     
     if (error.response?.status === 400) {
       throw new Error(error.response?.data?.message || 'Invalid payment data. Please check your information.');
@@ -107,7 +107,7 @@ export async function initiatePayment(email, amount, cartId) {
  */
 export function redirectToPayment(authorizationUrl) {
   try {
-    console.log('🔍 PaymentService: Redirecting to payment URL:', authorizationUrl);
+
     
     if (!authorizationUrl) {
       throw new Error('Payment URL is required for redirection');
@@ -116,7 +116,7 @@ export function redirectToPayment(authorizationUrl) {
     // Redirect to payment page
     window.location.href = authorizationUrl;
   } catch (error) {
-    console.error('❌ PaymentService: Failed to redirect to payment:', error);
+
     throw new Error('Failed to redirect to payment page. Please try again.');
   }
 }
@@ -146,7 +146,7 @@ export function validatePaymentAmount(amount) {
  */
 export async function handlePaymentSuccess(reference) {
   try {
-    console.log('🔍 PaymentService: Handling payment success:', { reference });
+
     
     if (!reference) {
       throw new Error('Payment reference is required');
@@ -155,11 +155,11 @@ export async function handlePaymentSuccess(reference) {
     // Verify payment with backend (which calls Paystack API)
     const verificationResult = await verifyPayment(reference);
     
-    console.log('✅ PaymentService: Payment verified successfully:', verificationResult);
+
     
     return verificationResult;
   } catch (error) {
-    console.error('❌ PaymentService: Failed to handle payment success:', error);
+
     throw new Error(error.response?.data?.message || error.message || 'Failed to process payment success.');
   }
 }
@@ -171,7 +171,7 @@ export async function handlePaymentSuccess(reference) {
  */
 export async function verifyPayment(reference) {
   try {
-    console.log('🔍 PaymentService: Verifying payment:', reference);
+
     
     if (!reference) {
       throw new Error('Payment reference is required');
@@ -179,11 +179,11 @@ export async function verifyPayment(reference) {
     
     const response = await api.get(`${API_ENDPOINTS.PAYMENTS.VERIFY}/${reference}`);
     
-    console.log('✅ PaymentService: Payment verified successfully:', response.data);
+
     
     return response.data;
   } catch (error) {
-    console.error('❌ PaymentService: Failed to verify payment:', error);
+
     
     if (error.response?.status === 400) {
       throw new Error(error.response?.data?.message || 'Invalid payment reference.');

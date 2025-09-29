@@ -62,7 +62,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   useEffect(() => {
     if (user?.seller) {
       setSellerData(user.seller);
-      console.log('🔄 Dashboard: Seller data updated from context:', user.seller.catalogueName);
+      // Seller data updated from context
     }
   }, [user?.seller]);
 
@@ -71,18 +71,13 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   const totalOrders = orders.length;
   
   // Debug orders for revenue calculation
-  console.log('🔍 Dashboard: Calculating revenue from orders:', orders.length);
-  console.log('🔍 Dashboard: Sample order for revenue calc:', orders[0]);
+  // Calculate revenue from orders
   
   const totalRevenue = orders.reduce((sum, orderSeller) => {
     // Use the same pattern as Orders page - check for amountDue first, then order.totalPrice
     const price = orderSeller.amountDue || orderSeller.order?.totalPrice || 0;
     const parsedPrice = parseFloat(price) || 0;
-    console.log('🔍 Dashboard: OrderSeller price fields:', {
-      amountDue: orderSeller.amountDue,
-      orderTotalPrice: orderSeller.order?.totalPrice,
-      parsed: parsedPrice
-    });
+    // Calculate revenue from order price fields
     return sum + parsedPrice;
   }, 0);
   
@@ -123,7 +118,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
       setCatalogueLinkCopied(true);
       setTimeout(() => setCatalogueLinkCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy catalogue link:', err);
+      // Failed to copy catalogue link
     }
   };
 
@@ -138,7 +133,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         return;
       }
       
-      console.log('🔍 Dashboard: Retrying fetch for seller ID:', user.seller.id);
+      // Retrying fetch for seller ID
       const [productsData, ordersData] = await Promise.all([
         getSellerProducts(user.seller.id),
         getSellerOrders(user.seller.id)
@@ -150,10 +145,9 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
       // Handle orders data structure - getSellerOrders returns response.data directly
       const ordersArray = Array.isArray(ordersData) ? ordersData : (ordersData?.data || []);
       setOrders(ordersArray);
-      console.log('✅ Dashboard: Retry successful - Products:', productsData?.length || 0, 'Orders:', ordersArray.length);
+      // Retry successful
       
     } catch (err) {
-      console.error('❌ Dashboard: Retry failed:', err);
       setError(err.message);
     } finally {
       setLoading(false);

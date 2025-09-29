@@ -49,19 +49,17 @@ export default function ProductDetailPage() {
                   id: categoryResponse.data.id,
                   name: categoryResponse.data.name
                 };
-                console.log('✅ ProductDetail: Category details fetched and added:', response.data.category);
               }
             } catch (categoryError) {
-              console.warn('⚠️ ProductDetail: Failed to fetch category details:', categoryError);
+              // Category fetch failed, continue without category details
             }
           } else {
-            console.warn('⚠️ ProductDetail: No category data found in product');
+            // No category data found
           }
         } else {
           throw new Error('Product not found');
         }
       } catch (err) {
-        console.error('❌ ProductDetail: Failed to fetch product:', err);
         setError(err.message || 'Failed to load product details');
       } finally {
         setLoading(false);
@@ -83,7 +81,7 @@ export default function ProductDetailPage() {
             setSellerProfilePicture(catalogueData.seller.user.profilePicture);
           }
         } catch (error) {
-          console.log('Failed to fetch seller profile picture:', error);
+          // Failed to fetch seller profile picture
         }
       }
     };
@@ -256,10 +254,8 @@ export default function ProductDetailPage() {
                   to={`/category/${product.category?.id || product.categoryId}`} 
                   className="hover:text-blue-600 transition-colors truncate max-w-[120px] sm:max-w-none"
                   onClick={() => {
-                    console.log('🔍 ProductDetail: Breadcrumb clicked, category data:', product.category);
-                    console.log('🔍 ProductDetail: Category ID:', product.category?.id || product.categoryId);
-                    console.log('🔍 ProductDetail: Category name:', product.category?.name);
-                    console.log('🔍 ProductDetail: Product categoryId field:', product.categoryId);
+                    // Navigate to category page
+                    navigate(`/categories/${product.category?.id || product.categoryId}`);
                   }}
                 >
                   {product.category?.name || 'Category'}
@@ -427,14 +423,11 @@ export default function ProductDetailPage() {
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
                       onClick={async () => {
                         try {
-                          console.log('🔍 ProductDetail: Starting to get seller user ID for seller:', product.seller.id);
                           // Get seller's user ID for chat with fallback
                           const sellerUserId = await getSellerUserIdWithFallback(product.seller.id);
-                          console.log('✅ ProductDetail: Successfully got seller user ID:', sellerUserId);
                           // Navigate to chat with seller's user ID
                           navigate(`/chat?sellerId=${sellerUserId}`);
                         } catch (error) {
-                          console.error('❌ ProductDetail: Failed to get seller user ID:', error);
                           // Show error message
                           alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                         }

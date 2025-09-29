@@ -123,14 +123,14 @@ export function ChatProvider({ children }) {
 
   // Load conversations on mount and when user role changes
   useEffect(() => {
-    console.log('🚀 ChatContext: useEffect triggered, loading conversations');
+
     loadConversations();
   }, [loadConversations]);
 
   // Listen for conversation creation events
   useEffect(() => {
     const handleConversationCreated = () => {
-      console.log('🔄 Conversation created, reloading conversations');
+
       loadConversations();
     };
 
@@ -167,7 +167,7 @@ export function ChatProvider({ children }) {
       
       return message;
     } catch (error) {
-      console.error('Failed to send message:', error);
+
       throw error;
     }
   };
@@ -194,19 +194,19 @@ export function ChatProvider({ children }) {
         return updatedConversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
       });
     } catch (error) {
-      console.error('Failed to mark as read:', error);
+
     }
   }, [conversations]);
 
   // Search conversations with useCallback
   const searchConversations = useCallback(async (query) => {
     try {
-      console.log('🔍 Searching conversations with query:', query);
+
       const results = await chatService.searchConversations(query, conversations, currentUserRole);
-      console.log('🔍 Search results:', results);
+
       setConversations(results);
     } catch (error) {
-      console.error('Search failed:', error);
+
     }
   }, [conversations, currentUserRole]);
 

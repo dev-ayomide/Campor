@@ -302,9 +302,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       } catch (contextError) {
       }
       
-      console.log('✅ Payment info updated successfully');
     } catch (err) {
-      console.error('❌ Failed to update payment info:', err);
       setError(err.message);
     } finally {
       setLoading(false);

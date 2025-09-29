@@ -81,7 +81,6 @@ class SocketService {
   // Listen to an event from the server
   on(event, callback) {
     if (this.socket) {
-      console.log('👂 Setting up socket listener for:', event);
       this.socket.on(event, callback);
       
       // Store the listener for cleanup
@@ -90,7 +89,6 @@ class SocketService {
       }
       this.eventListeners.get(event).push(callback);
     } else {
-      console.log('❌ Cannot set up listener - socket not available:', event);
     }
   }
 
@@ -154,7 +152,6 @@ class SocketService {
 
   // Manual reconnect
   async reconnect(token) {
-    console.log('🔄 Attempting to reconnect socket...');
     this.disconnect();
     return this.connect(token);
   }

@@ -917,44 +917,40 @@ export async function addToCart(cartId, items) {
 
 export async function updateCartItemQuantity(itemId, quantity) {
   try {
-    console.log('🔍 CartService: Updating cart item quantity:', { itemId, quantity });
-    
     const response = await api.patch(`${API_ENDPOINTS.CART.UPDATE_ITEM}/${itemId}`, {
       quantity
     });
     
-    console.log('✅ CartService: Cart item quantity updated successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to update cart item quantity:', error);
     throw new Error(error.response?.data?.message || 'Failed to update cart item quantity.');
   }
 }
 
 export async function removeFromCart(itemId) {
   try {
-    console.log('🔍 CartService: Removing item from cart:', itemId);
+
     
     const response = await api.delete(`${API_ENDPOINTS.CART.REMOVE_ITEM}/${itemId}`);
     
-    console.log('✅ CartService: Item removed from cart successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to remove item from cart:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to remove item from cart.');
   }
 }
 
 export async function clearCart() {
   try {
-    console.log('🔍 CartService: Clearing cart...');
+
     
     const response = await api.delete(API_ENDPOINTS.CART.CLEAR);
     
-    console.log('✅ CartService: Cart cleared successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ CartService: Failed to clear cart:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to clear cart.');
   }
 }
@@ -963,13 +959,13 @@ export async function clearCart() {
 
 export async function getAllCategories() {
   try {
-    console.log('🔍 CategoryService: Fetching all categories...');
+
     
     const response = await api.get(API_ENDPOINTS.CATEGORIES.ALL);
     
     return response.data;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to fetch categories:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to fetch categories.');
   }
 }
@@ -981,28 +977,28 @@ export async function getCategoriesOnly() {
     
     return response.data;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to fetch categories:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to fetch categories.');
   }
 }
 
 export async function getCategoryById(categoryId) {
   try {
-    console.log('🔍 CategoryService: Fetching category by ID:', categoryId);
+
     
     const response = await api.get(`${API_ENDPOINTS.CATEGORIES.BY_ID}/${categoryId}`);
     
-    console.log('✅ CategoryService: Category fetched successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to fetch category:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to fetch category.');
   }
 }
 
 export async function createCategories(categoryNames) {
   try {
-    console.log('🔍 CategoryService: Creating categories:', categoryNames);
+
     
     const payload = {
       names: categoryNames
@@ -1010,38 +1006,38 @@ export async function createCategories(categoryNames) {
     
     const response = await api.post(API_ENDPOINTS.CATEGORIES.CREATE, payload);
     
-    console.log('✅ CategoryService: Categories created successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to create categories:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to create categories.');
   }
 }
 
 export async function updateCategory(categoryId, categoryData) {
   try {
-    console.log('🔍 CategoryService: Updating category:', { categoryId, categoryData });
+
     
     const response = await api.put(`${API_ENDPOINTS.CATEGORIES.UPDATE}/${categoryId}`, categoryData);
     
-    console.log('✅ CategoryService: Category updated successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to update category:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to update category.');
   }
 }
 
 export async function deleteCategory(categoryId) {
   try {
-    console.log('🔍 CategoryService: Deleting category:', categoryId);
+
     
     const response = await api.delete(`${API_ENDPOINTS.CATEGORIES.DELETE}/${categoryId}`);
     
-    console.log('✅ CategoryService: Category deleted successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ CategoryService: Failed to delete category:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to delete category.');
   }
 }
@@ -1052,14 +1048,14 @@ export const getSellerOrders = async (sellerId, retryCount = 0) => {
   
   // If there's already a pending request for this seller, wait for it
   if (pendingRequests.has(requestKey)) {
-    console.log('⏳ SellerService: Waiting for pending orders request...');
+
     return pendingRequests.get(requestKey);
   }
   
   const requestPromise = (async () => {
     try {
-      console.log('📦 SellerService: Fetching seller orders for seller:', sellerId);
-      console.log('📦 SellerService: Full URL:', `/orders/${sellerId}/seller`);
+
+
       
       // Validate sellerId before making the request
       if (!sellerId) {
@@ -1067,12 +1063,12 @@ export const getSellerOrders = async (sellerId, retryCount = 0) => {
       }
       
       const response = await api.get(`/orders/${sellerId}/seller`);
-      console.log('✅ SellerService: Seller orders fetched successfully:', response.data);
+
       return response.data;
     } catch (error) {
-      console.error('❌ SellerService: Failed to fetch seller orders:', error);
-      console.error('❌ SellerService: Error details:', error.response?.data);
-      console.error('❌ SellerService: Status:', error.response?.status);
+
+
+
       
       // Retry logic for network errors
       if (retryCount < 2 && (
@@ -1081,7 +1077,7 @@ export const getSellerOrders = async (sellerId, retryCount = 0) => {
         error.response?.status >= 500 ||
         error.message.includes('timeout')
       )) {
-        console.log(`🔄 SellerService: Retrying orders request (attempt ${retryCount + 1}/2)`);
+
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
         return getSellerOrders(sellerId, retryCount + 1);
       }
@@ -1099,24 +1095,24 @@ export const getSellerOrders = async (sellerId, retryCount = 0) => {
 
 export const getOrderDetails = async (orderId) => {
   try {
-    console.log('📦 SellerService: Fetching order details for order:', orderId);
+
     const response = await api.get(`/orders/${orderId}`);
-    console.log('✅ SellerService: Order details fetched successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ SellerService: Failed to fetch order details:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to fetch order details');
   }
 };
 
 export const updateOrderStatus = async (orderId, orderStatus) => {
   try {
-    console.log('📦 SellerService: Updating order status:', { orderId, orderStatus });
+
     const response = await api.put(`/orders/${orderId}/status`, { orderStatus });
-    console.log('✅ SellerService: Order status updated successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ SellerService: Failed to update order status:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to update order status');
   }
 };
@@ -1151,16 +1147,16 @@ export async function getOrderBySettlementCode(sellerId, settlementCode) {
 // Initiate transfer to seller
 export async function initiateTransferToSeller(orderSellerId) {
   try {
-    console.log('🔍 TransferService: Initiating transfer for order seller:', orderSellerId);
+
     
     const response = await api.post('/payments/transfer', {
       orderSellerId: orderSellerId
     });
     
-    console.log('✅ TransferService: Transfer initiated successfully:', response.data);
+
     return response.data;
   } catch (error) {
-    console.error('❌ TransferService: Failed to initiate transfer:', error);
+
     throw new Error(error.response?.data?.message || 'Failed to initiate transfer.');
   }
 }

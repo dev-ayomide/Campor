@@ -101,9 +101,9 @@ export function AuthProvider({ children }) {
             setUser(userData);
           }
           
-          console.log('🔍 AuthContext: User profile fetched on second attempt');
+
         } catch (profileError) {
-          console.error('❌ AuthContext: Failed to fetch user profile on second attempt:', profileError);
+
           // Still set the token but show a warning
           setError('Login successful but failed to load user profile. Please refresh the page.');
         }
@@ -112,7 +112,7 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return data;
     } catch (err) {
-      console.error('❌ AuthContext: Login error:', err);
+
       setError(err.message || 'Login failed');
       setLoading(false);
       
@@ -161,7 +161,7 @@ export function AuthProvider({ children }) {
         isSeller: true // Add explicit seller flag
       };
       setUser(updatedUser);
-      console.log('✅ AuthContext: Seller onboarding completed, user updated:', updatedUser);
+
       return sellerData;
     } catch (err) {
       setError(err.message || 'Failed to complete seller onboarding');
@@ -198,7 +198,7 @@ export function AuthProvider({ children }) {
       // Since getSellerProfile might not work, let's use getSellerCatalogue
       // which includes seller information and is known to work
       const catalogueData = await authService.getSellerCatalogue(sellerId);
-      console.log('✅ AuthContext: Updated seller data from catalogue:', catalogueData);
+
       
       // Extract seller info from catalogue data - note: catalogueData has { seller: {...}, products: [...] } structure
       const sellerData = catalogueData.seller;
@@ -222,15 +222,15 @@ export function AuthProvider({ children }) {
           ...prevUser,
           seller: sellerProfile
         };
-        console.log('🔄 AuthContext: Updating user context with new seller data:', sellerProfile.catalogueName);
+
         return updatedUser;
       });
       
       return sellerProfile;
     } catch (err) {
-      console.error('❌ AuthContext: Failed to update seller data:', err);
+
       // Don't throw the error, just log it and continue
-      console.log('ℹ️ AuthContext: Continuing without updating seller data');
+
     }
   };
 
@@ -262,8 +262,8 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   
   if (context === undefined || context === null) {
-    console.error('❌ useAuth: Context is null/undefined. Make sure component is wrapped in AuthProvider.');
-    console.error('❌ useAuth: Check provider hierarchy in main.jsx and App.jsx');
+
+
     throw new Error('useAuth must be used within an AuthProvider');
   }
   

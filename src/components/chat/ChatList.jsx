@@ -74,7 +74,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   // Listen for conversation creation events
   useEffect(() => {
     const handleConversationCreated = () => {
-      console.log('🔄 Conversation created event received, reloading conversations');
+
       loadConversations();
     };
 
@@ -109,7 +109,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   }, []);
 
   const handleSearch = async (query) => {
-    console.log('🔍 ChatList: Search input changed to:', query);
+
     setSearchQuery(query);
     
     // Clear existing timeout
@@ -121,15 +121,15 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
     searchTimeoutRef.current = setTimeout(async () => {
       try {
         if (query.trim()) {
-          console.log('🔍 ChatList: Calling searchConversations with:', query);
+
           await searchConversations(query);
         } else {
-          console.log('🔍 ChatList: Empty query, reloading all conversations');
+
           // If search is empty, reload all conversations
           await loadConversations();
         }
       } catch (error) {
-        console.error('Search failed:', error);
+
       }
     }, 300);
   };
@@ -163,7 +163,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   };
 
   // No loading spinner - seamless like demo
-  console.log('🔍 ChatList: Current conversations:', conversations.length);
+
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#F7F5F0' }}>
@@ -180,9 +180,9 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                   const token = localStorage.getItem('campor_token');
                   try {
                     await socketService.reconnect(token);
-                    console.log('🔄 Manual reconnection attempted');
+
                   } catch (error) {
-                    console.error('❌ Manual reconnection failed:', error);
+
                   }
                 }}
                 className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
