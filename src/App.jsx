@@ -134,16 +134,16 @@ export default function App() {
             <Orders />
           </RequireAuth>
         } />
-        <Route path="/seller/customers" element={
+        {/* <Route path="/seller/customers" element={
           <RequireAuth>
             <Customers />
           </RequireAuth>
-        } />
-        <Route path="/seller/analytics" element={
+        } /> */}
+        {/* <Route path="/seller/analytics" element={
           <RequireAuth>
             <Analytics />
           </RequireAuth>
-        } />
+        } /> */}
         <Route path="/seller/products/add" element={
           <RequireAuth>
             <AddProduct />

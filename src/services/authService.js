@@ -190,7 +190,16 @@ export async function resendVerificationCode(email) {
     
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to resend verification code. Please try again.');
+    
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Email is already verified or invalid format.');
+    } else if (error.response?.status === 404) {
+      throw new Error('User not found. Please check your email address.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || 'Failed to resend verification code. Please try again.');
+    }
   }
 }
 
@@ -223,7 +232,16 @@ export async function forgotPassword(email) {
     
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to send password reset email. Please try again.');
+    
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid email format. Please check your email address.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Email not found. Please check your email address or register for an account.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || 'Failed to send password reset email. Please try again.');
+    }
   }
 }
 
@@ -237,7 +255,16 @@ export async function resetPassword(token, newPassword) {
     
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Failed to reset password. Please try again.');
+    
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid input data. Please check your password requirements.');
+    } else if (error.response?.status === 401) {
+      throw new Error('Invalid or expired reset token. Please request a new password reset.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || 'Failed to reset password. Please try again.');
+    }
   }
 }
 

@@ -54,30 +54,30 @@ export default function SellerSidebar({ onMobileClose, isMobile = false }) {
       path: '/seller/orders',
       active: location.pathname === '/seller/orders'
     },
-    {
-      icon: (
-        <img 
-          src="/customers.svg" 
-          alt="Customers" 
-          className={`w-5 h-5 ${location.pathname === '/seller/customers' ? 'brightness-0 invert' : ''}`} 
-        />
-      ),
-      label: 'Customers',
-      path: '/seller/customers',
-      active: location.pathname === '/seller/customers'
-    },
-    {
-      icon: (
-        <img 
-          src="/analytics-icon.svg" 
-          alt="Analytics" 
-          className={`w-5 h-5 ${location.pathname === '/seller/analytics' ? 'brightness-0 invert' : ''}`} 
-        />
-      ),
-      label: 'Analytics',
-      path: '/seller/analytics',
-      active: location.pathname === '/seller/analytics'
-    },
+    // {
+    //   icon: (
+    //     <img 
+    //       src="/customers.svg" 
+    //       alt="Customers" 
+    //       className={`w-5 h-5 ${location.pathname === '/seller/customers' ? 'brightness-0 invert' : ''}`} 
+    //     />
+    //   ),
+    //   label: 'Customers',
+    //   path: '/seller/customers',
+    //   active: location.pathname === '/seller/customers'
+    // },
+    // {
+    //   icon: (
+    //     <img 
+    //       src="/analytics-icon.svg" 
+    //       alt="Analytics" 
+    //       className={`w-5 h-5 ${location.pathname === '/seller/analytics' ? 'brightness-0 invert' : ''}`} 
+    //     />
+    //   ),
+    //   label: 'Analytics',
+    //   path: '/seller/analytics',
+    //   active: location.pathname === '/seller/analytics'
+    // },
     {
       icon: (
         <img 
