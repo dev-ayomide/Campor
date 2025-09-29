@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerOrders } from '../../services/ordersService';
-import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter } from '../../components/common';
+import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter, ExportOptionsModal } from '../../components/common';
 import { useChat } from '../../contexts/ChatContext';
 import { chatApiService } from '../../services/chatApiService';
+import * as XLSX from 'xlsx';
 const productImage = '/product.png';
 
 export default function SellerOrdersPage() {
@@ -17,6 +18,9 @@ export default function SellerOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [filteredOrders, setFilteredOrders] = useState([]);
+  const [exportModal, setExportModal] = useState({ isOpen: false });
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -219,6 +223,152 @@ export default function SellerOrdersPage() {
     }
   };
 
+  // Export functions
+  const exportToCSV = (data, fields, filename) => {
+    const headers = fields.map(field => {
+      switch (field) {
+        case 'orderCode': return 'Order Code';
+        case 'customer': return 'Customer Name';
+        case 'date': return 'Order Date';
+        case 'status': return 'Status';
+        case 'amount': return 'Amount';
+        case 'items': return 'Items Count';
+        case 'paymentMethod': return 'Payment Method';
+        case 'shippingAddress': return 'Shipping Address';
+        default: return field;
+      }
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...data.map(order => {
+        return fields.map(field => {
+          let value = '';
+          switch (field) {
+            case 'orderCode':
+              value = order.order?.orderCode || order.orderId || '';
+              break;
+            case 'customer':
+              value = order.order?.user?.name || 'Customer';
+              break;
+            case 'date':
+              value = new Date(order.order?.createdAt || order.createdAt).toLocaleDateString();
+              break;
+            case 'status':
+              value = order.status || order.order?.orderStatus || '';
+              break;
+            case 'amount':
+              value = parseFloat(order.amountDue || order.order?.totalPrice || 0);
+              break;
+            case 'items':
+              value = order.order?.orderItems?.length || 0;
+              break;
+            case 'paymentMethod':
+              value = order.order?.paymentMethod || 'N/A';
+              break;
+            case 'shippingAddress':
+              value = order.order?.shippingAddress || 'N/A';
+              break;
+            default:
+              value = '';
+          }
+          // Escape commas and quotes in CSV
+          return `"${String(value).replace(/"/g, '""')}"`;
+        }).join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToExcel = (data, fields, filename) => {
+    const worksheetData = data.map(order => {
+      const row = {};
+      fields.forEach(field => {
+        switch (field) {
+          case 'orderCode':
+            row['Order Code'] = order.order?.orderCode || order.orderId || '';
+            break;
+          case 'customer':
+            row['Customer Name'] = order.order?.user?.name || 'Customer';
+            break;
+          case 'date':
+            row['Order Date'] = new Date(order.order?.createdAt || order.createdAt).toLocaleDateString();
+            break;
+          case 'status':
+            row['Status'] = order.status || order.order?.orderStatus || '';
+            break;
+          case 'amount':
+            row['Amount'] = parseFloat(order.amountDue || order.order?.totalPrice || 0);
+            break;
+          case 'items':
+            row['Items Count'] = order.order?.orderItems?.length || 0;
+            break;
+          case 'paymentMethod':
+            row['Payment Method'] = order.order?.paymentMethod || 'N/A';
+            break;
+          case 'shippingAddress':
+            row['Shipping Address'] = order.order?.shippingAddress || 'N/A';
+            break;
+        }
+      });
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const handleExport = async (exportOptions) => {
+    try {
+      setExportLoading(true);
+      setExportSuccess('');
+
+      const { format, data, fields, dateRange } = exportOptions;
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `orders_${dateRange}_${timestamp}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+
+      if (format === 'csv') {
+        exportToCSV(data, fields, filename);
+      } else {
+        exportToExcel(data, fields, filename);
+      }
+
+      setExportSuccess(`Orders exported successfully as ${filename}`);
+      
+      // Auto-dismiss success message
+      setTimeout(() => {
+        setExportSuccess('');
+      }, 5000);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // Auto-dismiss success message
+  useEffect(() => {
+    if (exportSuccess) {
+      const timer = setTimeout(() => {
+        setExportSuccess('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [exportSuccess]);
+
   return (
     <SellerLayout>
       <div className="max-w-full overflow-hidden">
@@ -252,6 +402,7 @@ export default function SellerOrdersPage() {
             { value: 'REFUNDED', label: 'Refunded' }
           ]}
           onRefresh={() => window.location.reload()}
+          onExport={() => setExportModal({ isOpen: true })}
           searchPlaceholder="Search by order code, customer name..."
           loading={loading}
           className="mb-6"
@@ -297,7 +448,10 @@ export default function SellerOrdersPage() {
               </select>
               
               {/* Export Button */}
-              <button className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2">
+              <button 
+                onClick={() => setExportModal({ isOpen: true })}
+                className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+              >
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -481,6 +635,45 @@ export default function SellerOrdersPage() {
             </button>
           </nav>
         </div>
+            </div>
+          </div>
+        )}
+
+        {/* Export Options Modal */}
+        <ExportOptionsModal
+          isOpen={exportModal.isOpen}
+          onClose={() => setExportModal({ isOpen: false })}
+          onExport={handleExport}
+          data={filteredOrders}
+          title="Export Orders"
+        />
+
+        {/* Export Success Message */}
+        {exportSuccess && (
+          <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{exportSuccess}</span>
+            <button
+              onClick={() => setExportSuccess('')}
+              className="ml-2 text-green-600 hover:text-green-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Export Loading Overlay */}
+        {exportLoading && (
+          <div className="fixed inset-0 z-40 bg-black bg-opacity-25 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 flex items-center gap-3">
+              <svg className="w-5 h-5 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-gray-700">Exporting orders...</span>
             </div>
           </div>
         )}

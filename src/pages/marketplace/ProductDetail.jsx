@@ -421,9 +421,6 @@ export default function ProductDetailPage() {
                       <p className="font-medium text-gray-900 text-base truncate">
                         {product.seller.catalogueName || 'Unknown Seller'}
                       </p>
-                      <p className="text-sm text-gray-600 truncate">
-                        Seller ID: {product.seller.id?.slice(0, 8)}...
-                      </p>
                     </div>
                   </div>
                   

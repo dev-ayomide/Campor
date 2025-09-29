@@ -18,7 +18,7 @@ import filterIcon from '../../../public/filter.svg';
 import SearchHighlight from '../../components/search/SearchHighlight';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
-import { ProductGridSkeleton, CategoryListSkeleton } from '../../components/common';
+import { ProductGridSkeleton, CategoryListSkeleton, PriceRangeSlider } from '../../components/common';
 
 export default function MarketplacePage() {
   const { user, token } = useContext(AuthContext);
@@ -33,6 +33,7 @@ export default function MarketplacePage() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [selectedBrand, setSelectedBrand] = useState('All');
   const [selectedPrice, setSelectedPrice] = useState('All Price');
+  const [priceRange, setPriceRange] = useState([0, 100000]);
 
   // Real data states
   const [products, setProducts] = useState([]);
@@ -153,7 +154,7 @@ export default function MarketplacePage() {
       filters.category = selectedCategory.name;
     }
     
-    // Price filter - pass the selected price string directly
+    // Price filter - pass the selected price string directly to match algoliaService expectations
     if (selectedPrice && selectedPrice !== 'All Price') {
       filters.price = selectedPrice;
     }
@@ -233,11 +234,25 @@ export default function MarketplacePage() {
     setSelectedPrice(price);
   };
 
+  // Handle price range slider change
+  const handlePriceRangeChange = (range) => {
+    setPriceRange(range);
+    // Convert range to price string for compatibility
+    if (range[0] === 0 && range[1] === 100000) {
+      setSelectedPrice('All Price');
+    } else if (range[1] === 100000) {
+      setSelectedPrice(`₦${range[0].toLocaleString()}+`);
+    } else {
+      setSelectedPrice(`₦${range[0].toLocaleString()} - ₦${range[1].toLocaleString()}`);
+    }
+  };
+
   // Clear all filters
   const clearFilters = () => {
     setSelectedCategory({ id: 'all', name: 'All' });
     setSelectedPrice('All Price');
     setSelectedBrand('All');
+    setPriceRange([0, 100000]);
     setSearchQuery('');
     // Reset pagination when clearing filters
     setPagination({
@@ -718,7 +733,22 @@ export default function MarketplacePage() {
               {/* Price Filter */}
               <div className="p-4">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">PRICE</h3>
+                
+                {/* Price Range Slider */}
+                <div className="mb-6">
+                  <PriceRangeSlider
+                    min={0}
+                    max={100000}
+                    step={1000}
+                    value={priceRange}
+                    onChange={handlePriceRangeChange}
+                    className="mb-4"
+                  />
+                </div>
+
+                {/* Predefined Price Ranges */}
                 <div className="space-y-2.5">
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">Quick Select:</h4>
                   {priceRanges.map((price) => (
                     <label key={price} className="flex items-center cursor-pointer">
                       <input 
@@ -916,8 +946,8 @@ export default function MarketplacePage() {
                           }}
                         />
                         
-                        {/* Stock Status Badge */}
-                        {(!product.inStock || product.stockQuantity <= 0 || !product.stockQuantity) && (
+                        {/* Stock Status Badge - Only for grid view */}
+                        {(!product.inStock || product.stockQuantity <= 0 || !product.stockQuantity) && viewMode === 'grid' && (
                           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                             Out of Stock
                           </div>
@@ -943,13 +973,21 @@ export default function MarketplacePage() {
                               </div>
 
                               {/* Product Name - Compact with highlighting */}
-                              <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 leading-tight">
-                                <SearchHighlight 
-                                  text={productName} 
-                                  highlight={searchQuery} 
-                                  className="text-sm font-semibold text-gray-900"
-                                />
-                              </h3>
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight flex-1">
+                                  <SearchHighlight 
+                                    text={productName} 
+                                    highlight={searchQuery} 
+                                    className="text-sm font-semibold text-gray-900"
+                                  />
+                                </h3>
+                                {/* Out of Stock Badge for list view */}
+                                {(!product.inStock || product.stockQuantity <= 0 || !product.stockQuantity) && (
+                                  <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0">
+                                    Out of Stock
+                                  </div>
+                                )}
+                              </div>
 
                               {/* Price - Prominent */}
                               <div className="flex items-center gap-2 mb-1">

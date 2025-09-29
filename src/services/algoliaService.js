@@ -31,6 +31,8 @@ const buildAlgoliaFilters = (selectedCategory, selectedPrice) => {
   // Price filter - handle numeric price values properly
   if (selectedPrice && selectedPrice !== 'All Price') {
     console.log('🔍 AlgoliaService: Processing price filter:', selectedPrice);
+    
+    // Handle predefined price ranges
     if (selectedPrice === '₦0.00 - 9,999.99') {
       filters.push('price:0 TO 9999.99');
     } else if (selectedPrice === '₦10,000.00 - 19,999.99') {
@@ -41,7 +43,20 @@ const buildAlgoliaFilters = (selectedCategory, selectedPrice) => {
       filters.push('price:30000 TO 39999.99');
     } else if (selectedPrice === '₦40,000.00+') {
       filters.push('price >= 40000');
+    } 
+    // Handle custom price ranges from slider
+    else if (selectedPrice.includes('+')) {
+      // Handle "₦X,XXX+" format
+      const minPrice = parseInt(selectedPrice.replace(/[₦,]/g, ''));
+      filters.push(`price >= ${minPrice}`);
+    } else if (selectedPrice.includes(' - ')) {
+      // Handle "₦X,XXX - ₦Y,YYY" format
+      const [minStr, maxStr] = selectedPrice.split(' - ');
+      const minPrice = parseInt(minStr.replace(/[₦,]/g, ''));
+      const maxPrice = parseInt(maxStr.replace(/[₦,]/g, ''));
+      filters.push(`price:${minPrice} TO ${maxPrice}`);
     }
+    
     console.log('🔍 AlgoliaService: Added price filter:', filters[filters.length - 1]);
   }
   
