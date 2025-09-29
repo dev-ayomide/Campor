@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useCart } from '../../contexts/CartContext';
-import { WishlistSkeleton } from '../../components/common';
+import { WishlistSkeleton, ConfirmationModal } from '../../components/common';
 import WishlistButton from '../../components/wishlist/WishlistButton';
 import AddToCartButton from '../../components/cart/AddToCartButton';
 import { Heart, Trash2 } from 'lucide-react';
@@ -15,12 +15,58 @@ export default function WishlistPage() {
   const { wishlist, loading, error, removeProductFromWishlist } = useWishlist();
   const { addProductToCart } = useCart();
   const isSignedIn = !!user;
+  
+  // Modal and notification states
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Yes',
+    confirmButtonColor: 'red'
+  });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const handleRemoveFromWishlist = async (productId) => {
+  // Auto-dismiss success message
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  const handleRemoveFromWishlist = (productId) => {
+    // Find the product to get its name
+    const item = wishlist.find(item => {
+      const product = item.product || item;
+      return (product.id || item.productId) === productId;
+    });
+    
+    const product = item?.product || item;
+    const productName = product?.name || 'this item';
+    
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Remove from Wishlist',
+      message: `Are you sure you want to remove "${productName}" from your wishlist?`,
+      onConfirm: () => confirmRemoveFromWishlist(productId),
+      confirmText: 'Remove',
+      confirmButtonColor: 'red'
+    });
+  };
+
+  const confirmRemoveFromWishlist = async (productId) => {
     try {
+      setActionLoading(true);
       await removeProductFromWishlist(productId);
+      setSuccessMessage('Item removed from wishlist successfully');
     } catch (error) {
       console.error('Failed to remove from wishlist:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -172,6 +218,47 @@ export default function WishlistPage() {
             </div>
           )}
         </>
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          confirmText={confirmationModal.confirmText}
+          confirmButtonColor={confirmationModal.confirmButtonColor}
+        />
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{successMessage}</span>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="ml-2 text-green-600 hover:text-green-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Action Loading Overlay */}
+        {actionLoading && (
+          <div className="fixed inset-0 z-40 bg-black bg-opacity-25 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 flex items-center gap-3">
+              <svg className="w-5 h-5 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-gray-700">Processing...</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment } from '../../services/paymentsService';
 import { getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
-import { CartSkeleton, ChatIcon } from '../../components/common';
+import { CartSkeleton, ChatIcon, ConfirmationModal } from '../../components/common';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 const productImage = '/product.png';
 const profileImage = '/profile.png';
@@ -28,6 +28,28 @@ export default function CartPage() {
   const isSignedIn = !!user;
   const [fixingCart, setFixingCart] = useState(false);
   
+  // Modal and notification states
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Yes',
+    confirmButtonColor: 'red'
+  });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Auto-dismiss success message
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+  
   // Use cart data from context (already grouped by seller)
   const groupedItems = cart || [];
   const cartNeedsFixing = needsFixing();
@@ -48,15 +70,41 @@ export default function CartPage() {
     }
   };
 
-  const removeItem = async (itemId, event) => {
+  const removeItem = (itemId, event) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
+    
+    // Find the item to get its name
+    let itemName = 'this item';
+    for (const group of groupedItems) {
+      const item = group.items.find(i => i.id === itemId);
+      if (item) {
+        itemName = item.product?.name || 'this item';
+        break;
+      }
+    }
+    
+    setConfirmationModal({
+      isOpen: true,
+      title: 'Remove Item',
+      message: `Are you sure you want to remove "${itemName}" from your cart?`,
+      onConfirm: () => confirmRemoveItem(itemId),
+      confirmText: 'Remove',
+      confirmButtonColor: 'red'
+    });
+  };
+
+  const confirmRemoveItem = async (itemId) => {
     try {
+      setActionLoading(true);
       await removeItemFromCart(itemId);
+      setSuccessMessage('Item removed from cart successfully');
     } catch (error) {
       console.error('Failed to remove item:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -119,6 +167,18 @@ export default function CartPage() {
     } catch (e) {
       console.error('Failed to initiate payment', e);
       alert(e.message || 'Failed to initiate payment');
+    }
+  };
+
+  const confirmClearCart = async () => {
+    try {
+      setActionLoading(true);
+      await clearUserCart();
+      setSuccessMessage('Cart cleared successfully');
+    } catch (error) {
+      console.error('Failed to clear cart:', error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -445,16 +505,17 @@ export default function CartPage() {
 
               <button 
                 type="button"
-                onClick={async (e) => {
+                onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (window.confirm('Are you sure you want to clear your cart?')) {
-                    try {
-                      await clearUserCart();
-                    } catch (error) {
-                      console.error('Failed to clear cart:', error);
-                    }
-                  }
+                  setConfirmationModal({
+                    isOpen: true,
+                    title: 'Clear Cart',
+                    message: `Are you sure you want to clear your entire cart? This will remove all ${getTotalItems()} items.`,
+                    onConfirm: () => confirmClearCart(),
+                    confirmText: 'Clear Cart',
+                    confirmButtonColor: 'red'
+                  });
                 }}
                 className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
               >
@@ -467,6 +528,47 @@ export default function CartPage() {
         </div>
           )}
         </>
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          confirmText={confirmationModal.confirmText}
+          confirmButtonColor={confirmationModal.confirmButtonColor}
+        />
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{successMessage}</span>
+            <button
+              onClick={() => setSuccessMessage('')}
+              className="ml-2 text-green-600 hover:text-green-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Action Loading Overlay */}
+        {actionLoading && (
+          <div className="fixed inset-0 z-40 bg-black bg-opacity-25 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 flex items-center gap-3">
+              <svg className="w-5 h-5 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="text-gray-700">Processing...</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
