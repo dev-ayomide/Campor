@@ -435,8 +435,8 @@ export async function getSellerProducts(sellerId, retryCount = 0) {
       // Use the products endpoint - this returns ALL products regardless of status
       const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
       
-      // The response should be an array of products directly
-      const products = Array.isArray(response.data) ? response.data : [];
+      // Handle paginated response structure
+      const products = response.data?.products || response.data || [];
       
       return products;
     } catch (error) {
@@ -487,7 +487,8 @@ export async function getProductById(productId) {
     // Get seller products with full details
     const productsResponse = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/${sellerId}/products`);
     
-    const products = Array.isArray(productsResponse.data) ? productsResponse.data : [];
+    // Handle paginated response structure
+    const products = productsResponse.data?.products || productsResponse.data || [];
     
     // Find the specific product
     const product = products.find(p => p.id === productId);
@@ -1064,7 +1065,9 @@ export const getSellerOrders = async (sellerId, retryCount = 0) => {
       
       const response = await api.get(`/orders/${sellerId}/seller`);
 
-      return response.data;
+      // Handle paginated response structure
+      const orders = response.data?.orders || response.data || [];
+      return orders;
     } catch (error) {
 
 

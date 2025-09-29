@@ -20,9 +20,10 @@ export async function getUserOrders() {
   try {
     const response = await api.get(API_ENDPOINTS.ORDERS.USER);
     const payload = response.data;
-    // Support both shapes: Array or { data: Array }
+    // Support multiple response shapes: Array, { data: Array }, or { orders: Array }
     if (Array.isArray(payload)) return payload;
     if (payload && Array.isArray(payload.data)) return payload.data;
+    if (payload && Array.isArray(payload.orders)) return payload.orders;
     return [];
   } catch (error) {
     if (error.response?.status === 401) {
@@ -38,9 +39,10 @@ export async function getSellerOrders(sellerId) {
     const response = await api.get(`/orders/${sellerId}/seller`);
     
     const payload = response.data;
-    // Support both shapes: Array or { data: Array }
+    // Support multiple response shapes: Array, { data: Array }, or { orders: Array }
     if (Array.isArray(payload)) return payload;
     if (payload && Array.isArray(payload.data)) return payload.data;
+    if (payload && Array.isArray(payload.orders)) return payload.orders;
     return [];
   } catch (error) {
     if (error.response?.status === 401) {
