@@ -418,7 +418,7 @@ export default function MarketplacePage() {
           <div className="absolute inset-0 bg-black/20"></div>
         </div>
         
-        <div className="relative z-10 w-full px-4 py-8 lg:py-12">
+        <div className="relative z-10 w-full px-4 py-14 sm:py-16 md:py-20 lg:py-20 xl:py-24">
           <div className="text-center">
             {/* Full Width Search Bar */}
             <div className="w-full mx-auto px-2 sm:max-w-5xl sm:px-6">

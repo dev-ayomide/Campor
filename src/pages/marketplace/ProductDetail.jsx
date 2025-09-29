@@ -305,7 +305,7 @@ export default function ProductDetailPage() {
                 )}
                 
                 {/* Loading Overlay */}
-                {isTransitioning && (
+                {isTransitioning && !isSwipeActive && (
                   <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                   </div>
