@@ -32,15 +32,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear stored auth data
-      localStorage.removeItem('campor_token');
-      localStorage.removeItem('campor_user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Don't redirect if this is a login attempt - let the login form handle the error
+      const isLoginAttempt = error.config?.url?.includes('/auth/login') || 
+                            error.config?.url?.includes('/login');
       
-      // Redirect to login if not already there
-      if (window.location.pathname !== '/auth') {
-        window.location.href = '/auth';
+      if (!isLoginAttempt) {
+        // Clear stored auth data
+        localStorage.removeItem('campor_token');
+        localStorage.removeItem('campor_user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect to login if not already there
+        if (window.location.pathname !== '/auth') {
+          window.location.href = '/auth';
+        }
       }
     }
     return Promise.reject(error);

@@ -165,33 +165,58 @@ export default function ProductDetailPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [product?.imageUrls, isTransitioning]);
 
-  // Touch/swipe support
+  // Enhanced touch/swipe support
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [swipeDirection, setSwipeDirection] = useState(null);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
 
-  const minSwipeDistance = 50;
+  const minSwipeDistance = 30; // Reduced for more responsive swiping
+  const maxSwipeDistance = 200; // Prevent accidental swipes
 
   const onTouchStart = (e) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    setSwipeDirection(null);
+    setIsSwipeActive(true);
   };
 
   const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    if (!touchStart) return;
+    
+    const currentTouch = e.targetTouches[0].clientX;
+    setTouchEnd(currentTouch);
+    
+    const distance = touchStart - currentTouch;
+    
+    // Show visual feedback for swipe direction
+    if (Math.abs(distance) > 10) {
+      setSwipeDirection(distance > 0 ? 'left' : 'right');
+    }
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) {
+      setIsSwipeActive(false);
+      setSwipeDirection(null);
+      return;
+    }
     
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    const isLeftSwipe = distance > minSwipeDistance && distance < maxSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance && distance > -maxSwipeDistance;
 
     if (isLeftSwipe) {
       handleNextImage();
     } else if (isRightSwipe) {
       handlePrevImage();
     }
+    
+    // Reset swipe state
+    setIsSwipeActive(false);
+    setSwipeDirection(null);
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   const handleQuantityChange = (change) => {
@@ -263,7 +288,7 @@ export default function ProductDetailPage() {
             {/* Main Image Container */}
             <div className="relative group">
               <div 
-                className="relative aspect-square bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100"
+                className="relative aspect-square bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 cursor-grab active:cursor-grabbing"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -273,15 +298,32 @@ export default function ProductDetailPage() {
                   alt={product.name}
                   className={`w-full h-full object-cover transition-all duration-300 ${
                     isTransitioning ? 'opacity-70 scale-105' : 'opacity-100 scale-100'
-                  }`}
+                  } ${isSwipeActive ? 'select-none' : ''}`}
+                  draggable={false}
                 />
                 
-                
+                {/* Swipe Direction Indicator */}
+                {isSwipeActive && swipeDirection && (
+                  <div className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 transition-opacity duration-200`}>
+                    <div className={`text-white text-2xl font-bold ${
+                      swipeDirection === 'left' ? 'transform -translate-x-4' : 'transform translate-x-4'
+                    }`}>
+                      {swipeDirection === 'left' ? '→' : '←'}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Loading Overlay */}
                 {isTransitioning && (
                   <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+                  </div>
+                )}
+                
+                {/* Swipe Hint for Mobile */}
+                {product.imageUrls && product.imageUrls.length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Swipe to navigate
                   </div>
                 )}
               </div>
