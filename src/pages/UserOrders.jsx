@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import { useAuth } from '../context/AuthContext';
 import { getUserOrders } from '../services/ordersService';
-import { OrderItemSkeleton } from '../components/common';
+import { OrderItemSkeleton, Pagination } from '../components/common';
 import { Eye } from 'lucide-react';
 const productImage = '/product.png';
 
@@ -14,6 +14,13 @@ export default function UserOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const isSignedIn = !!user;
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    itemsPerPage: 10
+  });
 
   const handleViewOrderDetails = (order) => {
     navigate(`/orders/${order.id}`);
@@ -43,8 +50,32 @@ export default function UserOrders() {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        const ordersData = await getUserOrders();
-        setOrders(ordersData || []);
+        const response = await getUserOrders();
+        
+        // Handle both array response and paginated response
+        if (Array.isArray(response)) {
+          setOrders(response);
+          // Calculate pagination for local data
+          const totalPages = Math.ceil(response.length / pagination.itemsPerPage);
+          setPagination(prev => ({
+            ...prev,
+            totalPages,
+            totalItems: response.length
+          }));
+        } else if (response?.orders) {
+          setOrders(response.orders);
+          // Update pagination with API data if available
+          if (response.pagination) {
+            setPagination(prev => ({
+              ...prev,
+              totalPages: response.pagination.totalPages,
+              totalItems: response.pagination.totalItems,
+              itemsPerPage: response.pagination.itemsPerPage
+            }));
+          }
+        } else {
+          setOrders([]);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -55,7 +86,19 @@ export default function UserOrders() {
     if (user) {
       fetchOrders();
     }
-  }, [user]);
+  }, [user, pagination.itemsPerPage]);
+
+  // Get paginated orders
+  const getPaginatedOrders = () => {
+    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+    const endIndex = startIndex + pagination.itemsPerPage;
+    return orders.slice(startIndex, endIndex);
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
 
   return (
     <MainLayout>
@@ -201,7 +244,7 @@ export default function UserOrders() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map((order) => (
+                      {getPaginatedOrders().map((order) => (
                         <tr key={order.id} className="border-b border-gray-100 align-top">
                           <td className="py-6">
                             <div className="flex flex-col">
@@ -250,7 +293,7 @@ export default function UserOrders() {
                 
                 {/* Mobile Card View */}
                 <div className="md:hidden space-y-4">
-                  {orders.map((order) => (
+                  {getPaginatedOrders().map((order) => (
                     <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                       <div className="flex justify-between items-start mb-3">
                         <div>
@@ -300,6 +343,16 @@ export default function UserOrders() {
                     </div>
                   ))}
                 </div>
+                
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <Pagination
+                    currentPage={pagination.currentPage}
+                    totalPages={pagination.totalPages}
+                    onPageChange={handlePageChange}
+                    className="mt-8"
+                  />
+                )}
               </div>
             )}
           </>

@@ -31,3 +31,4 @@ export {
 } from './SkeletonLoader';
 export { default as OrderDetailsModal } from './OrderDetailsModal';
 export { default as PriceRangeSlider } from './PriceRangeSlider';
+export { default as Pagination } from './Pagination';

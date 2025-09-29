@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerOrders } from '../../services/ordersService';
-import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter, ExportOptionsModal } from '../../components/common';
+import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter, ExportOptionsModal, Pagination } from '../../components/common';
 import { useChat } from '../../contexts/ChatContext';
 import { chatApiService } from '../../services/chatApiService';
 import * as XLSX from 'xlsx';
@@ -21,6 +21,13 @@ export default function SellerOrdersPage() {
   const [exportModal, setExportModal] = useState({ isOpen: false });
   const [exportLoading, setExportLoading] = useState(false);
   const [exportSuccess, setExportSuccess] = useState('');
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    itemsPerPage: 10
+  });
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -78,7 +85,27 @@ export default function SellerOrdersPage() {
     }
 
     setFilteredOrders(filtered);
-  }, [orders, searchTerm, statusFilter]);
+    
+    // Update pagination when filtered orders change
+    const totalPages = Math.ceil(filtered.length / pagination.itemsPerPage);
+    setPagination(prev => ({ 
+      ...prev, 
+      totalPages,
+      currentPage: 1 // Reset to first page when filters change
+    }));
+  }, [orders, searchTerm, statusFilter, pagination.itemsPerPage]);
+
+  // Get paginated orders
+  const getPaginatedOrders = () => {
+    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+    const endIndex = startIndex + pagination.itemsPerPage;
+    return filteredOrders.slice(startIndex, endIndex);
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
 
   const handleMessageCustomer = async (orderSeller) => {
     try {
@@ -476,7 +503,7 @@ export default function SellerOrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                      {filteredOrders.map((orderSeller) => (
+                      {getPaginatedOrders().map((orderSeller) => (
                   <tr key={orderSeller.id} className="hover:bg-gray-50">
                     <td className="py-4 px-6">
                       <span className="font-medium text-gray-900">{orderSeller.order?.orderCode || orderSeller.orderId}</span>
@@ -577,27 +604,14 @@ export default function SellerOrdersPage() {
               )}
 
         {/* Pagination */}
-        <div className="flex items-center justify-center mt-8">
-          <nav className="flex items-center space-x-1">
-            <button className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <button className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg">1</button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">2</button>
-            <span className="px-3 py-2 text-sm text-gray-500">...</span>
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">9</button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">10</button>
-            
-            <button className="p-2 text-gray-400 hover:text-gray-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </nav>
-        </div>
+        {filteredOrders.length > pagination.itemsPerPage && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+            className="mt-8"
+          />
+        )}
             </div>
           </div>
         )}

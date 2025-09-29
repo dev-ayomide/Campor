@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../products';
-import { ProductGridSkeleton } from '../common';
+import { ProductGridSkeleton, Pagination } from '../common';
 
 export default function SearchResults({ 
   products = [], 
@@ -214,39 +214,12 @@ export default function SearchResults({
       </div>
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2">
-          <button
-            onClick={() => onPageChange(pagination.currentPage - 1)}
-            disabled={pagination.currentPage <= 1}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200"
-          >
-            Previous
-          </button>
-          
-          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => onPageChange(page)}
-              className={`px-3 py-2 text-sm border rounded-md transition-colors duration-200 ${
-                page === pagination.currentPage
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-          
-          <button
-            onClick={() => onPageChange(pagination.currentPage + 1)}
-            disabled={pagination.currentPage >= pagination.totalPages}
-            className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors duration-200"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <Pagination
+        currentPage={pagination.currentPage || 1}
+        totalPages={pagination.totalPages || 1}
+        onPageChange={onPageChange}
+        className="mt-8"
+      />
     </div>
   );
 }

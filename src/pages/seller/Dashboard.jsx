@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerCatalogue, getSellerOrders, getSellerProducts } from '../../services/authService';
-import { SellerDashboardSkeleton } from '../../components/common';
+import { SellerDashboardSkeleton, Pagination } from '../../components/common';
 
 export default function SellerDashboardPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -13,6 +13,18 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [catalogueLinkCopied, setCatalogueLinkCopied] = useState(false);
+  
+  // Pagination states for dashboard sections
+  const [ordersPagination, setOrdersPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    itemsPerPage: 5
+  });
+  const [productsPagination, setProductsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    itemsPerPage: 4
+  });
 
   useEffect(() => {
     const fetchSellerData = async () => {
@@ -84,8 +96,38 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
   // Calculate unique customers (unique userIds) - use the same pattern as Orders page
   const uniqueCustomers = new Set(orders.map(orderSeller => orderSeller.order?.user?.id || orderSeller.order?.userId)).size;
   
-  // Get recent orders (last 5)
-  const recentOrders = orders.slice(0, 5);
+  // Update pagination when data changes
+  useEffect(() => {
+    const ordersTotalPages = Math.ceil(orders.length / ordersPagination.itemsPerPage);
+    setOrdersPagination(prev => ({ ...prev, totalPages: ordersTotalPages }));
+    
+    const productsTotalPages = Math.ceil(products.length / productsPagination.itemsPerPage);
+    setProductsPagination(prev => ({ ...prev, totalPages: productsTotalPages }));
+  }, [orders.length, products.length]);
+
+  // Get paginated orders
+  const getPaginatedOrders = () => {
+    const startIndex = (ordersPagination.currentPage - 1) * ordersPagination.itemsPerPage;
+    const endIndex = startIndex + ordersPagination.itemsPerPage;
+    return orders.slice(startIndex, endIndex);
+  };
+
+  // Get paginated products
+  const getPaginatedProducts = () => {
+    const startIndex = (productsPagination.currentPage - 1) * productsPagination.itemsPerPage;
+    const endIndex = startIndex + productsPagination.itemsPerPage;
+    return products.slice(startIndex, endIndex);
+  };
+
+  // Handle orders pagination
+  const handleOrdersPageChange = (page) => {
+    setOrdersPagination(prev => ({ ...prev, currentPage: page }));
+  };
+
+  // Handle products pagination
+  const handleProductsPageChange = (page) => {
+    setProductsPagination(prev => ({ ...prev, currentPage: page }));
+  };
   
   // Get status color for orders - use same pattern as Orders page
   const getStatusColor = (status) => {
@@ -315,9 +357,9 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
           {/* Recent Orders */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Orders</h3>
-            {recentOrders.length > 0 ? (
+            {orders.length > 0 ? (
               <div className="space-y-3">
-                {recentOrders.map((orderSeller) => (
+                {getPaginatedOrders().map((orderSeller) => (
                   <div key={orderSeller.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -347,6 +389,17 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 <p className="text-sm text-gray-400">Your customer orders will appear here</p>
               </div>
             )}
+            
+            {/* Orders Pagination */}
+            {orders.length > ordersPagination.itemsPerPage && (
+              <Pagination
+                currentPage={ordersPagination.currentPage}
+                totalPages={ordersPagination.totalPages}
+                onPageChange={handleOrdersPageChange}
+                className="mt-4"
+              />
+            )}
+            
             <div className="mt-6">
               <Link 
                 to="/seller/orders"
@@ -362,7 +415,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Your Products</h3>
             {products.length > 0 ? (
             <div className="space-y-4">
-                {products.slice(0, 4).map((product) => (
+                {getPaginatedProducts().map((product) => (
                   <div key={product.id} className="flex items-center justify-between">
                 <div className="flex items-center">
                       <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3 overflow-hidden">
@@ -396,8 +449,19 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
                 </svg>
                 <p className="text-gray-500 mb-4">No products yet</p>
                 <p className="text-sm text-gray-400">Start by adding your first product</p>
-                </div>
+                  </div>
             )}
+            
+            {/* Products Pagination */}
+            {products.length > productsPagination.itemsPerPage && (
+              <Pagination
+                currentPage={productsPagination.currentPage}
+                totalPages={productsPagination.totalPages}
+                onPageChange={handleProductsPageChange}
+                className="mt-4"
+              />
+            )}
+            
             <div className="mt-6">
               <Link 
                 to="/seller/products/add"

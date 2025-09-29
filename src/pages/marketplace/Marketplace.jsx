@@ -18,7 +18,7 @@ import filterIcon from '../../../public/filter.svg';
 import SearchHighlight from '../../components/search/SearchHighlight';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
-import { ProductGridSkeleton, CategoryListSkeleton, PriceRangeSlider } from '../../components/common';
+import { ProductGridSkeleton, CategoryListSkeleton, PriceRangeSlider, Pagination } from '../../components/common';
 
 export default function MarketplacePage() {
   const { user, token } = useContext(AuthContext);
@@ -1106,52 +1106,12 @@ export default function MarketplacePage() {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-center mt-8">
-              <nav className="flex items-center gap-2">
-                <button 
-                  onClick={() => fetchProducts(pagination.currentPage - 1)}
-                  disabled={pagination.currentPage <= 1}
-                  className={`px-3 py-2 transition-colors ${
-                    pagination.currentPage <= 1 
-                      ? 'text-gray-300 cursor-not-allowed' 
-                      : 'text-gray-600 hover:text-gray-700'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                {/* Generate page numbers based on real pagination */}
-                {Array.from({ length: pagination.totalPages }, (_, index) => index + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => fetchProducts(page)}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      page === pagination.currentPage
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                
-                <button 
-                  onClick={() => fetchProducts(pagination.currentPage + 1)}
-                  disabled={pagination.currentPage >= pagination.totalPages}
-                  className={`px-3 py-2 transition-colors ${
-                    pagination.currentPage >= pagination.totalPages 
-                      ? 'text-gray-300 cursor-not-allowed' 
-                      : 'text-gray-600 hover:text-gray-700'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </nav>
-            </div>
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              onPageChange={fetchProducts}
+              className="mt-8"
+            />
           </main>
         </div>
       </div>

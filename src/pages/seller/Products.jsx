@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerProducts, deleteProduct, updateProductStatus, publishProduct, unpublishProduct } from '../../services/authService';
-import { SellerDashboardSkeleton, Breadcrumb, MobileSearchFilter, ConfirmationModal } from '../../components/common';
+import { SellerDashboardSkeleton, Breadcrumb, MobileSearchFilter, ConfirmationModal, Pagination } from '../../components/common';
 
 export default function SellerProductsPage({ toggleMobileMenu }) {
   const { user } = useAuth();
@@ -14,6 +14,13 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    itemsPerPage: 12
+  });
   
   // Modal and notification states
   const [confirmationModal, setConfirmationModal] = useState({
@@ -53,8 +60,25 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
           return;
         }
         
-        const productsData = await getSellerProducts(user.seller.id);
-        setProducts(productsData || []);
+        const response = await getSellerProducts(user.seller.id);
+        
+        // Handle both array response and paginated response
+        if (Array.isArray(response)) {
+          setProducts(response);
+        } else if (response?.products) {
+          setProducts(response.products);
+          // Update pagination with API data if available
+          if (response.pagination) {
+            setPagination(prev => ({
+              ...prev,
+              totalPages: response.pagination.totalPages,
+              totalItems: response.pagination.totalItems,
+              itemsPerPage: response.pagination.itemsPerPage
+            }));
+          }
+        } else {
+          setProducts([]);
+        }
         
       } catch (err) {
         setError(err.message);
@@ -85,7 +109,30 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
     }
 
     setFilteredProducts(filtered);
-  }, [products, searchTerm, statusFilter]);
+    
+    // Only update pagination if we don't have API pagination data
+    // If we have API pagination, use it as-is
+    if (!pagination.totalItems || pagination.totalItems === 0) {
+      const totalPages = Math.ceil(filtered.length / pagination.itemsPerPage);
+      setPagination(prev => ({ 
+        ...prev, 
+        totalPages,
+        currentPage: 1 // Reset to first page when filters change
+      }));
+    }
+  }, [products, searchTerm, statusFilter, pagination.itemsPerPage]);
+
+  // Get paginated products
+  const getPaginatedProducts = () => {
+    const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+    const endIndex = startIndex + pagination.itemsPerPage;
+    return filteredProducts.slice(startIndex, endIndex);
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
+  };
 
   const handleDeleteProduct = (productId) => {
     const product = products.find(p => p.id === productId);
@@ -430,7 +477,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                 </tr>
               </thead>
                         <tbody>
-                          {filteredProducts.map((product) => {
+                          {getPaginatedProducts().map((product) => {
                             const status = getProductStatus(product);
                             const sales = getSalesCount(product);
                             return (
@@ -530,6 +577,16 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                           })}
               </tbody>
             </table>
+            
+            {/* Pagination for List View */}
+            {pagination.totalPages > 1 && (
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+                className="mt-8"
+              />
+            )}
           </div>
                   )}
 
@@ -537,7 +594,7 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                   {viewMode === 'grid' && (
                   <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {filteredProducts.map((product) => {
+                      {getPaginatedProducts().map((product) => {
                         const status = getProductStatus(product);
                         const sales = getSalesCount(product);
                         return (
@@ -741,6 +798,16 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
                         );
                       })}
                     </div>
+                    
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                      <Pagination
+                        currentPage={pagination.currentPage}
+                        totalPages={pagination.totalPages}
+                        onPageChange={handlePageChange}
+                        className="mt-8"
+                      />
+                    )}
                   </div>
                 )}
 
@@ -770,28 +837,6 @@ export default function SellerProductsPage({ toggleMobileMenu }) {
               </div>
               )}
 
-        {/* Pagination */}
-              <div className="flex items-center justify-center mt-8">
-          <nav className="flex items-center space-x-1">
-            <button className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <button className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg">1</button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">2</button>
-            <span className="px-3 py-2 text-sm text-gray-500">...</span>
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">9</button>
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">10</button>
-            
-            <button className="p-2 text-gray-400 hover:text-gray-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </nav>
-        </div>
             </div>
           </div>
         )}
