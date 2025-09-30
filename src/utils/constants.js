@@ -53,6 +53,11 @@ export const API_ENDPOINTS = {
     INITIATE: '/payments/initiate',
     VERIFY: '/payments/verify',
   },
+  NEWSLETTER: {
+    SUBSCRIBE: '/users/newsletter/subscribe',
+    UNSUBSCRIBE: '/users/newsletter/unsubscribe',
+    STATUS: '/users/newsletter/status',
+  },
   WISHLIST: {
     ADD: '/wishlist/add',
     GET: '/wishlist',

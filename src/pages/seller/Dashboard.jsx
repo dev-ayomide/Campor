@@ -304,7 +304,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
         </div>
 
         {/* Catalogue Sharing Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-[#2563EB] rounded-xl p-6 mb-8">
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Share Your Catalogue</h3>

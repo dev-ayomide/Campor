@@ -1,15 +1,30 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { subscribeToNewsletter } from '../../services/newsletterService';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const { isSeller } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle newsletter subscription
-    setEmail('');
+    if (isSubmitting) return;
+    setSuccessMessage('');
+    setErrorMessage('');
+    try {
+      setIsSubmitting(true);
+      await subscribeToNewsletter(email.trim());
+      setSuccessMessage('Thanks for subscribing!');
+      setEmail('');
+    } catch (err) {
+      setErrorMessage('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,12 +60,23 @@ export default function Footer() {
               </div>
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-3 rounded-full font-medium transition-colors whitespace-nowrap"
+                disabled={isSubmitting}
+                className={`bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-3 rounded-full font-medium transition-colors whitespace-nowrap ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Get Started
+                {isSubmitting ? 'Subscribing...' : 'Get Started'}
               </button>
             </form>
           </div>
+          {(successMessage || errorMessage) && (
+            <div className="mt-4 w-full lg:w-auto text-center lg:text-right">
+              {successMessage && (
+                <p className="text-green-400 text-sm" role="status">{successMessage}</p>
+              )}
+              {errorMessage && (
+                <p className="text-red-400 text-sm" role="alert">{errorMessage}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Want to sell section - only show for non-sellers */}
