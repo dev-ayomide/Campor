@@ -181,7 +181,7 @@ export default function RegisterPage() {
           </div>
           <div className="text-sm">
             <label htmlFor="subscribe-newsletter" className="text-gray-700 cursor-pointer">
-              I'd love to receive updates about new features, campus events, and exclusive deals from Campor via email
+              I'd love to subscribe to Campor's newsletter to receive updates about new features, campus events, and exclusive deals from Campor via email
             </label>
           </div>
         </div>
