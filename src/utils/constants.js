@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     CATALOGUE: '/sellers',
     UPDATE: '/sellers',
     DELETE_PRODUCT: '/sellers',
+    INFO: '/sellers',
   },
   PRODUCTS: {
     ALL: '/products/all',

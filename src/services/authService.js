@@ -764,47 +764,17 @@ export async function updateProductInCatalogue(productId, productData) {
 export async function updateSellerInfo(sellerId, sellerData) {
   try {
     
-    // Create FormData for multipart/form-data request
-    const formData = new FormData();
+    // Prepare JSON payload for the API (not FormData)
+    const payload = {
+      catalogueName: sellerData.catalogueName,
+      storeDescription: sellerData.storeDescription,
+      phoneNumber: sellerData.phoneNumber,
+      whatsappNumber: sellerData.whatsappNumber,
+      location: sellerData.location,
+      catalogueCover: sellerData.catalogueCover
+    };
     
-    // Add fields that are being updated (only basic seller info, not bank details)
-    if (sellerData.catalogueName) {
-      formData.append('catalogueName', sellerData.catalogueName);
-    }
-    if (sellerData.storeDescription) {
-      formData.append('storeDescription', sellerData.storeDescription);
-    }
-    if (sellerData.phoneNumber) {
-      formData.append('phoneNumber', sellerData.phoneNumber);
-    }
-    if (sellerData.whatsappNumber) {
-      formData.append('whatsappNumber', sellerData.whatsappNumber);
-    }
-    if (sellerData.location) {
-      formData.append('location', sellerData.location);
-    }
-    
-    // Add catalogue cover if provided
-    if (sellerData.catalogueCover) {
-      formData.append('catalogueCover', sellerData.catalogueCover);
-    }
-    
-    // Create a new axios instance for multipart/form-data
-    const multipartApi = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 30000, // Longer timeout for file uploads
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    // Add auth token
-    const token = localStorage.getItem('campor_token') || localStorage.getItem('token');
-    if (token) {
-      multipartApi.defaults.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    const response = await multipartApi.put(`${API_ENDPOINTS.SELLER.UPDATE}/${sellerId}`, formData);
+    const response = await api.put(`${API_ENDPOINTS.SELLER.UPDATE}/${sellerId}`, payload);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to update seller information.');
@@ -828,6 +798,15 @@ export async function completeSellerOnboarding(sellerData) {
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to complete seller onboarding.');
+  }
+}
+
+export async function getSellerInfo(sellerId) {
+  try {
+    const response = await api.get(`${API_ENDPOINTS.SELLER.INFO}/${sellerId}/info`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch seller information.');
   }
 }
 

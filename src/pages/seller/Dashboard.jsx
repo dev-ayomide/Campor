@@ -316,7 +316,7 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex items-center gap-2 bg-white rounded-lg p-3 border border-gray-200 flex-1">
                 <code className="text-sm text-gray-700 flex-1 break-all">
-                  {window.location.origin}/seller/{user?.seller?.id}/catalogue
+                  {window.location.origin}/selandler/{user?.seller?.id}/catalogue
                 </code>
               </div>
               

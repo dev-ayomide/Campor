@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
-import { updateSellerInfo } from '../../services/authService';
+import { updateSellerInfo, getSellerInfo } from '../../services/authService';
 import { bankResolutionService } from '../../services/bankResolutionService';
 import { CatalogueCoverUpload, Breadcrumb } from '../../components/common';
 
@@ -19,6 +19,11 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [bankSearchTerm, setBankSearchTerm] = useState('');
   const debounceTimeoutRef = useRef(null);
+  
+  // Track initialization and dirty state to prevent overwriting user input
+  const initializedRef = useRef(false);
+  const [storeDirty, setStoreDirty] = useState(false);
+  const [paymentsDirty, setPaymentsDirty] = useState(false);
 
   // Store Info Form Data
   const [storeInfo, setStoreInfo] = useState({
@@ -38,35 +43,36 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
     accountName: ''
   });
 
+  // Initialize form state when user.seller becomes available
   useEffect(() => {
     if (user?.seller) {
-      // Update form state with the latest data from context
-      const newStoreInfo = {
-        catalogueCover: user.seller.catalogueCover || '',
-        catalogueName: user.seller.catalogueName || '',
-        storeDescription: user.seller.storeDescription || '',
-        phoneNumber: user.seller.phoneNumber || '',
-        whatsappNumber: user.seller.whatsappNumber || '',
-        location: user.seller.location || ''
-      };
+      // Only initialize if not dirty (user hasn't made changes) or if this is the first load
+      if (!storeDirty && !paymentsDirty) {
+        setStoreInfo({
+          catalogueCover: user.seller.catalogueCover || '',
+          catalogueName: user.seller.catalogueName || '',
+          storeDescription: user.seller.storeDescription || '',
+          phoneNumber: user.seller.phoneNumber || '',
+          whatsappNumber: user.seller.whatsappNumber || '',
+          location: user.seller.location || ''
+        });
 
-      const newPaymentInfo = {
-        bankName: user.seller.bankName || '',
-        bankCode: user.seller.bankCode || '',
-        accountNumber: user.seller.accountNumber || '',
-        accountName: user.seller.accountName || ''
-      };
-
-      // Always update the form state to ensure it reflects the latest data
-      setStoreInfo(newStoreInfo);
-      setPaymentInfo(newPaymentInfo);
-      
-      // Set account as verified if we already have account name
-      if (newPaymentInfo.accountName && newPaymentInfo.accountNumber && newPaymentInfo.bankCode) {
-        setAccountVerified(true);
+        setPaymentInfo({
+          bankName: user.seller.bankName || '',
+          bankCode: user.seller.bankCode || '',
+          accountNumber: user.seller.accountNumber || '',
+          accountName: user.seller.accountName || ''
+        });
+        
+        // Set account as verified if we already have account name
+        if (user.seller.accountName && user.seller.accountNumber && user.seller.bankCode) {
+          setAccountVerified(true);
+        }
       }
+      
+      initializedRef.current = true;
     }
-  }, [user?.seller]);
+  }, [user?.seller, storeDirty, paymentsDirty]); // Depend on seller data and dirty states
 
   // Cleanup debounce timeout on unmount
   useEffect(() => {
@@ -124,6 +130,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
   const handleStoreInfoChange = (e) => {
     const { name, value } = e.target;
+    setStoreDirty(true);
     setStoreInfo(prev => ({
       ...prev,
       [name]: value
@@ -132,6 +139,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
 
   const handlePaymentInfoChange = (e) => {
     const { name, value } = e.target;
+    setPaymentsDirty(true);
     
     if (name === 'bankName') {
       // Find the bank code when bank name is selected
@@ -154,6 +162,7 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
   };
 
   const handleCoverChange = (coverUrl) => {
+    setStoreDirty(true);
     setStoreInfo(prev => ({
       ...prev,
       catalogueCover: coverUrl
@@ -258,10 +267,9 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       // Update seller data in context with latest information
       try {
         await updateSellerData(user.seller.id);
-        
-        // Keep the form state with the updated values to prevent clearing
-        // The form state already has the correct values from the user input
+        setStoreDirty(false);
       } catch (contextError) {
+        console.error('Failed to refresh seller data:', contextError);
       }
       
     } catch (err) {
@@ -297,9 +305,14 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
       try {
         await updateSellerData(user.seller.id);
         
-        // Keep the form state with the updated values to prevent clearing
-        // The form state already has the correct values from the user input
+        // Update account verification status
+        if (paymentInfo.accountName && paymentInfo.accountNumber && paymentInfo.bankCode) {
+          setAccountVerified(true);
+        }
+        
+        setPaymentsDirty(false);
       } catch (contextError) {
+        console.error('Failed to refresh seller data:', contextError);
       }
       
     } catch (err) {

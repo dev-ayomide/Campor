@@ -195,25 +195,22 @@ export function AuthProvider({ children }) {
 
   const updateSellerData = async (sellerId) => {
     try {
-      // Since getSellerProfile might not work, let's use getSellerCatalogue
-      // which includes seller information and is known to work
-      const catalogueData = await authService.getSellerCatalogue(sellerId);
-
+      // Use the correct seller info endpoint
+      const sellerInfo = await authService.getSellerInfo(sellerId);
       
-      // Extract seller info from catalogue data - note: catalogueData has { seller: {...}, products: [...] } structure
-      const sellerData = catalogueData.seller;
       const sellerProfile = {
         id: sellerId,
-        catalogueName: sellerData.catalogueName,
-        storeDescription: sellerData.storeDescription,
-        cataloguePicture: sellerData.cataloguePicture || sellerData.catalogueCover, // Use catalogueCover as fallback
-        phoneNumber: sellerData.phoneNumber,
-        whatsappNumber: sellerData.whatsappNumber,
-        location: sellerData.location,
-        bankName: sellerData.bankName,
-        bankCode: sellerData.bankCode,
-        accountNumber: sellerData.accountNumber,
-        accountName: sellerData.accountName
+        catalogueName: sellerInfo.catalogueName,
+        storeDescription: sellerInfo.storeDescription,
+        catalogueCover: sellerInfo.catalogueCover,
+        cataloguePicture: sellerInfo.catalogueCover, // Map to cataloguePicture for backward compatibility
+        phoneNumber: sellerInfo.phoneNumber,
+        whatsappNumber: sellerInfo.whatsappNumber,
+        location: sellerInfo.location,
+        bankName: sellerInfo.bankName,
+        bankCode: sellerInfo.bankCode,
+        accountNumber: sellerInfo.accountNumber,
+        accountName: sellerInfo.accountName
       };
       
       // Update the user context with the new seller data
@@ -222,15 +219,14 @@ export function AuthProvider({ children }) {
           ...prevUser,
           seller: sellerProfile
         };
-
+        
         return updatedUser;
       });
       
       return sellerProfile;
     } catch (err) {
-
+      console.error('Failed to update seller data:', err);
       // Don't throw the error, just log it and continue
-
     }
   };
 
