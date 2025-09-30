@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isValidEmail, isValidPassword } from '../../utils/validators';
 import { PasswordInput, Modal } from '../../components/common';
+import { subscribeToNewsletter } from '../../services/newsletterService';
 import TermsAndConditions from './TermsAndConditions';
 
 export default function RegisterPage() {
@@ -12,6 +13,7 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState('');
   const [localErr, setLocalErr] = useState(null);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [subscribeToNewsletter, setSubscribeToNewsletter] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   const { register, loading } = useAuth();
@@ -29,6 +31,17 @@ export default function RegisterPage() {
 
     try {
       await register({ name: fullName, email, password });
+      
+      // Subscribe to newsletter if user opted in
+      if (subscribeToNewsletter) {
+        try {
+          await subscribeToNewsletter(email);
+        } catch (newsletterErr) {
+          // Don't fail registration if newsletter subscription fails
+          console.log('Newsletter subscription failed:', newsletterErr);
+        }
+      }
+      
       // Store email for verification
       localStorage.setItem('campor_verification_email', email);
       // after registration you might want to redirect to verify
@@ -152,6 +165,24 @@ export default function RegisterPage() {
             {localErr && !agreeToTerms && (
               <p className="text-xs text-red-500 mt-1">You must agree to the terms to continue</p>
             )}
+          </div>
+        </div>
+
+        {/* Newsletter Subscription Checkbox */}
+        <div className="flex items-start space-x-3">
+          <div className="flex items-center h-5">
+            <input
+              id="subscribe-newsletter"
+              type="checkbox"
+              checked={subscribeToNewsletter}
+              onChange={(e) => setSubscribeToNewsletter(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+          </div>
+          <div className="text-sm">
+            <label htmlFor="subscribe-newsletter" className="text-gray-700 cursor-pointer">
+              I'd love to receive updates about new features, campus events, and exclusive deals from Campor via email
+            </label>
           </div>
         </div>
 
