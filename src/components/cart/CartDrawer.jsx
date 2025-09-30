@@ -4,7 +4,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { initiatePayment, redirectToPayment } from '../../services/paymentService';
 import { X, Plus, Minus, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
-import { ShoppingBagIcon } from '../common';
+import { ShoppingBagIcon, CheckoutConfirmationModal } from '../common';
 import { calculatePaystackCharge, formatPrice } from '../../utils/constants';
 
 export default function CartDrawer({ isOpen, onClose }) {
@@ -27,6 +27,7 @@ export default function CartDrawer({ isOpen, onClose }) {
   const [updatingItem, setUpdatingItem] = useState(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [fixingCart, setFixingCart] = useState(false);
+  const [checkoutModal, setCheckoutModal] = useState({ isOpen: false });
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -66,7 +67,23 @@ export default function CartDrawer({ isOpen, onClose }) {
     }
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
+    if (!user || !user.email || !user.cart?.id) {
+        return;
+    }
+
+    if (cart.length === 0) {
+      return;
+    }
+
+    if (cartNeedsFixing) {
+      return;
+    }
+
+    setCheckoutModal({ isOpen: true });
+  };
+
+  const handleConfirmCheckout = async () => {
     if (!user || !user.email || !user.cart?.id) {
         return;
     }
@@ -79,15 +96,18 @@ export default function CartDrawer({ isOpen, onClose }) {
       setProcessingPayment(true);
       
       const { totalPrice } = getCartTotals();
+      const paystackCharge = calculatePaystackCharge(totalPrice);
+      const totalWithCharges = totalPrice + paystackCharge;
       
+      // Convert to kobo (multiply by 100) and round
+      const amountInKobo = Math.round(totalWithCharges * 100);
       
       // Initiate payment
       const paymentResponse = await initiatePayment(
         user.email,
-        totalPrice,
+        amountInKobo,
         user.cart.id
       );
-      
       
       // Redirect to payment URL
       if (paymentResponse.authorization_url) {
@@ -100,6 +120,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       alert(error.message || 'Failed to process checkout. Please try again.');
     } finally {
       setProcessingPayment(false);
+      setCheckoutModal({ isOpen: false });
     }
   };
 
@@ -368,13 +389,9 @@ export default function CartDrawer({ isOpen, onClose }) {
                   <span className="text-gray-600">Items ({totalItems})</span>
                   <span className="font-medium">{formatPrice(totalPrice)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Payment processing fee</span>
-                  <span className="font-medium">{formatPrice(getPaystackCharge())}</span>
-                </div>
                 <div className="flex justify-between text-lg font-semibold">
-                  <span>Total</span>
-                  <span>{formatPrice(getTotalWithCharges())}</span>
+                  <span>Subtotal</span>
+                  <span>{formatPrice(totalPrice)}</span>
                 </div>
               </div>
 
@@ -408,6 +425,16 @@ export default function CartDrawer({ isOpen, onClose }) {
           )}
         </div>
       </div>
+
+      {/* Checkout Confirmation Modal */}
+      <CheckoutConfirmationModal
+        isOpen={checkoutModal.isOpen}
+        onClose={() => setCheckoutModal({ isOpen: false })}
+        onConfirm={handleConfirmCheckout}
+        cartTotal={totalPrice}
+        totalItems={totalItems}
+        isProcessing={processingPayment}
+      />
     </div>
   );
 }

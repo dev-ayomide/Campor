@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { initiatePayment } from '../../services/paymentsService';
 import { getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
-import { CartSkeleton, ChatIcon, ConfirmationModal } from '../../components/common';
+import { CartSkeleton, ChatIcon, ConfirmationModal, CheckoutConfirmationModal } from '../../components/common';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { calculatePaystackCharge, formatPrice } from '../../utils/constants';
 const productImage = '/product.png';
@@ -40,6 +40,8 @@ export default function CartPage() {
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [checkoutModal, setCheckoutModal] = useState({ isOpen: false });
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   // Auto-dismiss success message
   useEffect(() => {
@@ -143,19 +145,30 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckoutAll = async () => {
+  const handleCheckoutAll = () => {
+    if (!isSignedIn) {
+      alert('Please sign in to continue');
+      return;
+    }
+    if (cartNeedsFixing) {
+      alert('Please fix cart issues before proceeding to checkout');
+      return;
+    }
+    setCheckoutModal({ isOpen: true });
+  };
+
+  const handleConfirmCheckout = async () => {
     try {
-      if (!isSignedIn) {
-        alert('Please sign in to continue');
-        return;
-      }
-      if (cartNeedsFixing) {
-        alert('Please fix cart issues before proceeding to checkout');
-        return;
-      }
+      setProcessingPayment(true);
       const totalAmountNaira = getTotalAmount();
-      const amountInKobo = Math.round((Number(totalAmountNaira) || 0) * 100);
+      const paystackCharge = calculatePaystackCharge(totalAmountNaira);
+      const totalWithCharges = totalAmountNaira + paystackCharge;
+      
+      // Convert to kobo (multiply by 100) and round
+      const amountInKobo = Math.round(totalWithCharges * 100);
+      
       if (amountInKobo <= 0) return;
+      
       const email = user?.email;
       const currentCartId = cartId;
       const res = await initiatePayment({ email, amount: amountInKobo, cartId: currentCartId });
@@ -167,6 +180,9 @@ export default function CartPage() {
       }
     } catch (e) {
       alert(e.message || 'Failed to initiate payment');
+    } finally {
+      setProcessingPayment(false);
+      setCheckoutModal({ isOpen: false });
     }
   };
 
@@ -480,15 +496,10 @@ export default function CartPage() {
                   <span className="text-blue-600">Campus pickup</span>
                 </div>
                 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Payment processing fee</span>
-                  <span className="font-medium text-gray-900">{formatPrice(getPaystackCharge())}</span>
-                </div>
-                
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between">
-                    <span className="text-base font-medium text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-gray-900">{formatPrice(getTotalWithCharges())}</span>
+                    <span className="text-base font-medium text-gray-900">Subtotal</span>
+                    <span className="text-lg font-bold text-gray-900">{formatPrice(getTotalAmount())}</span>
                   </div>
                 </div>
               </div>
@@ -531,6 +542,16 @@ export default function CartPage() {
         </div>
           )}
         </>
+
+        {/* Checkout Confirmation Modal */}
+        <CheckoutConfirmationModal
+          isOpen={checkoutModal.isOpen}
+          onClose={() => setCheckoutModal({ isOpen: false })}
+          onConfirm={handleConfirmCheckout}
+          cartTotal={getTotalAmount()}
+          totalItems={getTotalItems()}
+          isProcessing={processingPayment}
+        />
 
         {/* Confirmation Modal */}
         <ConfirmationModal
