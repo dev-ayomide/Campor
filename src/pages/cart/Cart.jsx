@@ -6,6 +6,7 @@ import { getSellerUserId, getSellerUserIdWithFallback } from '../../services/aut
 import { useCart } from '../../contexts/CartContext';
 import { CartSkeleton, ChatIcon, ConfirmationModal } from '../../components/common';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { calculatePaystackCharge, formatPrice } from '../../utils/constants';
 const productImage = '/product.png';
 const profileImage = '/profile.png';
 
@@ -118,8 +119,13 @@ export default function CartPage() {
     return getCartTotals().totalPrice;
   };
 
-  const formatPrice = (price) => {
-    return `₦${parseFloat(price || 0).toLocaleString()}`;
+  const getPaystackCharge = () => {
+    const totalAmount = getTotalAmount();
+    return calculatePaystackCharge(totalAmount);
+  };
+
+  const getTotalWithCharges = () => {
+    return getTotalAmount() + getPaystackCharge();
   };
 
   const handleCheckoutSeller = (sellerId) => {
@@ -474,10 +480,15 @@ export default function CartPage() {
                   <span className="text-blue-600">Campus pickup</span>
                 </div>
                 
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Payment processing fee</span>
+                  <span className="font-medium text-gray-900">{formatPrice(getPaystackCharge())}</span>
+                </div>
+                
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between">
                     <span className="text-base font-medium text-gray-900">Total</span>
-                    <span className="text-lg font-bold text-gray-900">{formatPrice(getTotalAmount())}</span>
+                    <span className="text-lg font-bold text-gray-900">{formatPrice(getTotalWithCharges())}</span>
                   </div>
                 </div>
               </div>
@@ -492,7 +503,7 @@ export default function CartPage() {
                 disabled={cartNeedsFixing}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {cartNeedsFixing ? 'Fix Cart Issues First' : 'Checkout All'}
+                {cartNeedsFixing ? 'Fix Cart Issues First' : 'Proceed to Checkout'}
               </button>
 
               <button 

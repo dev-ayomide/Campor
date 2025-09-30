@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { initiatePayment, redirectToPayment } from '../../services/paymentService';
 import { X, Plus, Minus, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ShoppingBagIcon } from '../common';
+import { calculatePaystackCharge, formatPrice } from '../../utils/constants';
 
 export default function CartDrawer({ isOpen, onClose }) {
   const { 
@@ -104,6 +105,14 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   const formatPrice = (price) => {
     return `₦${parseFloat(price).toLocaleString()}`;
+  };
+
+  const getPaystackCharge = () => {
+    return calculatePaystackCharge(totalPrice);
+  };
+
+  const getTotalWithCharges = () => {
+    return totalPrice + getPaystackCharge();
   };
 
   const { totalItems, totalPrice } = getCartTotals();
@@ -359,9 +368,13 @@ export default function CartDrawer({ isOpen, onClose }) {
                   <span className="text-gray-600">Items ({totalItems})</span>
                   <span className="font-medium">{formatPrice(totalPrice)}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Payment processing fee</span>
+                  <span className="font-medium">{formatPrice(getPaystackCharge())}</span>
+                </div>
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Total</span>
-                  <span>{formatPrice(totalPrice)}</span>
+                  <span>{formatPrice(getTotalWithCharges())}</span>
                 </div>
               </div>
 

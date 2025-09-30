@@ -71,3 +71,21 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: '/orders',
   }
 };
+
+// Paystack charge calculation
+export const calculatePaystackCharge = (amount) => {
+  // Paystack charges 1.5% + ₦100 for local transactions
+  // ₦100 fee is waived for transactions under ₦2,500
+  // Fees are capped at ₦2,000
+  
+  const percentageCharge = amount * 0.015; // 1.5%
+  const fixedCharge = amount < 2500 ? 0 : 100; // ₦100 waived for amounts under ₦2,500
+  const totalCharge = percentageCharge + fixedCharge;
+  
+  // Cap the charge at ₦2,000
+  return Math.min(totalCharge, 2000);
+};
+
+export const formatPrice = (price) => {
+  return `₦${parseFloat(price || 0).toLocaleString()}`;
+};
