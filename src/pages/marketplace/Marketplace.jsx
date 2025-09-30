@@ -1000,7 +1000,7 @@ export default function MarketplacePage() {
 
                               {/* Seller Info - Compact */}
                               <div 
-                                className="flex items-center gap-1 mb-2 hover:text-blue-600 transition-colors group cursor-pointer"
+                                className="flex items-center gap-1 mb-2 transition-colors group cursor-pointer"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigate(`/seller/${product.seller?.id}/catalogue`);
@@ -1014,12 +1014,12 @@ export default function MarketplacePage() {
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <span className="text-xs font-medium text-gray-600">
+                                    <span className="text-xs font-medium text-gray-600 group-hover:text-blue-600">
                                       {product.seller?.catalogueName?.charAt(0) || 'S'}
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
+                                <span className="text-xs text-blue-600 group-hover:text-blue-700 transition-colors">{product.seller?.catalogueName || 'Unknown Seller'}</span>
                               </div>
                             </div>
 
@@ -1064,7 +1064,7 @@ export default function MarketplacePage() {
 
                             {/* Seller Info */}
                             <div 
-                              className="flex items-center gap-1 mb-3 hover:text-blue-600 transition-colors group cursor-pointer"
+                              className="flex items-center gap-1 mb-3 transition-colors group cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigate(`/seller/${product.seller?.id}/catalogue`);
@@ -1078,12 +1078,12 @@ export default function MarketplacePage() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <span className="text-xs font-medium text-gray-600">
+                                  <span className="text-xs font-medium text-gray-600 group-hover:text-blue-600">
                                     {product.seller?.catalogueName?.charAt(0) || 'S'}
                                   </span>
                                 )}
                               </div>
-                              <span className="text-xs text-gray-600 group-hover:text-blue-600">{product.seller?.catalogueName || 'Unknown Seller'}</span>
+                              <span className="text-xs text-blue-600 group-hover:text-blue-700 transition-colors">{product.seller?.catalogueName || 'Unknown Seller'}</span>
                             </div>
 
                             {/* Action Buttons */}

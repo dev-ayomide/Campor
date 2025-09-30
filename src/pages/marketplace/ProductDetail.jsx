@@ -6,6 +6,7 @@ import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
 import { ProductDetailSkeleton } from '../../components/common';
 import { Star, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
+import ChatIcon from '../../components/common/ChatIcon';
 const productImage = '/product.png';
 const profileImage = '/profile.png';
 
@@ -386,41 +387,32 @@ export default function ProductDetailPage() {
 
             {/* Seller Info */}
             {product.seller && (
-              <div className="rounded-lg ">
+              <div className="rounded-lg">
                 <h3 className="text-sm font-medium text-gray-900 mb-4">About Seller</h3>
-                <div className="space-y-4">
-                  {/* Seller Info */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {(product.seller.user?.profilePicture || sellerProfilePicture) ? (
-                        <img 
-                          src={product.seller.user?.profilePicture || sellerProfilePicture} 
-                          alt={product.seller.catalogueName || 'Seller'} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-lg font-medium text-gray-600">
-                          {product.seller.catalogueName?.charAt(0) || 'S'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 text-base truncate">
-                        {product.seller.catalogueName || 'Unknown Seller'}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {(product.seller.user?.profilePicture || sellerProfilePicture) ? (
+                      <img 
+                        src={product.seller.user?.profilePicture || sellerProfilePicture} 
+                        alt={product.seller.catalogueName || 'Seller'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-lg font-medium text-gray-600">
+                        {product.seller.catalogueName?.charAt(0) || 'S'}
+                      </span>
+                    )}
                   </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Link 
                       to={`/seller/${product.seller.id}/catalogue`}
-                      className="flex-1 bg-white hover:bg-gray-50 text-gray-700 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border border-gray-300 text-center"
+                      className="font-medium text-blue-600 text-base hover:text-blue-700 transition-colors duration-200 cursor-pointer truncate"
+                      title={`View ${product.seller.catalogueName || 'Seller'}'s store`}
                     >
-                      View Store
+                      {product.seller.catalogueName || 'Unknown Seller'}
                     </Link>
                     <button 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                      className="flex-shrink-0 p-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                       onClick={async () => {
                         try {
                           // Get seller's user ID for chat with fallback
@@ -432,8 +424,9 @@ export default function ProductDetailPage() {
                           alert(`Unable to start chat: ${error.message}. Please try refreshing the page or contact support.`);
                         }
                       }}
+                      title={`Message ${product.seller.catalogueName || 'Seller'}`}
                     >
-                      Message {product.seller.catalogueName || 'Seller'}
+                      <ChatIcon className="w-5 h-5 text-white" />
                     </button>
                   </div>
                 </div>
