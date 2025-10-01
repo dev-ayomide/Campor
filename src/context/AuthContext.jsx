@@ -153,12 +153,18 @@ export function AuthProvider({ children }) {
   const completeSellersOnboarding = async (sellerData) => {
     try {
       // For the new seller registration API, sellerData is the response from registerSeller
+      // The API now returns a new token with updated role (SELLER)
+      if (sellerData.token) {
+        setToken(sellerData.token);
+      }
+      
       // Update user with seller information
       const updatedUser = { 
         ...user, 
         sellerCompleted: true, 
-        seller: sellerData, // sellerData is the full seller response from the API
-        isSeller: true // Add explicit seller flag
+        seller: sellerData.seller, // sellerData.seller contains the seller information
+        isSeller: true, // Add explicit seller flag
+        role: 'SELLER' // Update the role in user data as well
       };
       setUser(updatedUser);
 

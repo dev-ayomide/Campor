@@ -364,6 +364,25 @@ export async function testSellerEndpoint() {
 // Import bank verification service for bank code mapping
 import { getBankCode } from './bankVerificationService';
 
+export async function checkCatalogueNameAvailability(catalogueName) {
+  try {
+    const response = await api.get(API_ENDPOINTS.SELLER.CHECK_CATALOGUE_NAME, {
+      params: { catalogueName }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Invalid catalogue name');
+    } else if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    } else if (error.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    } else {
+      throw new Error(error.response?.data?.message || error.message || 'Failed to check catalogue name availability.');
+    }
+  }
+}
+
 export async function registerSeller(sellerData) {
   try {
     

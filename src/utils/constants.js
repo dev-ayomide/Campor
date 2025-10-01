@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
   },
   SELLER: {
     REGISTER: '/sellers/register',
+    CHECK_CATALOGUE_NAME: '/sellers/check-catalogue-name',
     ONBOARDING: '/seller/onboarding',
     PROFILE: '/seller/profile',
     CATALOGUE: '/sellers',

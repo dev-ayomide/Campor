@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { registerSeller, testSellerEndpoint } from '../../services/authService';
+import { registerSeller, testSellerEndpoint, checkCatalogueNameAvailability } from '../../services/authService';
 import { bankResolutionService } from '../../services/bankResolutionService';
 import { CatalogueCoverUpload } from '../../components/common';
 
@@ -33,6 +33,12 @@ export default function SellerOnboardingPage() {
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Catalogue name validation states
+  const [isCheckingCatalogueName, setIsCheckingCatalogueName] = useState(false);
+  const [catalogueNameError, setCatalogueNameError] = useState(null);
+  const [catalogueNameValid, setCatalogueNameValid] = useState(false);
+  const catalogueNameTimeoutRef = useRef(null);
   
   // Bank verification states
   const [isVerifyingBank, setIsVerifyingBank] = useState(false);
@@ -193,8 +199,68 @@ export default function SellerOnboardingPage() {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
+      if (catalogueNameTimeoutRef.current) {
+        clearTimeout(catalogueNameTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Debounced catalogue name validation function
+  const debouncedCheckCatalogueName = useCallback(async (catalogueName) => {
+    if (!catalogueName || catalogueName.trim().length < 2) {
+      setCatalogueNameError(null);
+      setCatalogueNameValid(false);
+      return;
+    }
+
+    setIsCheckingCatalogueName(true);
+    setCatalogueNameError(null);
+
+    try {
+      const response = await checkCatalogueNameAvailability(catalogueName.trim());
+      if (response.available) {
+        setCatalogueNameValid(true);
+        setCatalogueNameError(null);
+      } else {
+        setCatalogueNameValid(false);
+        setCatalogueNameError('This catalogue name is already taken. Please choose a different name.');
+      }
+    } catch (error) {
+      setCatalogueNameValid(false);
+      if (error.message.includes('already exists') || error.message.includes('taken')) {
+        setCatalogueNameError('This catalogue name is already taken. Please choose a different name.');
+      } else {
+        setCatalogueNameError('Unable to verify catalogue name availability. Please try again.');
+      }
+    } finally {
+      setIsCheckingCatalogueName(false);
+    }
+  }, []);
+
+  // Handle catalogue name change with debouncing
+  const handleCatalogueNameChange = useCallback((e) => {
+    const catalogueName = e.target.value;
+    
+    setStoreInfo(prev => ({
+      ...prev,
+      catalogueName
+    }));
+    
+    setCatalogueNameValid(false);
+    setCatalogueNameError(null);
+
+    // Clear existing timeout
+    if (catalogueNameTimeoutRef.current) {
+      clearTimeout(catalogueNameTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced validation
+    if (catalogueName.trim().length >= 2) {
+      catalogueNameTimeoutRef.current = setTimeout(() => {
+        debouncedCheckCatalogueName(catalogueName);
+      }, 800); // 800ms delay
+    }
+  }, [debouncedCheckCatalogueName]);
 
   const handleCoverChange = (coverUrl) => {
     setStoreInfo(prev => ({ ...prev, catalogueCover: coverUrl }));
@@ -205,7 +271,9 @@ export default function SellerOnboardingPage() {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        return storeInfo.catalogueName.trim() && storeInfo.storeDescription.trim();
+        return storeInfo.catalogueName.trim() && 
+               storeInfo.storeDescription.trim() && 
+               catalogueNameValid; // Require catalogue name to be valid
       case 2:
         return bankDetails.bankName && 
                bankDetails.accountNumber && 
@@ -229,7 +297,15 @@ export default function SellerOnboardingPage() {
       let errorMessage = '';
       switch (currentStep) {
         case 1:
-          errorMessage = 'Please complete all required fields: Store name and Store description';
+          if (!storeInfo.catalogueName.trim()) {
+            errorMessage = 'Please enter your store name';
+          } else if (!catalogueNameValid) {
+            errorMessage = catalogueNameError || 'Please wait for store name validation to complete';
+          } else if (!storeInfo.storeDescription.trim()) {
+            errorMessage = 'Please enter your store description';
+          } else {
+            errorMessage = 'Please complete all required fields: Store name and Store description';
+          }
           break;
         case 2:
           if (!bankDetails.bankName) {
@@ -289,6 +365,8 @@ export default function SellerOnboardingPage() {
     // Store Info validation
     if (!storeInfo.catalogueName.trim()) {
       errors.push('Store name is required');
+    } else if (!catalogueNameValid) {
+      errors.push('Store name must be unique and available');
     }
     if (!storeInfo.storeDescription.trim()) {
       errors.push('Store description is required');
@@ -407,12 +485,43 @@ export default function SellerOnboardingPage() {
                 <input
                   type="text"
                   value={storeInfo.catalogueName}
-                  onChange={(e) => setStoreInfo(prev => ({ ...prev, catalogueName: e.target.value }))}
+                  onChange={handleCatalogueNameChange}
                   placeholder="e.g Chidi's Phone Accessories"
-                  className="w-full pl-12 pr-4 py-3 bg-transparent border border-gray-300 rounded-xl focus:border-blue-500 transition-colors"
+                  className={`w-full pl-12 pr-12 py-3 bg-transparent border rounded-xl transition-colors ${
+                    catalogueNameError 
+                      ? 'border-red-500 focus:border-red-500' 
+                      : catalogueNameValid 
+                        ? 'border-green-500 focus:border-green-500' 
+                        : 'border-gray-300 focus:border-blue-500'
+                  }`}
                   required
                 />
+                {/* Validation status indicator */}
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {isCheckingCatalogueName && (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                  )}
+                  {!isCheckingCatalogueName && catalogueNameValid && (
+                    <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {!isCheckingCatalogueName && catalogueNameError && (
+                    <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </div>
               </div>
+              {/* Catalogue name validation error message */}
+              {catalogueNameError && (
+                <p className="mt-2 text-sm text-red-600 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {catalogueNameError}
+                </p>
+              )}
             </div>
 
             <div>
