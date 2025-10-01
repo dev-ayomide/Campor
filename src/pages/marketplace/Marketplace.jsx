@@ -16,6 +16,7 @@ const marketplaceImage = '/marketplace.png';
 const productImage = '/product.png';
 import filterIcon from '../../../public/filter.svg';
 import SearchHighlight from '../../components/search/SearchHighlight';
+import { AutocompleteSearchBox } from '../../components/search';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
 import { ProductGridSkeleton, CategoryListSkeleton, PriceRangeSlider, Pagination } from '../../components/common';
@@ -255,7 +256,7 @@ export default function MarketplacePage() {
     fetchProducts(1);
   };
 
-  // Enhanced search handler with better UX
+  // Enhanced search handler with better UX - Navigate to search results page
   const handleSearch = async (e) => {
     e.preventDefault();
     
@@ -265,29 +266,8 @@ export default function MarketplacePage() {
       return;
     }
     
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await searchProductsAlgolia(searchQuery, 1, 10, buildFilters());
-      
-      if (response.data) {
-        const searchResults = response.data.products || [];
-        const sortedResults = sortProducts(searchResults);
-        setProducts(sortedResults);
-        setPagination(response.data.pagination || {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 0,
-          itemsPerPage: 10
-        });
-      }
-    } catch (err) {
-      setError('Search is temporarily unavailable. Please try again.');
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
+    // Navigate to search results page with query
+    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   // Enhanced real-time search with better UX
@@ -389,7 +369,7 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Full Width Hero Section */}
-      <section className="relative text-white overflow-hidden w-full">
+      <section className="relative text-white overflow-visible w-full">
         <div className="absolute inset-0">
           {/* Modern Gradient Background - Brand Consistent */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900"></div>
@@ -418,43 +398,11 @@ export default function MarketplacePage() {
           <div className="absolute inset-0 bg-black/20"></div>
         </div>
         
-        <div className="relative z-10 w-full px-4 py-14 sm:py-16 md:py-20 lg:py-20 xl:py-24">
+        <div className="relative z-10 w-full px-4 py-14 sm:py-16 md:py-20 lg:py-20 xl:py-24 overflow-visible" style={{ zIndex: 10 }}>
           <div className="text-center">
             {/* Full Width Search Bar */}
-            <div className="w-full mx-auto px-2 sm:max-w-5xl sm:px-6">
-              <form onSubmit={handleSearch} className="relative">
-                <div className="flex bg-white rounded-full shadow-lg overflow-hidden min-h-[58px] w-full">
-                  <div className="flex-1 flex items-center px-4 sm:px-6 py-4 min-w-0">
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => handleRealTimeSearch(e.target.value)}
-                      onBlur={() => {
-                        // Force viewport reset on blur to prevent zoom issues
-                        if (window.visualViewport) {
-                          window.scrollTo(0, window.scrollY);
-                        }
-                      }}
-                      placeholder="What are you looking for?"
-                      className="flex-1 text-gray-900 text-base focus:outline-none bg-transparent placeholder-gray-400 min-w-0"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                      style={{ fontSize: '16px' }}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-2 sm:py-3 m-1 text-sm sm:text-base font-semibold transition-colors rounded-full flex-shrink-0"
-                  >
-                    Search
-                  </button>
-                </div>
-              </form>
+            <div className="w-full mx-auto px-2 sm:max-w-5xl sm:px-6 overflow-visible" style={{ zIndex: 99999 }}>
+              <AutocompleteSearchBox placeholder="What are you looking for?" />
             </div>
           </div>
         </div>
@@ -657,43 +605,9 @@ export default function MarketplacePage() {
             </div>
 
             <div className={`bg-white rounded-xl shadow-sm sticky top-4 overflow-hidden z-30 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
-              {/* Search Section */}
-              <div className="p-3 border-b border-gray-100">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      const query = e.target.value;
-                      setSearchQuery(query);
-                      
-                      // Real-time search with debouncing
-                      if (query.trim()) {
-                        setLoading(true);
-                        debouncedSearch(query, (result) => {
-                          if (result.data) {
-                            setProducts(result.data.products || []);
-                            setPagination(result.data.pagination || {
-                              currentPage: 1,
-                              totalPages: 1,
-                              totalItems: 0,
-                              itemsPerPage: 10
-                            });
-                          }
-                          setLoading(false);
-                        });
-                      } else {
-                        // If search is cleared, fetch all products
-                        fetchProducts(1);
-                      }
-                    }}
-                    placeholder="What are you looking for?"
-                    className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm transition-all duration-200 hover:shadow-md"
-                  />
-                  <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
+              {/* Search Section - Hidden on desktop */}
+              <div className="p-3 border-b border-gray-100 lg:hidden">
+                <AutocompleteSearchBox placeholder="What are you looking for?" className="text-sm" />
               </div>
 
               {/* Filter Button */}

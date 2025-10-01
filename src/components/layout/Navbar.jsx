@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
@@ -10,6 +10,7 @@ export default function Navbar({ variant = 'default' }) {
   const { user, logout, isSeller } = useAuth();
   const { getItemCount } = useCart();
   const { getItemCount: getWishlistCount } = useWishlist();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSellerNavOpen, setIsSellerNavOpen] = useState(false);
   const [isAcceptOrderModalOpen, setIsAcceptOrderModalOpen] = useState(false);
@@ -64,6 +65,7 @@ export default function Navbar({ variant = 'default' }) {
               <span className="text-xl font-bold text-gray-900">Campor</span>
             </Link>
           </div>
+
 
           {/* Desktop Navigation - Show different navigation based on sign-in status */}
         <div className="hidden lg:flex items-center space-x-8">

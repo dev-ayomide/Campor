@@ -697,11 +697,6 @@ export default function SellerOnboardingPage() {
                   {bankVerificationError}
                 </div>
               )}
-              {accountVerified && (
-                <div className="mt-2 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-2">
-                  ✓ Account name resolved successfully
-                </div>
-              )}
               {bankDetails.accountNumber.length === 10 && !accountVerified && !isVerifyingBank && !bankVerificationError && (
                 <div className="mt-2 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
                   Account will be verified automatically when you finish typing or click outside the field
@@ -712,11 +707,6 @@ export default function SellerOnboardingPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Account Name <span className="text-red-500">*</span>
-                {bankDetails.accountName && (
-                  <span className="ml-2 text-xs text-green-600 font-medium">
-                    ✓ Verified
-                  </span>
-                )}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -742,11 +732,6 @@ export default function SellerOnboardingPage() {
                   </svg>
                 )}
               </div>
-              {bankDetails.accountName && (
-                <p className="mt-1 text-xs text-green-600">
-                  Account name verified successfully
-                </p>
-              )}
             </div>
 
             {/* Security Note */}

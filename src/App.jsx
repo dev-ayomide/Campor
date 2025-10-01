@@ -13,6 +13,7 @@ const verifyImage = '/verifyscreen.png';
 
 // Import pages from new organized structure
 import { Landing, Marketplace, ProductDetail } from './pages/marketplace';
+import { SearchResults } from './pages/search';
 import { Cart } from './pages/cart';
 import { Wishlist } from './pages/wishlist';
 import Profile from './pages/Profile';
@@ -58,6 +59,11 @@ export default function App() {
         <Route path="/product/:slug" element={
           <RequireAuth>
             <MainLayout><ProductDetail /></MainLayout>
+          </RequireAuth>
+        } />
+        <Route path="/search" element={
+          <RequireAuth>
+            <MainLayout><SearchResults /></MainLayout>
           </RequireAuth>
         } />
         <Route path="/cart" element={
