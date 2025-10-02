@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { BlurText } from '../../components/common';
 const heroImage = '/heroimage.png';
 const facilitateImage = '/image-fac.png';
 
@@ -121,17 +122,28 @@ export default function LandingPage() {
             variants={fadeInLeft}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <motion.h1 
-              className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight"
-              variants={fadeInUp}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              Your Campus<br />
-              Marketplace.<br />
-              <span className="text-blue-600">Verified & Secure.</span>
-            </motion.h1>
+            <h2 className="text-4xl lg:text-5xl  font-extrabold text-gray-900 mb-4 leading-tight">
+              <BlurText 
+                text="Your Campus"
+                className="block mb-2"
+                staggerDelay={0.15}
+                duration={0.9}
+              />
+              <BlurText 
+                text="Marketplace."
+                className="block mb-2"
+                staggerDelay={0.15}
+                duration={0.9}
+              />
+              <BlurText 
+                text="Verified & Secure."
+                className="text-blue-600 block"
+                staggerDelay={0.15}
+                duration={0.9}
+              />
+            </h2>
             <motion.p 
-              className="text-gray-500 text-base sm:text-lg md:text-xl mb-6 max-w-xl font-medium"
+              className="text-gray-500 text-lg mb-6 max-w-xl font-medium"
               variants={fadeInUp}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
@@ -202,7 +214,7 @@ export default function LandingPage() {
 
             {/* Features List */}
             <motion.div 
-              className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mt-2 text-gray-700 text-[1rem]"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mt-2 text-gray-700 text-[0.9rem]"
               variants={staggerContainer}
               transition={{ duration: 0.8, delay: 0.8 }}
             >
@@ -269,64 +281,15 @@ export default function LandingPage() {
               <img 
                 src={heroImage} 
                 alt="Student using laptop for campus marketplace" 
-                className="w-full h-auto rounded-2xl shadow-2xl"
+                className="w-full h-auto "
                 loading="eager"
                 decoding="async"
                 style={{ imageRendering: 'auto' }}
               />
             </motion.div>
             {/* Decorative Elements */}
-            <motion.div 
-              className="absolute -top-4 -right-4 w-16 h-16 bg-blue-600 rounded-lg transform rotate-12"
-              animate={{ 
-                rotate: [12, 15, 12],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            ></motion.div>
-            <motion.div 
-              className="absolute -bottom-4 -left-4 w-12 h-12 bg-blue-400 rounded-lg transform -rotate-12"
-              animate={{ 
-                rotate: [-12, -15, -12],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1
-              }}
-            ></motion.div>
-            <motion.div 
-              className="absolute top-1/2 -right-8 w-8 h-8 bg-gray-900 rounded-lg transform rotate-45"
-              animate={{ 
-                rotate: [45, 50, 45],
-                scale: [1, 1.2, 1]
-              }}
-              transition={{ 
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 0.5
-              }}
-            ></motion.div>
-            <motion.div 
-              className="absolute bottom-1/4 -left-8 w-6 h-6 bg-blue-300 rounded transform rotate-45"
-              animate={{ 
-                rotate: [45, 50, 45],
-                scale: [1, 1.2, 1]
-              }}
-              transition={{ 
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1.5
-              }}
-            ></motion.div>
+            
+          
           </motion.div>
         </div>
       </section>
@@ -334,15 +297,13 @@ export default function LandingPage() {
       {/* App Features Section */}
       <section ref={featuresRef} id="features" className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 text-center">
-            <motion.h2 
-              className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4"
-              initial="hidden"
-              animate={featuresInView ? "visible" : "hidden"}
-              variants={fadeInUp}
-              transition={{ duration: 0.8 }}
-            >
-              Built Specifically for RUN Students
-            </motion.h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              <BlurText 
+                text="Built Specifically for RUN Students"
+                staggerDelay={0.12}
+                duration={0.8}
+              />
+            </h2>
             
             <motion.p 
               className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto"
@@ -390,13 +351,20 @@ export default function LandingPage() {
               variants={fadeInRight}
               transition={{ duration: 0.8 }}
             >
-              <motion.h2 
-                className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight"
-                variants={fadeInUp}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                How Campor<br />Works for RUN
-              </motion.h2>
+              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                <BlurText 
+                  text="How Campor"
+                  className="block mb-2"
+                  staggerDelay={0.12}
+                  duration={0.8}
+                />
+                <BlurText 
+                  text="Works for RUN"
+                  className="block"
+                  staggerDelay={0.12}
+                  duration={0.8}
+                />
+              </h2>
               
               <motion.p 
                 className="text-gray-600 text-lg mb-8"
@@ -496,7 +464,11 @@ export default function LandingPage() {
             {/* Left Content */}
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
-                Discover every detail of the campus marketplace.
+                <BlurText 
+                  text="Discover every detail of the campus marketplace."
+                  staggerDelay={0.1}
+                  duration={0.7}
+                />
               </h2>
               
               <p className="text-gray-600 mb-8">
@@ -549,15 +521,13 @@ export default function LandingPage() {
       {/* Core Features Grid */}
       <section ref={coreFeaturesRef} id="core-features" className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.h2 
-            className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-4"
-            initial="hidden"
-            animate={coreFeaturesInView ? "visible" : "hidden"}
-            variants={fadeInUp}
-            transition={{ duration: 0.8 }}
-          >
-            Why RUN Students Choose Campor
-          </motion.h2>
+          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-4">
+            <BlurText 
+              text="Why RUN Students Choose Campor"
+              staggerDelay={0.1}
+              duration={0.7}
+            />
+          </h2>
           
           <motion.p 
             className="text-gray-600 text-lg text-center mb-16 max-w-3xl mx-auto"
@@ -715,9 +685,24 @@ export default function LandingPage() {
             {/* Left Content */}
                   <div>
                     <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                    Facilitate<br />
-                    Convenient Campus<br />
-                    Commerce
+                      <BlurText 
+                        text="Facilitate"
+                        className="block mb-2"
+                        staggerDelay={0.12}
+                        duration={0.8}
+                      />
+                      <BlurText 
+                        text="Convenient Campus"
+                        className="block mb-2"
+                        staggerDelay={0.12}
+                        duration={0.8}
+                      />
+                      <BlurText 
+                        text="Commerce"
+                        className="block"
+                        staggerDelay={0.12}
+                        duration={0.8}
+                      />
                     </h2>
                     
                     <p className="text-gray-600 text-md mb-8 leading-relaxed">
@@ -775,7 +760,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Trusted by RUN Students
+              <BlurText 
+                text="Trusted by RUN Students"
+                staggerDelay={0.1}
+                duration={0.7}
+              />
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
               Join the secure campus marketplace designed exclusively for RUN community
@@ -784,8 +773,8 @@ export default function LandingPage() {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -804,11 +793,11 @@ export default function LandingPage() {
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg 
                   className="w-8 h-8"
                   fill="none"
-                  stroke="#9333ea"
+                  stroke="#007bff"
                   viewBox="0 0 24 24"
                   loading="lazy"
                   decoding="async"
@@ -832,15 +821,13 @@ export default function LandingPage() {
       {/* FAQs Section */}
       <section ref={faqRef} id="faq" className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.h2 
-            className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-16"
-            initial="hidden"
-            animate={faqInView ? "visible" : "hidden"}
-            variants={fadeInUp}
-            transition={{ duration: 0.8 }}
-          >
-            Frequently Asked Questions
-          </motion.h2>
+          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 text-center mb-16">
+            <BlurText 
+              text="Frequently Asked Questions"
+              staggerDelay={0.1}
+              duration={0.7}
+            />
+          </h2>
 
           <div className="max-w-4xl mx-auto">
             <motion.div 
