@@ -309,7 +309,7 @@ const EditProduct = ({ toggleMobileMenu }) => {
               {/* Add Photo */}
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">Product Images</label>
-                <p className="text-sm text-gray-600 mb-4">Manage your product images. You can add, remove, or reorder images.</p>
+                <p className="text-sm text-gray-600 mb-4">Manage your product images. You can add, remove, or reorder images by dragging them or using the arrow buttons.</p>
                 
                 <ImageUpload
                   images={formData.imageUrls}

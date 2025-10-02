@@ -200,7 +200,7 @@ export default function AddProductPage({ toggleMobileMenu }) {
               {/* Add Photo Section */}
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Add Photo</h3>
-                <p className="text-sm text-gray-600 mb-4">Add at least 1 photo for this product</p>
+                <p className="text-sm text-gray-600 mb-4">Add at least 1 photo for this product. You can reorder images by dragging them or using the arrow buttons.</p>
                 
                 <ImageUpload
                   images={formData.imageUrls}

@@ -18,6 +18,8 @@ export default function ImageUpload({
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   // Use only the images prop from parent
   const allImages = images;
@@ -65,6 +67,67 @@ export default function ImageUpload({
         onImagesChange(newImages);
       }
     } catch (err) {
+    }
+  };
+
+  const handleImageDragStart = (e, index) => {
+    if (disabled) return;
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.outerHTML);
+  };
+
+  const handleImageDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleImageDragLeave = (e) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+  };
+
+  const handleImageDrop = (e, dropIndex) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newImages = [...images];
+    const draggedImage = newImages[draggedIndex];
+    
+    // Remove the dragged image from its original position
+    newImages.splice(draggedIndex, 1);
+    
+    // Insert it at the new position
+    newImages.splice(dropIndex, 0, draggedImage);
+    
+    if (onImagesChange) {
+      onImagesChange(newImages);
+    }
+    
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleMoveImage = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex || disabled) return;
+    
+    const newImages = [...images];
+    const movedImage = newImages[fromIndex];
+    
+    // Remove the image from its original position
+    newImages.splice(fromIndex, 1);
+    
+    // Insert it at the new position
+    newImages.splice(toIndex, 0, movedImage);
+    
+    if (onImagesChange) {
+      onImagesChange(newImages);
     }
   };
 
@@ -171,9 +234,21 @@ export default function ImageUpload({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {allImages.map((image, index) => {
               const imageUrl = typeof image === 'string' ? image : image.url;
+              const isDragging = draggedIndex === index;
+              const isDragOver = dragOverIndex === index;
               
               return (
-                <div key={`${imageUrl}-${index}`} className="relative group">
+                <div 
+                  key={`${imageUrl}-${index}`} 
+                  className={`relative group cursor-move transition-all duration-200 ${
+                    isDragging ? 'opacity-50 scale-95' : ''
+                  } ${isDragOver ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}`}
+                  draggable={!disabled}
+                  onDragStart={(e) => handleImageDragStart(e, index)}
+                  onDragOver={(e) => handleImageDragOver(e, index)}
+                  onDragLeave={handleImageDragLeave}
+                  onDrop={(e) => handleImageDrop(e, index)}
+                >
                   <img
                     src={imageUrl}
                     alt={`Preview ${index + 1}`}
@@ -183,6 +258,16 @@ export default function ImageUpload({
                     }}
                   />
                   
+                  {/* Drag Handle */}
+                  {!disabled && (
+                    <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  {/* Remove Button */}
                   {!disabled && (
                     <button
                       type="button"
@@ -197,6 +282,47 @@ export default function ImageUpload({
                       </svg>
                     </button>
                   )}
+                  
+                  {/* Move Up/Down Buttons */}
+                  {!disabled && allImages.length > 1 && (
+                    <div className="absolute bottom-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveImage(index, index - 1);
+                          }}
+                          className="bg-black bg-opacity-50 text-white rounded p-1 hover:bg-opacity-70 transition-colors"
+                          title="Move up"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                      )}
+                      {index < allImages.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveImage(index, index + 1);
+                          }}
+                          className="bg-black bg-opacity-50 text-white rounded p-1 hover:bg-opacity-70 transition-colors"
+                          title="Move down"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Image Number Badge */}
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs rounded px-2 py-1">
+                    {index + 1}
+                  </div>
                 </div>
               );
             })}
