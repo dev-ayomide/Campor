@@ -113,12 +113,12 @@ export default function Footer() {
             >
               Privacy Policy
             </Link>
-            <a 
-              href="mailto:support@campor.live" 
+            <Link 
+              to="/contact" 
               className="text-gray-400 hover:text-gray-300 text-sm transition-colors underline"
             >
               Contact Support
-            </a>
+            </Link>
           </div>
           
           <p className="text-gray-500 text-sm">

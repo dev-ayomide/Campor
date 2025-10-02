@@ -38,6 +38,8 @@ import { Chat } from './pages/chat';
 import NotFound from './pages/NotFound';
 import PaymentVerification from './pages/PaymentVerification';
 import TermsAndConditionsPage from './pages/TermsAndConditions';
+import PrivacyPolicyPage from './pages/PrivacyPolicy';
+import ContactSupportPage from './pages/ContactSupport';
 
 export default function App() {
   return (
@@ -177,6 +179,11 @@ export default function App() {
         <Route path="/verify" element={<AuthLayout heroImage={verifyImage}><Verify /></AuthLayout>} />
         <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
         <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
+
+        {/* Legal Pages */}
+        <Route path="/terms" element={<MainLayout><TermsAndConditionsPage /></MainLayout>} />
+        <Route path="/privacy" element={<MainLayout><PrivacyPolicyPage /></MainLayout>} />
+        <Route path="/contact" element={<MainLayout><ContactSupportPage /></MainLayout>} />
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
         </Routes>
