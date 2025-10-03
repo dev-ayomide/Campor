@@ -403,7 +403,7 @@ export async function checkProductAvailability(productId, quantity = 1) {
 // ===== CART STATUS VALIDATION FUNCTIONS =====
 
 /**
- * Check if cart has items that need fixing (out of stock or stock mismatch)
+ * Check if cart has items that need fixing (out of stock, stock mismatch, or deleted)
  * @param {Array} cart - Cart data
  * @returns {boolean} - True if cart needs fixing
  */
@@ -413,7 +413,7 @@ export function cartNeedsFixing(cart) {
   return cart.some(sellerGroup => 
     sellerGroup.items && Array.isArray(sellerGroup.items) &&
     sellerGroup.items.some(item => 
-      item.status === 'out_of_stock' || item.status === 'stock_mismatch'
+      item.status === 'out_of_stock' || item.status === 'stock_mismatch' || item.status === 'deleted'
     )
   );
 }
@@ -430,6 +430,7 @@ export function getCartStatusSummary(cart) {
       okItems: 0,
       stockMismatchItems: 0,
       outOfStockItems: 0,
+      deletedItems: 0,
       needsFixing: false
     };
   }
@@ -438,6 +439,7 @@ export function getCartStatusSummary(cart) {
   let okItems = 0;
   let stockMismatchItems = 0;
   let outOfStockItems = 0;
+  let deletedItems = 0;
   
   cart.forEach(sellerGroup => {
     if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
@@ -453,6 +455,9 @@ export function getCartStatusSummary(cart) {
           case 'out_of_stock':
             outOfStockItems++;
             break;
+          case 'deleted':
+            deletedItems++;
+            break;
           default:
             // If no status field, assume it's ok (backward compatibility)
             okItems++;
@@ -466,7 +471,8 @@ export function getCartStatusSummary(cart) {
     okItems,
     stockMismatchItems,
     outOfStockItems,
-    needsFixing: stockMismatchItems > 0 || outOfStockItems > 0
+    deletedItems,
+    needsFixing: stockMismatchItems > 0 || outOfStockItems > 0 || deletedItems > 0
   };
 }
 
@@ -483,7 +489,7 @@ export function getItemsNeedingFix(cart) {
   cart.forEach(sellerGroup => {
     if (sellerGroup.items && Array.isArray(sellerGroup.items)) {
       sellerGroup.items.forEach(item => {
-        if (item.status === 'out_of_stock' || item.status === 'stock_mismatch') {
+        if (item.status === 'out_of_stock' || item.status === 'stock_mismatch' || item.status === 'deleted') {
           itemsNeedingFix.push({
             ...item,
             sellerGroup

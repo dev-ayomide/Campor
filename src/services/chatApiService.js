@@ -32,7 +32,7 @@ class ChatApiService {
   }
 
   // Send a message to a user (matches working demo exactly)
-  async sendMessage(receiverId, content) {
+  async sendMessage(receiverId, content, imageUrl = null) {
     try {
       // Get current user info for debugging
       const currentUser = localStorage.getItem('campor_user') 
@@ -45,13 +45,20 @@ class ChatApiService {
         throw new Error(`Invalid receiverId format: ${receiverId}. Expected UUID format.`);
       }
       
+      const messageData = {
+        receiverId,
+        text: content  // Backend expects 'text' field, not 'content'
+      };
+      
+      // Add image URL if provided
+      if (imageUrl) {
+        messageData.imageUrl = imageUrl;
+      }
+      
       const response = await fetch(`${API_BASE_URL}/chat/send`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({
-          receiverId,
-          content
-        })
+        body: JSON.stringify(messageData)
       });
 
 
@@ -141,15 +148,42 @@ class ChatApiService {
   // Get messages for a specific chat
   async getChatMessages(chatId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/chat/messages/${chatId}`, {
+      // For seller conversations, we need to get messages by user ID
+      // The chatId might be a UUID (actual chat ID) or seller-userId format
+      let endpoint;
+      
+      if (chatId.startsWith('seller-')) {
+        // Extract userId from seller-userId::catalogueName format
+        const userId = chatId.includes('::') 
+          ? chatId.split('::')[0].replace('seller-', '')
+          : chatId.replace('seller-', '');
+        endpoint = `${API_BASE_URL}/chat/user/${userId}`;
+      } else {
+        // For regular chat IDs, try the messages endpoint
+        endpoint = `${API_BASE_URL}/chat/messages/${chatId}`;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'GET',
         headers: this.getAuthHeaders()
       });
 
       const result = await this.handleResponse(response);
-      return result.data || [];
+      console.log('Raw API response:', result); // Debug log
+      
+      // Handle different response structures
+      if (result.data && result.data.messages) {
+        console.log('Messages from result.data.messages:', result.data.messages); // Debug log
+        return result.data.messages;
+      } else if (Array.isArray(result.data)) {
+        console.log('Messages from result.data array:', result.data); // Debug log
+        return result.data;
+      } else {
+        console.log('No messages found in response'); // Debug log
+        return [];
+      }
     } catch (error) {
-
+      console.error('Failed to get chat messages:', error);
       throw error;
     }
   }
@@ -195,7 +229,8 @@ class ChatApiService {
       },
       lastMessage: lastMessage ? {
         id: lastMessage.id,
-        content: lastMessage.content,
+        content: lastMessage.text || lastMessage.content, // Handle both 'text' and 'content' fields
+        imageUrl: lastMessage.imageUrl, // Include imageUrl from backend
         timestamp: lastMessage.sentAt,
         senderId: lastMessage.senderId,
         senderName: lastMessage.senderId === currentUserId ? 'You' : otherUser.name,
@@ -226,8 +261,8 @@ class ChatApiService {
       product: {
         id: order.id,
         name: `${order.orderItems.length} Item${order.orderItems.length > 1 ? 's' : ''}`,
-        image: order.orderItems[0]?.product?.imageUrls?.[0] || null,
-        price: order.orderItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+        image: order.orderItems[0]?.productImages?.[0] || null,
+        price: order.orderItems.reduce((total, item) => total + (item.priceAtPurchase * item.quantity), 0)
       },
       lastMessage: null, // Orders don't have direct messages
       unreadCount: 0,
@@ -248,13 +283,11 @@ class ChatApiService {
         id: item.id,
         productId: item.productId,
         quantity: item.quantity,
-        price: item.price,
-        product: {
-          id: item.product.id,
-          name: item.product.name,
-          imageUrls: item.product.imageUrls,
-          price: item.product.price
-        }
+        priceAtPurchase: item.priceAtPurchase,
+        productName: item.productName,
+        productDescription: item.productDescription,
+        productImages: item.productImages,
+        sellerId: item.sellerId
       }))
     };
   }
@@ -263,7 +296,8 @@ class ChatApiService {
   transformMessageData(apiMessage, currentUserId) {
     return {
       id: apiMessage.id,
-      content: apiMessage.content,
+      content: apiMessage.text || apiMessage.content, // Handle both 'text' and 'content' fields
+      imageUrl: apiMessage.imageUrl, // Include imageUrl from backend
       timestamp: apiMessage.sentAt,
       senderId: apiMessage.senderId,
       senderName: apiMessage.senderId === currentUserId ? 'You' : 'Other User',

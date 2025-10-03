@@ -16,7 +16,7 @@ export default function SellerLayout({ children }) {
         {/* Main Content */}
         <div className="flex-1 lg:ml-64 min-w-0 overflow-hidden">
           {/* Page Content - Scrollable */}
-          <main className="h-[calc(100vh-5rem)] mt-20 lg:mt-20 p-6 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <main className="pt-20 lg:pt-20 p-6 min-h-screen overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {children}
           </main>
         </div>

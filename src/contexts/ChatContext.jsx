@@ -62,7 +62,8 @@ export function ChatProvider({ children }) {
                 ...conv,
                 lastMessage: {
                   id: messageData.id,
-                  content: messageData.content,
+                  content: messageData.text || messageData.content, // Handle both field names
+                  imageUrl: messageData.imageUrl, // Include imageUrl
                   timestamp: messageData.sentAt,
                   senderId: messageData.senderId,
                   senderName: messageData.senderId === user.id ? 'You' : 'Other User'
@@ -142,9 +143,9 @@ export function ChatProvider({ children }) {
   }, [loadConversations]);
 
   // Send message
-  const sendMessage = async (conversationId, content, receiverId) => {
+  const sendMessage = async (conversationId, content, receiverId, imageUrl = null) => {
     try {
-      const message = await chatService.sendMessage(conversationId, content, receiverId);
+      const message = await chatService.sendMessage(conversationId, content, receiverId, imageUrl);
       
       // Update conversation's last message
       setConversations(prev => 
@@ -155,6 +156,7 @@ export function ChatProvider({ children }) {
                 lastMessage: {
                   id: message.id,
                   content: message.content,
+                  imageUrl: message.imageUrl,
                   timestamp: message.timestamp,
                   senderId: message.senderId,
                   senderName: message.senderName

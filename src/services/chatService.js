@@ -57,20 +57,24 @@ export const chatService = {
         ? JSON.parse(localStorage.getItem('campor_user')).id 
         : null;
 
-      return messages.map(message => ({
-        ...message,
-        isFromCurrentUser: message.senderId === currentUserId,
-        timestamp: message.sentAt
-      }));
+      return messages.map(message => {
+        // Transform the message data to ensure proper field mapping
+        const transformedMessage = chatApiService.transformMessageData(message, currentUserId);
+        return {
+          ...transformedMessage,
+          isFromCurrentUser: message.senderId === currentUserId,
+          timestamp: message.sentAt
+        };
+      });
     } catch (error) {
       return [];
     }
   },
 
   // Send a new message
-  sendMessage: async (conversationId, content, receiverId) => {
+  sendMessage: async (conversationId, content, receiverId, imageUrl = null) => {
     try {
-      const message = await chatApiService.sendMessage(receiverId, content);
+      const message = await chatApiService.sendMessage(receiverId, content, imageUrl);
       const currentUserId = localStorage.getItem('campor_user') 
         ? JSON.parse(localStorage.getItem('campor_user')).id 
         : null;

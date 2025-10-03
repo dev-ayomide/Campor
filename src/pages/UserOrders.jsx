@@ -266,10 +266,10 @@ export default function UserOrders() {
                               <div className="mt-2 space-y-2">
                                 {order.orderItems.map((item) => (
                                   <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
-                                    <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
+                                    <img src={item.productImages?.[0] || productImage} alt={item.productName} className="w-10 h-10 object-cover rounded" />
                                     <div className="flex-1">
-                                      <div className="font-medium text-gray-900">{item.product?.name}</div>
-                                      <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                      <div className="font-medium text-gray-900">{item.productName}</div>
+                                      <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.priceAtPurchase || 0).toLocaleString()}</div>
                                     </div>
                                   </div>
                                 ))}
@@ -320,10 +320,10 @@ export default function UserOrders() {
                           <h4 className="text-sm font-medium text-gray-700">Items:</h4>
                           {order.orderItems.map((item) => (
                             <div key={item.id} className="flex items-center gap-3 text-sm text-gray-700">
-                              <img src={item.product?.imageUrls?.[0] || productImage} alt={item.product?.name} className="w-10 h-10 object-cover rounded" />
+                              <img src={item.productImages?.[0] || productImage} alt={item.productName} className="w-10 h-10 object-cover rounded" />
                               <div className="flex-1">
-                                <div className="font-medium text-gray-900">{item.product?.name}</div>
-                                <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.price || 0).toLocaleString()}</div>
+                                <div className="font-medium text-gray-900">{item.productName}</div>
+                                <div className="text-xs text-gray-500">Qty: {item.quantity} × ₦{Number(item.priceAtPurchase || 0).toLocaleString()}</div>
                               </div>
                             </div>
                           ))}

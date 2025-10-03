@@ -168,6 +168,14 @@ export default function CartDrawer({ isOpen, onClose }) {
           borderColor: 'border-red-200',
           icon: <AlertTriangle className="h-4 w-4" />
         };
+      case 'deleted':
+        return { 
+          text: 'Product deleted', 
+          color: 'text-red-600', 
+          bgColor: 'bg-red-50', 
+          borderColor: 'border-red-200',
+          icon: <AlertTriangle className="h-4 w-4" />
+        };
       default:
         return { 
           text: 'Available', 
@@ -226,8 +234,10 @@ export default function CartDrawer({ isOpen, onClose }) {
                   </h3>
                   <p className="text-sm text-yellow-700 mt-1">
                     {statusSummary.outOfStockItems > 0 && `${statusSummary.outOfStockItems} item(s) out of stock`}
-                    {statusSummary.outOfStockItems > 0 && statusSummary.stockMismatchItems > 0 && ', '}
+                    {statusSummary.outOfStockItems > 0 && (statusSummary.stockMismatchItems > 0 || statusSummary.deletedItems > 0) && ', '}
                     {statusSummary.stockMismatchItems > 0 && `${statusSummary.stockMismatchItems} item(s) have limited stock`}
+                    {statusSummary.stockMismatchItems > 0 && statusSummary.deletedItems > 0 && ', '}
+                    {statusSummary.deletedItems > 0 && `${statusSummary.deletedItems} item(s) have been deleted`}
                   </p>
                   <button
                     onClick={handleFixCart}
@@ -289,19 +299,20 @@ export default function CartDrawer({ isOpen, onClose }) {
                         const statusInfo = getStatusInfo(item);
                         const isOutOfStock = item.status === 'out_of_stock';
                         const isStockMismatch = item.status === 'stock_mismatch';
+                        const isDeleted = item.status === 'deleted';
                         const effectiveQuantity = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity;
                         
                         return (
                           <div 
                             key={item.id} 
                             className={`flex items-center space-x-3 p-3 rounded-lg border ${statusInfo.borderColor} ${statusInfo.bgColor} ${
-                              isOutOfStock ? 'opacity-60' : ''
+                              isOutOfStock || isDeleted ? 'opacity-60' : ''
                             }`}
                           >
                             {/* Product Image */}
                             <Link 
                               to={`/product/${item.product?.slug}`}
-                              className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock ? 'pointer-events-none' : ''}`}
+                              className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
                             >
                               <img
                                 src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
@@ -314,7 +325,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                             <div className="flex-1 min-w-0">
                               <Link 
                                 to={`/product/${item.product?.slug}`}
-                                className={`hover:text-blue-600 transition-colors ${isOutOfStock ? 'pointer-events-none' : ''}`}
+                                className={`hover:text-blue-600 transition-colors ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
                               >
                                 <h4 className="text-sm font-medium text-gray-900 truncate">
                                   {item.product?.name}
@@ -338,13 +349,20 @@ export default function CartDrawer({ isOpen, onClose }) {
                                   You have {item.quantity}, but only {item.maxAvailable} available
                                 </p>
                               )}
+                              
+                              {/* Deleted Product Info */}
+                              {isDeleted && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  This product has been deleted and is no longer available
+                                </p>
+                              )}
                             </div>
                             
                             {/* Quantity Controls */}
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                                disabled={updatingItem === item.id || isOutOfStock}
+                                disabled={updatingItem === item.id || isOutOfStock || isDeleted}
                                 className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                               >
                                 <Minus className="h-4 w-4" />
@@ -356,7 +374,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                               
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              disabled={updatingItem === item.id || isOutOfStock || (item.maxAvailable && item.quantity >= item.maxAvailable)}
+                              disabled={updatingItem === item.id || isOutOfStock || isDeleted || (item.maxAvailable && item.quantity >= item.maxAvailable)}
                               className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                             >
                               <Plus className="h-4 w-4" />

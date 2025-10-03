@@ -453,18 +453,18 @@ export default function OrderDetails() {
                         {sellerGroup.items.map((item) => (
                           <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                             <img 
-                              src={item.product?.imageUrls?.[0] || productImage} 
-                              alt={item.product?.name || 'Product'} 
+                              src={item.productImages?.[0] || productImage} 
+                              alt={item.productName || 'Product'} 
                               className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                             />
                             
                             <div className="flex-1">
-                              <h5 className="text-lg font-medium text-gray-900">{item.product?.name || 'Unknown Product'}</h5>
+                              <h5 className="text-lg font-medium text-gray-900">{item.productName || 'Unknown Product'}</h5>
                               <div className="flex items-center gap-6 text-sm text-gray-600 mt-2">
                                 <span>Quantity: <span className="font-medium text-gray-900">{item.quantity}</span></span>
-                                <span>Price: <span className="font-medium text-gray-900">{formatCurrency(item.price)}</span></span>
+                                <span>Price: <span className="font-medium text-gray-900">{formatCurrency(item.priceAtPurchase)}</span></span>
                                 <span className="font-semibold text-gray-900">
-                                  Subtotal: {formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}
+                                  Subtotal: {formatCurrency(Number(item.priceAtPurchase || 0) * Number(item.quantity || 0))}
                                 </span>
                               </div>
                             </div>

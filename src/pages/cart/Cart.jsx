@@ -263,8 +263,10 @@ export default function CartPage() {
                   </h3>
                   <p className="text-sm text-yellow-700 mt-1">
                     {statusSummary.outOfStockItems > 0 && `${statusSummary.outOfStockItems} item(s) out of stock`}
-                    {statusSummary.outOfStockItems > 0 && statusSummary.stockMismatchItems > 0 && ', '}
+                    {statusSummary.outOfStockItems > 0 && (statusSummary.stockMismatchItems > 0 || statusSummary.deletedItems > 0) && ', '}
                     {statusSummary.stockMismatchItems > 0 && `${statusSummary.stockMismatchItems} item(s) have limited stock`}
+                    {statusSummary.stockMismatchItems > 0 && statusSummary.deletedItems > 0 && ', '}
+                    {statusSummary.deletedItems > 0 && `${statusSummary.deletedItems} item(s) have been deleted`}
                   </p>
                   <button
                     type="button"
@@ -362,6 +364,7 @@ export default function CartPage() {
                   {group.items.map((item) => {
                     const isOutOfStock = item.status === 'out_of_stock';
                     const isStockMismatch = item.status === 'stock_mismatch';
+                    const isDeleted = item.status === 'deleted';
                     const effectiveQuantity = item.effectiveQuantity !== undefined ? item.effectiveQuantity : item.quantity;
                     
                     // Get status info
@@ -370,18 +373,20 @@ export default function CartPage() {
                       statusInfo = { text: 'Out of stock', color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
                     } else if (isStockMismatch) {
                       statusInfo = { text: `Only ${item.maxAvailable} available`, color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' };
+                    } else if (isDeleted) {
+                      statusInfo = { text: 'Product deleted', color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
                     }
                     
                     return (
                       <div 
                         key={item.id} 
-                        className={`p-6 ${statusInfo.bgColor} ${statusInfo.borderColor} border-l-4 ${isOutOfStock ? 'opacity-60' : ''}`}
+                        className={`p-6 ${statusInfo.bgColor} ${statusInfo.borderColor} border-l-4 ${isOutOfStock || isDeleted ? 'opacity-60' : ''}`}
                       >
                         <div className="flex gap-4">
                           {/* Product Image */}
                           <Link 
                             to={`/product/${item.product?.slug}`}
-                            className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock ? 'pointer-events-none' : ''}`}
+                            className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
                           >
                             <img 
                               src={item.product?.imageUrls?.[0] || productImage} 
@@ -397,7 +402,7 @@ export default function CartPage() {
                           <div className="flex-1 min-w-0">
                             <Link 
                               to={`/product/${item.product?.slug}`}
-                              className={`hover:text-blue-600 transition-colors ${isOutOfStock ? 'pointer-events-none' : ''}`}
+                              className={`hover:text-blue-600 transition-colors ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
                             >
                               <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
                                 {item.product?.name || 'Product'}
@@ -409,7 +414,7 @@ export default function CartPage() {
                             
                             {/* Status Indicator */}
                             <div className={`flex items-center space-x-1 mb-3 ${statusInfo.color}`}>
-                              {isOutOfStock || isStockMismatch ? (
+                              {isOutOfStock || isStockMismatch || isDeleted ? (
                                 <AlertTriangle className="h-4 w-4" />
                               ) : null}
                               <span className="text-xs font-medium">
@@ -423,13 +428,20 @@ export default function CartPage() {
                                 You have {item.quantity}, but only {item.maxAvailable} available
                               </p>
                             )}
+                            
+                            {/* Deleted Product Info */}
+                            {isDeleted && (
+                              <p className="text-xs text-red-600 mb-3">
+                                This product has been deleted and is no longer available
+                              </p>
+                            )}
 
                             {/* Quantity Controls */}
                             <div className="flex items-center gap-3">
                               <button 
                                 type="button"
                                 onClick={(e) => updateQuantity(item.id, item.quantity - 1, e)}
-                                disabled={isOutOfStock}
+                                disabled={isOutOfStock || isDeleted}
                                 className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600 disabled:opacity-50"
                               >
                                 -
@@ -440,7 +452,7 @@ export default function CartPage() {
                               <button 
                                 type="button"
                                 onClick={(e) => updateQuantity(item.id, item.quantity + 1, e)}
-                                disabled={isOutOfStock || (item.maxAvailable && item.quantity >= item.maxAvailable)}
+                                disabled={isOutOfStock || isDeleted || (item.maxAvailable && item.quantity >= item.maxAvailable)}
                                 className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-600 disabled:opacity-50"
                               >
                                 +

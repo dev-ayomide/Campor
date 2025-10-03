@@ -61,7 +61,12 @@ export default function ProductDetailPage() {
           throw new Error('Product not found');
         }
       } catch (err) {
-        setError(err.message || 'Failed to load product details');
+        // Check if it's a deleted product error
+        if (err.message && err.message.includes('deleted')) {
+          setError('This product has been deleted and is no longer available');
+        } else {
+          setError(err.message || 'Failed to load product details');
+        }
       } finally {
         setLoading(false);
       }
