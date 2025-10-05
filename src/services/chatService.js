@@ -63,7 +63,8 @@ export const chatService = {
         return {
           ...transformedMessage,
           isFromCurrentUser: message.senderId === currentUserId,
-          timestamp: message.sentAt
+          // Don't override timestamp - it's already set by transformMessageData
+          // timestamp: message.sentAt  // This was causing the issue!
         };
       });
     } catch (error) {
@@ -82,7 +83,8 @@ export const chatService = {
       return {
         ...message,
         isFromCurrentUser: message.senderId === currentUserId,
-        timestamp: message.sentAt
+        timestamp: message.sentAt,
+        imageUrl: message.imageUrl // Preserve imageUrl from server response
       };
     } catch (error) {
       throw error;

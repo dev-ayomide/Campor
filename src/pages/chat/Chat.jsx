@@ -6,7 +6,21 @@ import { useSearchParams } from 'react-router-dom';
 
 const ChatContent = () => {
   const { user } = useAuth();
-  const { selectedConversationId, setSelectedConversationId, conversations, markAsRead } = useChat();
+  const chatContext = useChat();
+  
+  // Safety check to ensure context is loaded
+  if (!chatContext) {
+    return (
+      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#F7F5F0' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading chat...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const { selectedConversationId, setSelectedConversationId, conversations, markAsRead } = chatContext;
   const [showChatWindow, setShowChatWindow] = useState(false);
   const [searchParams] = useSearchParams();
   const sellerId = searchParams.get('sellerId');

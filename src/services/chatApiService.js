@@ -46,9 +46,13 @@ class ChatApiService {
       }
       
       const messageData = {
-        receiverId,
-        text: content  // Backend expects 'text' field, not 'content'
+        receiverId
       };
+      
+      // Add text only if provided and not null
+      if (content && content.trim()) {
+        messageData.text = content;
+      }
       
       // Add image URL if provided
       if (imageUrl) {
@@ -60,9 +64,6 @@ class ChatApiService {
         headers: this.getAuthHeaders(),
         body: JSON.stringify(messageData)
       });
-
-
-
 
       const result = await this.handleResponse(response);
       return result.data;
@@ -169,17 +170,13 @@ class ChatApiService {
       });
 
       const result = await this.handleResponse(response);
-      console.log('Raw API response:', result); // Debug log
       
       // Handle different response structures
       if (result.data && result.data.messages) {
-        console.log('Messages from result.data.messages:', result.data.messages); // Debug log
         return result.data.messages;
       } else if (Array.isArray(result.data)) {
-        console.log('Messages from result.data array:', result.data); // Debug log
         return result.data;
       } else {
-        console.log('No messages found in response'); // Debug log
         return [];
       }
     } catch (error) {
@@ -294,11 +291,22 @@ class ChatApiService {
 
   // Transform API message data to match our component structure
   transformMessageData(apiMessage, currentUserId) {
+    // Handle text content - prioritize non-null values
+    let content = null;
+    if (apiMessage.text && apiMessage.text.trim()) {
+      content = apiMessage.text;
+    } else if (apiMessage.content && apiMessage.content.trim()) {
+      content = apiMessage.content;
+    }
+    
+    // For image-only messages, content should be null, not a placeholder
+    
     return {
       id: apiMessage.id,
-      content: apiMessage.text || apiMessage.content, // Handle both 'text' and 'content' fields
-      imageUrl: apiMessage.imageUrl, // Include imageUrl from backend
-      timestamp: apiMessage.sentAt,
+      content: content,
+      imageUrl: apiMessage.imageUrl,
+      timestamp: apiMessage.sentAt, // Backend sends sentAt field
+      sentAt: apiMessage.sentAt,    // Also preserve sentAt for compatibility
       senderId: apiMessage.senderId,
       senderName: apiMessage.senderId === currentUserId ? 'You' : 'Other User',
       isFromCurrentUser: apiMessage.senderId === currentUserId,

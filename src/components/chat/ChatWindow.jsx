@@ -207,6 +207,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageModal, setImageModal] = useState({ isOpen: false, imageUrl: null });
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -278,7 +279,35 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     setShowEmojiPicker(false);
   };
 
-  // Handle image upload
+  // Image modal functions
+  const openImageModal = (imageUrl) => {
+    setImageModal({ isOpen: true, imageUrl });
+  };
+
+  const closeImageModal = () => {
+    setImageModal({ isOpen: false, imageUrl: null });
+  };
+
+  // Handle keyboard events for image modal
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && imageModal.isOpen) {
+        closeImageModal();
+      }
+    };
+
+    if (imageModal.isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [imageModal.isOpen]);
+
+  // Handle image upload (happens on send)
   const handleImageUpload = async (file) => {
     try {
       setUploadingImage(true);
@@ -289,26 +318,76 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         folder: 'samples/ecommerce/chat-images'
       });
       
-      // Send image message - only send text if user typed something
-      const messageContent = newMessage.trim();
-      await handleSendMessageWithImage(messageContent, uploadResult.url);
-      
-      setNewMessage('');
+      return uploadResult.url;
     } catch (error) {
-      setError(error.message || 'Failed to upload image');
+      setError(`Failed to upload image: ${error.message}`);
+      throw error;
     } finally {
       setUploadingImage(false);
     }
   };
 
-  // Handle file input change
-  const handleFileInputChange = (event) => {
+  // Handle file input change - directly upload image
+  const handleFileInputChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      handleImageUpload(file);
+    if (file && file.type.startsWith('image/')) {
+      try {
+        setUploadingImage(true);
+        const imageUrl = await handleImageUpload(file);
+        
+        // Send the image immediately
+        const tempId = `temp_${Date.now()}_${Math.random()}`;
+        
+        // Create optimistic message
+        const optimisticMessage = {
+          tempId,
+          content: null,
+          imageUrl: imageUrl,
+          senderId: currentUser.id,
+          sentAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
+          sender: {
+            id: currentUser.id,
+            name: currentUser.name || 'You'
+          },
+          isFromCurrentUser: true,
+          deliveryStatus: 'sent'
+        };
+        
+        setMessages(prev => [...prev, optimisticMessage]);
+        
+        // Send to server
+        if (conversationId && conversationId.startsWith('seller-')) {
+          const userId = conversationId.includes('::') 
+            ? conversationId.split('::')[0].replace('seller-', '')
+            : conversationId.replace('seller-', '');
+          
+          const sentMessage = await sendMessage(null, null, userId, imageUrl);
+          
+          // Confirm message
+          setMessages(prev => prev.map(msg => 
+            msg.tempId === tempId 
+              ? { 
+                  ...sentMessage, 
+                  tempId, 
+                  deliveryStatus: 'sent', 
+                  imageUrl: imageUrl,
+                  timestamp: msg.timestamp,
+                  sentAt: msg.sentAt
+                }
+              : msg
+          ));
+        }
+        
+        // Clear file input
+        event.target.value = '';
+        
+      } catch (error) {
+        setError(`Failed to send image: ${error.message}`);
+      } finally {
+        setUploadingImage(false);
+      }
     }
-    // Reset input
-    event.target.value = '';
   };
 
   // Trigger file input
@@ -397,8 +476,26 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             if (msg.tempId) existingMessagesMap.set(msg.tempId, msg);
           });
           
-          // Merge messages, keeping existing optimistic messages
-          const mergedMessages = [...newMessages];
+          // Merge messages, preserving delivery status from optimistic updates
+          const mergedMessages = newMessages.map(newMsg => {
+            // Check if this message exists in previous messages
+            const existingMsg = existingMessagesMap.get(newMsg.id);
+            
+            if (existingMsg && existingMsg.tempId) {
+              // This is a confirmed optimistic message - preserve its delivery status, content, and timestamp
+              return {
+                ...newMsg,
+                content: newMsg.content || existingMsg.content, // Preserve content from optimistic update if server doesn't have it
+                imageUrl: newMsg.imageUrl || existingMsg.imageUrl, // Preserve imageUrl from optimistic update if server doesn't have it
+                timestamp: existingMsg.timestamp || newMsg.timestamp, // Preserve timestamp from optimistic update
+                sentAt: existingMsg.sentAt || newMsg.sentAt, // Preserve sentAt from optimistic update
+                deliveryStatus: existingMsg.deliveryStatus || 'sent',
+                tempId: existingMsg.tempId
+              };
+            }
+            
+            return newMsg;
+          });
           
           // Add any optimistic messages that aren't in the new data
           prevMessages.forEach(prevMsg => {
@@ -436,7 +533,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       }
       
       const data = await chatService.getMessages(actualChatId);
-      console.log('Loaded messages:', data); // Debug log
       
       // Merge new messages with existing ones to prevent flickering
       setMessages(prevMessages => {
@@ -455,8 +551,26 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             if (msg.tempId) existingMessagesMap.set(msg.tempId, msg);
           });
           
-          // Merge messages, keeping existing optimistic messages
-          const mergedMessages = [...newMessages];
+          // Merge messages, preserving delivery status from optimistic updates
+          const mergedMessages = newMessages.map(newMsg => {
+            // Check if this message exists in previous messages
+            const existingMsg = existingMessagesMap.get(newMsg.id);
+            
+            if (existingMsg && existingMsg.tempId) {
+              // This is a confirmed optimistic message - preserve its delivery status, content, and timestamp
+              return {
+                ...newMsg,
+                content: newMsg.content || existingMsg.content, // Preserve content from optimistic update if server doesn't have it
+                imageUrl: newMsg.imageUrl || existingMsg.imageUrl, // Preserve imageUrl from optimistic update if server doesn't have it
+                timestamp: existingMsg.timestamp || newMsg.timestamp, // Preserve timestamp from optimistic update
+                sentAt: existingMsg.sentAt || newMsg.sentAt, // Preserve sentAt from optimistic update
+                deliveryStatus: existingMsg.deliveryStatus || 'sent',
+                tempId: existingMsg.tempId
+              };
+            }
+            
+            return newMsg;
+          });
           
           // Add any optimistic messages that aren't in the new data
           prevMessages.forEach(prevMsg => {
@@ -690,7 +804,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Optimistically add the message immediately - appears as sent
         const optimisticMessage = {
           tempId,
-          content: messageContent || (imageUrl ? '📷 Image' : ''),
+          content: messageContent || null, // Only set content if there's actual text
           imageUrl: imageUrl,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
@@ -729,7 +843,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Creating new conversation with seller - Optimistic update
         const optimisticMessage = {
           tempId,
-          content: messageContent || (imageUrl ? '📷 Image' : ''),
+          content: messageContent || null, // Only set content if there's actual text
           imageUrl: imageUrl,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
@@ -768,7 +882,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Existing conversation - Optimistic update
         const optimisticMessage = {
           tempId,
-          content: messageContent || (imageUrl ? '📷 Image' : ''),
+          content: messageContent || null, // Only set content if there's actual text
           imageUrl: imageUrl,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
@@ -825,9 +939,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
     const messageContent = newMessage.trim();
     const tempId = `temp_${Date.now()}_${Math.random()}`;
-    setNewMessage('');
 
     try {
+      // Only clear input after we're sure we can send the message
+      setNewMessage('');
+      
+      // Prepare message content - send null if empty, not empty string
+      const finalMessageContent = messageContent || null;
       // Check for self-messaging
       if (conversationId && conversationId.startsWith('seller-')) {
         // Parse seller userId from new format: seller-userId::catalogueName
@@ -850,7 +968,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Optimistically add the message immediately - appears as sent (like chat-demo)
         const optimisticMessage = {
           tempId,
-          content: messageContent,
+          content: finalMessageContent || null, // Only set content if there's actual text
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -862,14 +980,22 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           deliveryStatus: 'sent' // Start as 'sent' for instant feel
         };
         
+        
+        
         setMessages([optimisticMessage]);
         
-        const sentMessage = await sendMessage(null, messageContent, userId);
+        const sentMessage = await sendMessage(null, finalMessageContent, userId);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
           msg.tempId === tempId 
-            ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+            ? { 
+                ...sentMessage, 
+                tempId, 
+                deliveryStatus: 'sent', 
+                timestamp: msg.timestamp, // Preserve timestamp from optimistic message
+                sentAt: msg.sentAt // Preserve sentAt from optimistic message
+              }
             : msg
         ));
         
@@ -882,14 +1008,15 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           if (sentMessage.chatId) {
             loadMessagesWithChatId(sentMessage.chatId);
           }
-        }, 500); // Reduced from 1000ms to 500ms
+        }, 1000); // Increased timeout to give confirmation more time
         
       } else if (sellerId && !conversationId) {
         // Creating new conversation with seller - Optimistic update (like chat-demo)
         // Optimistically add the message immediately - appears as sent
         const optimisticMessage = {
           tempId,
-          content: messageContent,
+          content: finalMessageContent || null, // Only set content if there's actual text
+          imageUrl: imageUrl,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -903,12 +1030,19 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         setMessages([optimisticMessage]);
         
-        const sentMessage = await sendMessage(null, messageContent, sellerId);
+        const sentMessage = await sendMessage(null, finalMessageContent, sellerId, imageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
           msg.tempId === tempId 
-            ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+            ? { 
+                ...sentMessage, 
+                tempId, 
+                deliveryStatus: 'sent', 
+                imageUrl: imageUrl,
+                timestamp: msg.timestamp, // Preserve timestamp from optimistic message
+                sentAt: msg.sentAt // Preserve sentAt from optimistic message
+              }
             : msg
         ));
         
@@ -927,7 +1061,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Existing conversation - Optimistic update (like chat-demo)
         const optimisticMessage = {
           tempId,
-          content: messageContent,
+          content: finalMessageContent || null, // Only set content if there's actual text
+          imageUrl: imageUrl,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -943,18 +1078,28 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         setMessages(prev => [...prev, optimisticMessage]);
         
         const receiverId = conversation.participant.id;
-        const sentMessage = await sendMessage(conversationId, messageContent, receiverId);
+        const sentMessage = await sendMessage(conversationId, finalMessageContent, receiverId, imageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
           msg.tempId === tempId 
-            ? { ...sentMessage, tempId, deliveryStatus: 'sent' }
+            ? { 
+                ...sentMessage, 
+                tempId, 
+                deliveryStatus: 'sent', 
+                imageUrl: imageUrl,
+                timestamp: msg.timestamp, // Preserve timestamp from optimistic message
+                sentAt: msg.sentAt // Preserve sentAt from optimistic message
+              }
             : msg
         ));
         
         stopTyping(receiverId);
       }
     } catch (error) {
+      // Restore input state if there was an error
+      setNewMessage(messageContent);
+      
       // Show failure state instead of removing message (like chat-demo)
       setTimeout(() => {
         setMessages(prev => prev.map(msg => 
@@ -985,10 +1130,12 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       if (isNaN(date.getTime())) {
         return 'Just now';
       }
+      
+      // Show absolute time like "10:54 PM"
       return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
+        hour: 'numeric', 
         minute: '2-digit',
-        hour12: false 
+        hour12: true 
       });
     } catch (error) {
       return 'Just now';
@@ -1168,12 +1315,16 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 
                 <button
                   type="submit"
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() || uploadingImage}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
+                  {uploadingImage ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                   </svg>
+                  )}
                 </button>
               </div>
             </form>
@@ -1279,21 +1430,33 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                         <img 
                           src={message.imageUrl} 
                           alt="Chat image" 
-                          className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(message.imageUrl, '_blank')}
+                          className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-[220px] h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                          onClick={() => openImageModal(message.imageUrl)}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
                         />
+                        {/* Fallback for failed image loads */}
+                        <div className="hidden items-center justify-center bg-gray-100 rounded-lg p-4 text-gray-500 text-sm">
+                          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Image failed to load
+                        </div>
                       </div>
                     )}
                     
                     {/* Text content */}
                     {message.content && (
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p className="text-sm leading-relaxed">{message.content}</p>
                     )}
                     <div className={`flex items-center justify-end mt-1 space-x-1 ${
                       message.isFromCurrentUser ? 'text-blue-100' : 'text-gray-400'
                     }`}>
                       <p className="text-xs">
-                        {formatTime(message.timestamp)}
+                        {formatTime(message.timestamp || message.sentAt)}
                       </p>
                       {message.isFromCurrentUser && (
                         <div className="">
@@ -1377,6 +1540,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
       {/* Message Input - Fixed */}
       <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto lg:flex-shrink-0" style={{ backgroundColor: '#F7F5F0' }}>
+        
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           {/* Emoji Picker Button - Desktop Only */}
           <div className="hidden lg:block relative emoji-picker-container">
@@ -1427,12 +1591,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               type="button"
               onClick={triggerImageUpload}
               disabled={uploadingImage}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full disabled:opacity-50"
+              className="p-3 sm:p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full disabled:opacity-50 hover:bg-gray-100 active:bg-gray-200"
+              title="Add image"
             >
               {uploadingImage ? (
-                <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-6 h-6 sm:w-5 sm:h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               )}
@@ -1473,19 +1638,68 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           
           <button
             type="submit"
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || uploadingImage}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
           >
+            {uploadingImage ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <>
             {!isConnected && (
               <div className="w-1 h-1 bg-yellow-400 rounded-full animate-pulse"></div>
             )}
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>
+              </>
+            )}
           </button>
           </div>
         </form>
       </div>
+
+      {/* Image Modal - WhatsApp Style */}
+      {imageModal.isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          onClick={closeImageModal}
+        >
+          <div className="relative max-w-full max-h-full">
+            <img 
+              src={imageModal.imageUrl} 
+              alt="Full size image" 
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            {/* Close button */}
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Download button */}
+            <button
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = imageModal.imageUrl;
+                link.download = 'image.jpg';
+                link.target = '_blank';
+                link.click();
+              }}
+              className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -267,7 +267,7 @@ export function ChatProvider({ children }) {
 
 export const useChat = () => {
   const context = useContext(ChatContext);
-  if (context === undefined) {
+  if (context === null || context === undefined) {
     throw new Error('useChat must be used within a ChatProvider');
   }
   return context;
