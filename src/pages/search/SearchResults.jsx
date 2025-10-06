@@ -145,6 +145,14 @@ export default function SearchResultsPage() {
     setSelectedPrice('all');
     setPriceRange([0, 100000]);
     setPagination(prev => ({ ...prev, currentPage: 1 }));
+    
+    // Clear URL parameters for filters
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    setSearchParams(params);
+    
+    // Fetch fresh results with cleared filters
+    fetchSearchResults(1);
   };
 
   // Handle add to cart

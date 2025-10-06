@@ -5,27 +5,38 @@ import { AddToCartButton } from '../cart';
 import { WishlistButton } from '../wishlist';
 import { Star } from 'lucide-react';
 import { formatPrice } from '../../utils/formatting';
-import { getSellerCatalogue } from '../../services/authService';
+import { getSellerCatalogue, getSellerCatalogueBySlug } from '../../services/authService';
 
 export default function ProductCard({ product }) {
   const [sellerProfilePicture, setSellerProfilePicture] = useState(null);
+  const [sellerSlug, setSellerSlug] = useState(null);
 
-  // Fetch seller profile picture if not available in product data
+  // Fetch seller profile picture and slug if not available in product data
   useEffect(() => {
-    const fetchSellerProfilePicture = async () => {
+    const fetchSellerData = async () => {
       if (product.seller?.id && !product.seller.user?.profilePicture) {
         try {
-          const catalogueData = await getSellerCatalogue(product.seller.id);
+          // Try to use slug if available, otherwise fall back to ID
+          const catalogueData = product.seller.slug 
+            ? await getSellerCatalogueBySlug(product.seller.slug)
+            : await getSellerCatalogue(product.seller.id);
+          
           if (catalogueData.seller?.user?.profilePicture) {
             setSellerProfilePicture(catalogueData.seller.user.profilePicture);
           }
+          
+          // Set seller slug if available
+          if (catalogueData.seller?.slug) {
+            setSellerSlug(catalogueData.seller.slug);
+          }
         } catch (error) {
+          // Failed to fetch seller data
         }
       }
     };
 
-    fetchSellerProfilePicture();
-  }, [product.seller?.id]);
+    fetchSellerData();
+  }, [product.seller?.id, product.seller?.slug]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -94,7 +105,7 @@ export default function ProductCard({ product }) {
         {/* Seller Info */}
         {product.seller && (
           <Link 
-            to={`/seller/${product.seller.id}/catalogue`}
+            to={`/seller/${sellerSlug || product.seller.slug || product.seller.id}/catalogue`}
             className="flex items-center gap-2 mb-3 hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors group"
           >
             <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors overflow-hidden">

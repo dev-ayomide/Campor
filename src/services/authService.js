@@ -420,6 +420,47 @@ export async function registerSeller(sellerData) {
   }
 }
 
+export async function getSellerCatalogueBySlug(slug) {
+  try {
+    
+    const response = await api.get(`${API_ENDPOINTS.SELLER.CATALOGUE}/catalogue/${slug}`);
+    
+    // The API now returns updated structure with user profile and catalogue cover
+    const data = response.data;
+    
+    const mappedData = {
+      seller: {
+        id: data.userId, // Use userId as the seller ID since there's no separate seller ID
+        slug: slug, // Use the provided slug
+        user: {
+          ...data.user, // Contains name and profilePicture
+          id: data.userId // Map userId to user.id for consistency
+        },
+        catalogueName: data.catalogueName,
+        catalogueCover: data.catalogueCover || '', // Handle empty string
+        cataloguePicture: data.catalogueCover || '', // Also map to cataloguePicture for backward compatibility
+        storeDescription: data.storeDescription,
+        phoneNumber: data.phoneNumber || '',
+        whatsappNumber: data.whatsappNumber || '',
+        location: data.location,
+        bankName: data.bankName || '',
+        bankCode: data.bankCode || '',
+        accountNumber: data.accountNumber || '',
+        accountName: data.accountName || '',
+        createdAt: data.createdAt,
+        averageRating: data.averageRating || 0,
+        productCount: data._count?.products || 0
+      },
+      products: data.products || [],
+      rawApiResponse: data // Store raw API response for debugging
+    };
+    
+    return mappedData;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch seller catalogue.');
+  }
+}
+
 export async function getSellerCatalogue(sellerId) {
   try {
     
@@ -431,23 +472,24 @@ export async function getSellerCatalogue(sellerId) {
     const mappedData = {
       seller: {
         id: sellerId,
+        slug: data.slug || '', // Handle missing slug
         user: {
           ...data.user, // Contains name and profilePicture
           id: data.userId // Map userId to user.id for consistency
         },
         catalogueName: data.catalogueName,
-        catalogueCover: data.catalogueCover, // New cover photo field
-        cataloguePicture: data.catalogueCover, // Also map to cataloguePicture for backward compatibility
+        catalogueCover: data.catalogueCover || '', // Handle empty string
+        cataloguePicture: data.catalogueCover || '', // Also map to cataloguePicture for backward compatibility
         storeDescription: data.storeDescription,
-        phoneNumber: data.phoneNumber,
-        whatsappNumber: data.whatsappNumber,
+        phoneNumber: data.phoneNumber || '',
+        whatsappNumber: data.whatsappNumber || '',
         location: data.location,
-        bankName: data.bankName,
-        bankCode: data.bankCode,
-        accountNumber: data.accountNumber,
-        accountName: data.accountName,
+        bankName: data.bankName || '',
+        bankCode: data.bankCode || '',
+        accountNumber: data.accountNumber || '',
+        accountName: data.accountName || '',
         createdAt: data.createdAt,
-        averageRating: data.averageRating,
+        averageRating: data.averageRating || 0,
         productCount: data._count?.products || 0
       },
       products: data.products || [],

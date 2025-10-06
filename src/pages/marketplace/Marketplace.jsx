@@ -8,7 +8,6 @@ import {
   debouncedSearch 
 } from '../../services/algoliaService';
 import { getSellerCatalogue } from '../../services/authService';
-import { getCategories } from '../../services/categoryService';
 import { AuthContext } from '../../context/AuthContext';
 import { formatPrice } from '../../utils/formatting';
 import { useCart } from '../../contexts/CartContext';
@@ -122,8 +121,7 @@ export default function MarketplacePage() {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await getCategories();
-      
+      const response = await getCategoriesAlgolia();
       
       if (response.data && Array.isArray(response.data)) {
         // Add 'All' option at the beginning and keep full category objects
@@ -917,7 +915,7 @@ export default function MarketplacePage() {
                                 className="flex items-center gap-1 mb-2 transition-colors group cursor-pointer"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/seller/${product.seller?.id}/catalogue`);
+                                  navigate(`/seller/${product.seller?.slug || product.seller?.id}/catalogue`);
                                 }}
                               >
                                 <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -981,7 +979,7 @@ export default function MarketplacePage() {
                               className="flex items-center gap-1 mb-3 transition-colors group cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/seller/${product.seller?.id}/catalogue`);
+                                navigate(`/seller/${product.seller?.slug || product.seller?.id}/catalogue`);
                               }}
                             >
                               <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">

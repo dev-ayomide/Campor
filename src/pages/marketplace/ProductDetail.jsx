@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { getProductBySlug, getSellerCatalogue, getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
+import { getProductBySlug, getSellerCatalogue, getSellerCatalogueBySlug, getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { useCart } from '../../contexts/CartContext';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
@@ -24,6 +24,7 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState('Reviews');
   const [addingToCart, setAddingToCart] = useState(false);
   const [sellerProfilePicture, setSellerProfilePicture] = useState(null);
+  const [sellerSlug, setSellerSlug] = useState(null);
 
   // Fetch product data
   useEffect(() => {
@@ -77,25 +78,34 @@ export default function ProductDetailPage() {
     }
   }, [slug]);
 
-  // Fetch seller profile picture if not available in product data
+  // Fetch seller profile picture and slug if not available in product data
   useEffect(() => {
-    const fetchSellerProfilePicture = async () => {
+    const fetchSellerData = async () => {
       if (product?.seller?.id && !product.seller.user?.profilePicture) {
         try {
-          const catalogueData = await getSellerCatalogue(product.seller.id);
+          // Try to use slug if available, otherwise fall back to ID
+          const catalogueData = product.seller.slug 
+            ? await getSellerCatalogueBySlug(product.seller.slug)
+            : await getSellerCatalogue(product.seller.id);
+          
           if (catalogueData.seller?.user?.profilePicture) {
             setSellerProfilePicture(catalogueData.seller.user.profilePicture);
           }
+          
+          // Set seller slug if available
+          if (catalogueData.seller?.slug) {
+            setSellerSlug(catalogueData.seller.slug);
+          }
         } catch (error) {
-          // Failed to fetch seller profile picture
+          // Failed to fetch seller data
         }
       }
     };
 
     if (product?.seller?.id) {
-      fetchSellerProfilePicture();
+      fetchSellerData();
     }
-  }, [product?.seller?.id]);
+  }, [product?.seller?.id, product?.seller?.slug]);
 
   // Handle add to cart (no longer needed; using AddToCartButton controls per item)
 
@@ -410,7 +420,7 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Link 
-                      to={`/seller/${product.seller.id}/catalogue`}
+                      to={`/seller/${sellerSlug || product.seller.slug || product.seller.id}/catalogue`}
                       className="font-medium text-blue-600 text-base hover:text-blue-700 transition-colors duration-200 cursor-pointer truncate"
                       title={`View ${product.seller.catalogueName || 'Seller'}'s store`}
                     >

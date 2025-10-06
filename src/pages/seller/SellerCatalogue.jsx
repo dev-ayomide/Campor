@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Phone, Copy, Check, Star, Clock, Award, Package, Search } from 'lucide-react';
 import { ChatIcon } from '../../components/common';
 import filterIcon from '../../../public/filter.svg';
-import { getSellerCatalogue, getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
+import { getSellerCatalogueBySlug, getSellerUserId, getSellerUserIdWithFallback } from '../../services/authService';
 import { AddToCartButton } from '../../components/cart';
 import { WishlistButton } from '../../components/wishlist';
 import { ProductGridSkeleton } from '../../components/common';
@@ -12,7 +12,7 @@ import { debouncedSearch } from '../../services/algoliaService';
 import SearchHighlight from '../../components/search/SearchHighlight';
 
 export default function SellerCatalogue() {
-  const { sellerId } = useParams();
+  const { slug } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sellerData, setSellerData] = useState(null);
@@ -44,7 +44,7 @@ export default function SellerCatalogue() {
         setLoading(true);
         setError(null);
         
-        const data = await getSellerCatalogue(sellerId);
+        const data = await getSellerCatalogueBySlug(slug);
         setSellerData(data.seller);
         setProducts(data.products || []);
         
@@ -55,10 +55,10 @@ export default function SellerCatalogue() {
       }
     };
 
-    if (sellerId) {
+    if (slug) {
       fetchSellerCatalogue();
     }
-  }, [sellerId]);
+  }, [slug]);
 
   // Get unique categories from products
   const categories = ['All', ...new Set(products.map(product => product.category?.name).filter(Boolean))];
@@ -268,14 +268,14 @@ export default function SellerCatalogue() {
                   </div>
                   
               {/* Action Buttons - Mobile: centered, Desktop: right-aligned */}
-                  {user?.seller?.id !== sellerId && (
+                  {user?.seller?.id !== sellerData?.id && (
                 <div className="flex flex-col gap-3 items-center sm:items-end">
                       <button 
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 whitespace-nowrap text-sm touch-manipulation"
                         onClick={async () => {
                           try {
                             // Get seller's user ID for chat with fallback
-                            const sellerUserId = await getSellerUserIdWithFallback(sellerId);
+                            const sellerUserId = await getSellerUserIdWithFallback(sellerData?.id);
                             // Navigate to chat with seller's user ID
                             navigate(`/chat?sellerId=${sellerUserId}`);
                           } catch (error) {

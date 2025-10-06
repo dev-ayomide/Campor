@@ -206,6 +206,7 @@ export function AuthProvider({ children }) {
       
       const sellerProfile = {
         id: sellerId,
+        slug: sellerInfo.slug,
         catalogueName: sellerInfo.catalogueName,
         storeDescription: sellerInfo.storeDescription,
         catalogueCover: sellerInfo.catalogueCover,

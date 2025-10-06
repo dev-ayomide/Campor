@@ -316,13 +316,13 @@ export default function SellerDashboardPage({ toggleMobileMenu }) {
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex items-center gap-2 bg-white rounded-lg p-3 border border-gray-200 flex-1">
                 <code className="text-sm text-gray-700 flex-1 break-all">
-                  {window.location.origin}/seller/{user?.seller?.id}/catalogue
+                  {window.location.origin}/seller/{user?.seller?.slug || user?.seller?.id}/catalogue
                 </code>
               </div>
               
               <div className="flex gap-2">
                 <Link
-                  to={`/seller/${user?.seller?.id}/catalogue`}
+                  to={`/seller/${user?.seller?.slug || user?.seller?.id}/catalogue`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"

@@ -109,7 +109,7 @@ export default function App() {
         } />
         
         {/* Seller Catalogue Route - Public */}
-        <Route path="/seller/:sellerId/catalogue" element={
+        <Route path="/seller/:slug/catalogue" element={
           <RequireAuth>
             <MainLayout><SellerCatalogue /></MainLayout>
           </RequireAuth>
