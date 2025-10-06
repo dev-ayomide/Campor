@@ -255,22 +255,35 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   }
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      // Force scroll to bottom immediately
-      messagesEndRef.current.scrollIntoView({ 
-        behavior: 'auto', // Changed to auto for immediate scroll
-        block: 'end',
-        inline: 'nearest'
-      });
+    // Multiple approaches to ensure scrolling works on all devices
+    const scrollToBottomImmediate = () => {
+      // Method 1: Use scrollIntoView on the ref
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'auto',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }
       
-      // Additional brute force scroll
-      setTimeout(() => {
-        const messagesContainer = document.querySelector('.chat-messages-mobile');
-        if (messagesContainer) {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }, 50);
-    }
+      // Method 2: Direct scroll on container
+      const messagesContainer = document.querySelector('.chat-messages-mobile');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+      
+      // Method 3: Use window scroll as fallback
+      window.scrollTo(0, document.body.scrollHeight);
+    };
+    
+    // Execute immediately
+    scrollToBottomImmediate();
+    
+    // Execute again after a short delay to handle dynamic content
+    setTimeout(scrollToBottomImmediate, 50);
+    
+    // Execute once more after a longer delay for slow rendering
+    setTimeout(scrollToBottomImmediate, 200);
   };
 
   // Emoji picker functionality
@@ -747,15 +760,21 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   useEffect(() => {
     // Force scroll to bottom when messages change
     scrollToBottom();
-    
-    // Additional brute force scroll for mobile
-    setTimeout(() => {
-      const messagesContainer = document.querySelector('.chat-messages-mobile');
-      if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    }, 100);
   }, [messages]);
+
+  // Scroll to bottom when component mounts
+  useEffect(() => {
+    // Initial scroll to bottom when component loads
+    setTimeout(scrollToBottom, 200);
+  }, []);
+
+  // Scroll to bottom when conversation changes (new chat opened)
+  useEffect(() => {
+    if (conversation) {
+      // Delay to ensure DOM is ready
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [conversation]);
 
   // Close emoji picker when clicking outside
   useEffect(() => {
@@ -1558,7 +1577,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               ) : (
                 <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+              </svg>
               )}
             </button>
             <input
