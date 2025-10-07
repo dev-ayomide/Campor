@@ -634,54 +634,17 @@ export default function SellerSettingsPage({ toggleMobileMenu }) {
               {/* Account Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="accountNumber"
-                    value={paymentInfo.accountNumber}
-                    onChange={handleAccountNumberChange}
-                    onBlur={handleAccountNumberBlur}
-                    placeholder="9012345678"
-                    maxLength="10"
-                    className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      accountVerified ? 'border-green-300 bg-green-50' : 
-                      accountResolutionError ? 'border-red-300 bg-red-50' : 
-                      'border-gray-300'
-                    }`}
-                    required
-                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  {resolvingAccount && (
-                    <svg className="animate-spin w-5 h-5 text-blue-500 absolute right-4 top-1/2 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  {accountVerified && !resolvingAccount && (
-                    <svg className="w-5 h-5 text-green-500 absolute right-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
-                
-                {/* Account Resolution Status */}
-                {accountResolutionError && (
-                  <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
-                    {accountResolutionError}
-                  </div>
-                )}
-                {accountVerified && (
-                  <div className="mt-2 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-2">
-                    ✓ Account name resolved successfully
-                  </div>
-                )}
-                {paymentInfo.accountNumber.length === 10 && !accountVerified && !resolvingAccount && !accountResolutionError && (
-                  <div className="mt-2 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                    Account will be verified automatically when you finish typing or click outside the field
-                  </div>
-                )}
+                <input
+                  type="text"
+                  name="accountNumber"
+                  value={paymentInfo.accountNumber}
+                  onChange={handleAccountNumberChange}
+                  onBlur={handleAccountNumberBlur}
+                  placeholder="9012345678"
+                  maxLength="10"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  required
+                />
               </div>
 
               {/* Account Name */}
