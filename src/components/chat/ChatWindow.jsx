@@ -208,6 +208,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageModal, setImageModal] = useState({ isOpen: false, imageUrl: null });
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedImagePreviewUrl, setSelectedImagePreviewUrl] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -258,19 +260,19 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     // Multiple approaches to ensure scrolling works on all devices
     const scrollToBottomImmediate = () => {
       // Method 1: Use scrollIntoView on the ref
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ 
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
           behavior: 'auto',
-          block: 'end',
-          inline: 'nearest'
-        });
+        block: 'end',
+        inline: 'nearest'
+      });
       }
       
       // Method 2: Direct scroll on container
-      const messagesContainer = document.querySelector('.chat-messages-mobile');
-      if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
+        const messagesContainer = document.querySelector('.chat-messages-mobile');
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
       
       // Method 3: Use window scroll as fallback
       window.scrollTo(0, document.body.scrollHeight);
@@ -340,67 +342,24 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     }
   };
 
-  // Handle file input change - directly upload image
-  const handleFileInputChange = async (event) => {
+  // Handle file input change - set local preview and allow caption before sending
+  const handleFileInputChange = (event) => {
     const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      try {
-        setUploadingImage(true);
-        const imageUrl = await handleImageUpload(file);
-        
-        // Send the image immediately
-        const tempId = `temp_${Date.now()}_${Math.random()}`;
-        
-        // Create optimistic message
-        const optimisticMessage = {
-          tempId,
-          content: null,
-          imageUrl: imageUrl,
-          senderId: currentUser.id,
-          sentAt: new Date().toISOString(),
-          timestamp: new Date().toISOString(),
-          sender: {
-            id: currentUser.id,
-            name: currentUser.name || 'You'
-          },
-          isFromCurrentUser: true,
-          deliveryStatus: 'sent'
-        };
-        
-        setMessages(prev => [...prev, optimisticMessage]);
-        
-        // Send to server
-        if (conversationId && conversationId.startsWith('seller-')) {
-          const userId = conversationId.includes('::') 
-            ? conversationId.split('::')[0].replace('seller-', '')
-            : conversationId.replace('seller-', '');
-          
-          const sentMessage = await sendMessage(null, null, userId, imageUrl);
-          
-          // Confirm message
-          setMessages(prev => prev.map(msg => 
-            msg.tempId === tempId 
-              ? { 
-                  ...sentMessage, 
-                  tempId, 
-                  deliveryStatus: 'sent', 
-                  imageUrl: imageUrl,
-                  timestamp: msg.timestamp,
-                  sentAt: msg.sentAt
-                }
-              : msg
-          ));
-        }
-        
-        // Clear file input
-        event.target.value = '';
-        
-      } catch (error) {
-        setError(`Failed to send image: ${error.message}`);
-      } finally {
-        setUploadingImage(false);
-      }
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
     }
+    setError(null);
+    setSelectedImageFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedImagePreviewUrl(objectUrl);
+    // Allow selecting the same file again later
+    event.target.value = '';
+    // Focus input and scroll bottom so user sees the preview and can type
+    setTimeout(() => {
+      scrollToBottom();
+    }, 0);
   };
 
   // Trigger file input
@@ -954,7 +913,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !selectedImageFile) return;
 
     const messageContent = newMessage.trim();
     const tempId = `temp_${Date.now()}_${Math.random()}`;
@@ -965,6 +924,11 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       
       // Prepare message content - send null if empty, not empty string
       const finalMessageContent = messageContent || null;
+      let uploadedImageUrl = null;
+      if (selectedImageFile) {
+        setUploadingImage(true);
+        uploadedImageUrl = await handleImageUpload(selectedImageFile);
+      }
       // Check for self-messaging
       if (conversationId && conversationId.startsWith('seller-')) {
         // Parse seller userId from new format: seller-userId::catalogueName
@@ -987,7 +951,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Optimistically add the message immediately - appears as sent (like chat-demo)
         const optimisticMessage = {
           tempId,
-          content: finalMessageContent || null, // Only set content if there's actual text
+          content: finalMessageContent || null,
+          imageUrl: uploadedImageUrl || null,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1003,7 +968,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         setMessages([optimisticMessage]);
         
-        const sentMessage = await sendMessage(null, finalMessageContent, userId);
+        const sentMessage = await sendMessage(null, finalMessageContent, userId, uploadedImageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
@@ -1013,7 +978,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 tempId, 
                 deliveryStatus: 'sent', 
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
-                sentAt: msg.sentAt // Preserve sentAt from optimistic message
+                sentAt: msg.sentAt, // Preserve sentAt from optimistic message
+                imageUrl: uploadedImageUrl || sentMessage.imageUrl || null
               }
             : msg
         ));
@@ -1034,8 +1000,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         // Optimistically add the message immediately - appears as sent
         const optimisticMessage = {
           tempId,
-          content: finalMessageContent || null, // Only set content if there's actual text
-          imageUrl: imageUrl,
+          content: finalMessageContent || null,
+          imageUrl: uploadedImageUrl || null,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1049,7 +1015,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         setMessages([optimisticMessage]);
         
-        const sentMessage = await sendMessage(null, finalMessageContent, sellerId, imageUrl);
+        const sentMessage = await sendMessage(null, finalMessageContent, sellerId, uploadedImageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
@@ -1058,7 +1024,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
-                imageUrl: imageUrl,
+                imageUrl: uploadedImageUrl || sentMessage.imageUrl || null,
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
                 sentAt: msg.sentAt // Preserve sentAt from optimistic message
               }
@@ -1081,7 +1047,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null, // Only set content if there's actual text
-          imageUrl: imageUrl,
+          imageUrl: uploadedImageUrl || null,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1097,7 +1063,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         setMessages(prev => [...prev, optimisticMessage]);
         
         const receiverId = conversation.participant.id;
-        const sentMessage = await sendMessage(conversationId, finalMessageContent, receiverId, imageUrl);
+        const sentMessage = await sendMessage(conversationId, finalMessageContent, receiverId, uploadedImageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
         setMessages(prev => prev.map(msg => 
@@ -1106,7 +1072,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
-                imageUrl: imageUrl,
+                imageUrl: uploadedImageUrl || sentMessage.imageUrl || null,
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
                 sentAt: msg.sentAt // Preserve sentAt from optimistic message
               }
@@ -1115,6 +1081,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         stopTyping(receiverId);
       }
+      // Clear selected image state after successful send
+      if (selectedImagePreviewUrl) {
+        URL.revokeObjectURL(selectedImagePreviewUrl);
+      }
+      setSelectedImageFile(null);
+      setSelectedImagePreviewUrl(null);
+
     } catch (error) {
       // Restore input state if there was an error
       setNewMessage(messageContent);
@@ -1138,6 +1111,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       } else {
         setError(error.message || 'Failed to send message. Please try again.');
       }
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -1320,6 +1295,18 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               </div>
               
               <div className="flex-1 relative">
+                {selectedImagePreviewUrl && (
+                  <div className="absolute -top-20 left-0 flex items-center space-x-2 bg-white border border-gray-200 rounded-lg p-2 shadow z-10">
+                    <img src={selectedImagePreviewUrl} alt="preview" className="w-12 h-12 object-cover rounded" />
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedImageFile(null); setSelectedImagePreviewUrl(null); }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                )}
                 <input
                   type="text"
                   value={newMessage}
@@ -1334,7 +1321,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 
                 <button
                   type="submit"
-                  disabled={!newMessage.trim() || uploadingImage}
+                  disabled={(!newMessage.trim() && !selectedImageFile) || uploadingImage}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {uploadingImage ? (
@@ -1560,6 +1547,37 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       {/* Message Input - Fixed */}
       <div className="chat-fixed-input px-4 py-3 border-t border-gray-200 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto lg:flex-shrink-0" style={{ backgroundColor: '#F7F5F0' }}>
         
+        {/* Image Preview - Floating above input */}
+        {selectedImagePreviewUrl && (
+          <div className="mb-3 animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center space-x-3 bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+              <img 
+                src={selectedImagePreviewUrl} 
+                alt="Preview" 
+                className="w-12 h-12 object-cover rounded-lg"
+              />
+              <div className="flex-1">
+                <div className="text-sm text-gray-600">Image selected</div>
+                <div className="text-xs text-gray-500">Add caption below or send as is</div>
+              </div>
+          <button
+            type="button"
+                onClick={() => {
+                  if (selectedImagePreviewUrl) URL.revokeObjectURL(selectedImagePreviewUrl);
+                  setSelectedImageFile(null);
+                  setSelectedImagePreviewUrl(null);
+                }}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                title="Remove image"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+                </div>
+              </div>
+            )}
+        
         <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
           
           
@@ -1569,17 +1587,28 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               type="button"
               onClick={triggerImageUpload}
               disabled={uploadingImage}
-              className="p-3 sm:p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full disabled:opacity-50 hover:bg-gray-100 active:bg-gray-200"
-              title="Add image"
+              className={`p-3 sm:p-2 transition-all duration-200 rounded-full disabled:opacity-50 hover:bg-gray-100 active:bg-gray-200 ${
+                selectedImageFile 
+                  ? 'text-blue-500 bg-blue-50 border-2 border-blue-200' 
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+              title={selectedImageFile ? "Change image" : "Add image"}
             >
               {uploadingImage ? (
                 <div className="w-6 h-6 sm:w-5 sm:h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-              ) : (
+              ) : selectedImageFile ? (
                 <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
+              ) : (
+                <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
               )}
             </button>
+            {selectedImageFile && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -1616,21 +1645,21 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           
           <button
             type="submit"
-            disabled={!newMessage.trim() || uploadingImage}
+                  disabled={(!newMessage.trim() && !selectedImageFile) || uploadingImage}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
           >
-            {uploadingImage ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            ) : (
-              <>
+                  {uploadingImage ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <>
             {!isConnected && (
               <div className="w-1 h-1 bg-yellow-400 rounded-full animate-pulse"></div>
             )}
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>
-              </>
-            )}
+                    </>
+                  )}
           </button>
           </div>
         </form>

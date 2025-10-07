@@ -4,14 +4,13 @@ import SellerLayout from '../../layouts/SellerLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getSellerOrders } from '../../services/ordersService';
 import { OrderItemSkeleton, Breadcrumb, MobileSearchFilter, ExportOptionsModal, Pagination } from '../../components/common';
-import { useChat } from '../../contexts/ChatContext';
 import { chatApiService } from '../../services/chatApiService';
 import * as XLSX from 'xlsx';
 const productImage = '/product.png';
 
 export default function SellerOrdersPage() {
   const { user } = useAuth();
-  const chatContext = useChat();
+  // Note: Chat context is not available in this component, so we'll handle chat navigation differently
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,15 +36,22 @@ export default function SellerOrdersPage() {
         
         // Wait for user context to be fully loaded
         if (!user) {
+          console.log('Orders: User not loaded yet');
           return;
         }
         
+        console.log('Orders: User loaded:', user);
+        console.log('Orders: Seller info:', user.seller);
+        
         if (!user.seller?.id) {
+          console.log('Orders: No seller ID found');
           setError('Seller information not found. Please complete seller registration.');
           return;
         }
         
+        console.log('Orders: Fetching orders for seller ID:', user.seller.id);
         const ordersData = await getSellerOrders(user.seller.id);
+        console.log('Orders: Received orders data:', ordersData);
         
         // Handle new data structure - API returns array of OrderSeller objects
         if (Array.isArray(ordersData)) {
@@ -55,6 +61,7 @@ export default function SellerOrdersPage() {
         }
         
       } catch (err) {
+        console.error('Orders: Error fetching orders:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -140,25 +147,10 @@ export default function SellerOrdersPage() {
         return;
       }
 
-      // Check if chat context is available
-      if (!chatContext) {
-        // Navigate to chat page with customer ID as parameter
-        window.location.href = `/chat?sellerId=${customerUserId}`;
-        return;
-      }
-
-      // Check if chat already exists
-      const existingChat = await chatApiService.getChatWithUser(customerUserId);
-      
-      if (existingChat) {
-        chatContext.setSelectedConversationId(existingChat.id);
-      } else {
-        // Start new chat - the chatApiService will handle creating the chat
-        chatContext.setSelectedConversationId(`customer-${customerUserId}::${customerName}`);
-      }
-      
-      // Navigate to chat page
-      window.location.href = '/chat';
+      // Since chat context is not available in this component,
+      // we'll navigate directly to the chat page with the customer ID
+      // The chat page will handle setting up the conversation
+      window.location.href = `/chat?customerId=${customerUserId}&customerName=${encodeURIComponent(customerName)}`;
       
     } catch (err) {
       alert('Unable to start chat with customer. Please try again.');
@@ -470,6 +462,20 @@ export default function SellerOrdersPage() {
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-800">Error loading orders</p>
                 <p className="text-sm text-red-700 mt-1">{error}</p>
+                
+                {error.includes('Seller information not found') && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800 font-medium">Need to complete seller setup?</p>
+                    <p className="text-sm text-blue-700 mt-1">Complete your seller onboarding to start receiving orders.</p>
+                    <Link 
+                      to="/seller/onboarding"
+                      className="mt-2 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      Complete Seller Setup
+                    </Link>
+                  </div>
+                )}
+                
                 <button 
                   onClick={retryFetch}
                   disabled={loading}

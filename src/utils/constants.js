@@ -1,9 +1,9 @@
 // Validate that API_BASE_URL is set
 if (!import.meta.env.VITE_API_BASE_URL) {
-  // Environment variable not set - this is a development configuration issue
+  console.warn('VITE_API_BASE_URL environment variable not set. Using fallback URL.');
 }
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://campor-aa1452bb8116.herokuapp.com';
 export const RUN_EMAIL_REGEX = /^[^\s@]+@run\.edu\.ng$/i;
 
 // API Endpoints
