@@ -43,6 +43,11 @@ const setCachedCart = (cart) => {
   cartCacheTime = Date.now();
 };
 
+// Generate a unique cart ID
+const generateCartId = () => {
+  return 'cart-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+};
+
 
 
 // Get user cart
@@ -79,15 +84,13 @@ export async function addToCart(cartId, items) {
     // Note: Inventory validation is handled by backend webhook after payment
     // Frontend allows adding to cart, backend will handle stock validation
     
-    // Only include cartId if it's not null/undefined and not a temp ID
+    // Generate a cart ID if none exists
+    const finalCartId = cartId || generateCartId();
+    
     const payload = {
+      cartId: finalCartId,
       items: items
     };
-    
-    // Only add cartId if it's a real cart ID (not temp-cart-id)
-    if (cartId && cartId !== 'temp-cart-id') {
-      payload.cartId = cartId;
-    }
     
     const response = await api.post(API_ENDPOINTS.CART.ADD, payload);
     

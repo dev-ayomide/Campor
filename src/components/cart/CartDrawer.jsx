@@ -12,6 +12,7 @@ export default function CartDrawer({ isOpen, onClose }) {
     cart, 
     loading, 
     error, 
+    cartId,
     getCartTotals, 
     getItemCount,
     updateItemQuantity, 
@@ -68,7 +69,7 @@ export default function CartDrawer({ isOpen, onClose }) {
   };
 
   const handleCheckout = () => {
-    if (!user || !user.email || !user.cart?.id) {
+    if (!user || !user.email || !cartId) {
         return;
     }
 
@@ -84,7 +85,7 @@ export default function CartDrawer({ isOpen, onClose }) {
   };
 
   const handleConfirmCheckout = async () => {
-    if (!user || !user.email || !user.cart?.id) {
+    if (!user || !user.email || !cartId) {
         return;
     }
 
@@ -106,7 +107,7 @@ export default function CartDrawer({ isOpen, onClose }) {
       const paymentResponse = await initiatePayment(
         user.email,
         amountInKobo,
-        user.cart.id
+        cartId
       );
       
       // Redirect to payment URL

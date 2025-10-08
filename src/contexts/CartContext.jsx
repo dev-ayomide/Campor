@@ -55,15 +55,20 @@ export const CartProvider = ({ children }) => {
       
       const cartData = await getCart(force);
       
-      // Debug cart structure (removed since backend is fixed)
-      
       // Ensure cart is always an array
       const normalizedCart = Array.isArray(cartData) ? cartData : [];
       setCart(normalizedCart);
       
-      // Extract cart ID from first item if available
-      if (normalizedCart.length > 0 && normalizedCart[0].items && normalizedCart[0].items.length > 0) {
-        setCartId(normalizedCart[0].items[0].cartId);
+      // Extract cart ID from cart data if available
+      // The cart ID might be in the response metadata or in the first item
+      if (cartData?.cartId) {
+        setCartId(cartData.cartId);
+      } else if (normalizedCart.length > 0 && normalizedCart[0].items && normalizedCart[0].items.length > 0) {
+        // Fallback: extract from first item
+        const firstItem = normalizedCart[0].items[0];
+        if (firstItem.cartId) {
+          setCartId(firstItem.cartId);
+        }
       }
       
     } catch (err) {
@@ -84,13 +89,11 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Only pass cartId if it exists and is not null/undefined
-      const currentCartId = cartId && cartId !== 'temp-cart-id' ? cartId : null;
-      
-      const response = await addToCart(currentCartId, items);
+      // Always pass the current cartId (or null to let service generate one)
+      const response = await addToCart(cartId, items);
       
       // Update cartId from response if provided
-      if (response?.cartId && response.cartId !== currentCartId) {
+      if (response?.cartId && response.cartId !== cartId) {
         setCartId(response.cartId);
       }
       
