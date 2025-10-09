@@ -299,8 +299,7 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                       {conversation.orderSellers.map((orderSeller, index) => {
                         const isCurrentUser = orderSeller.seller.userId === currentUser?.id;
                         const sellerItems = conversation.orderItems.filter(item => 
-                          // For now, show all items for each seller. In production, you'd filter by sellerId
-                          true
+                          item.sellerId === orderSeller.sellerId
                         );
                         
                         return (
@@ -343,10 +342,10 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                                 <div key={item.id} className="bg-white border border-black rounded-lg p-3">
                                   <div className="flex items-center space-x-3">
                                     <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                                      {item.product.imageUrls && item.product.imageUrls.length > 0 ? (
+                                      {item.productImages && item.productImages.length > 0 ? (
                                         <img 
-                                          src={item.product.imageUrls[0]} 
-                                          alt={item.product.name}
+                                          src={item.productImages[0]} 
+                                          alt={item.productName}
                                           className="w-full h-full object-cover"
                                         />
                                       ) : (
@@ -356,11 +355,11 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
                                       )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <h4 className="font-medium text-gray-900 truncate">{item.product.name}</h4>
-                                      <p className="text-sm text-gray-500">Qty: {item.quantity} x ₦{item.product.price.toLocaleString()}</p>
+                                      <h4 className="font-medium text-gray-900 truncate">{item.productName}</h4>
+                                      <p className="text-sm text-gray-500">Qty: {item.quantity} x ₦{item.priceAtPurchase.toLocaleString()}</p>
                                     </div>
                                     <div className="text-right">
-                                      <p className="font-medium text-gray-900">₦{(item.price * item.quantity).toLocaleString()}</p>
+                                      <p className="font-medium text-gray-900">₦{(item.priceAtPurchase * item.quantity).toLocaleString()}</p>
                                     </div>
                                   </div>
                                 </div>
