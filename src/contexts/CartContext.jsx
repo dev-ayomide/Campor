@@ -89,7 +89,7 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Always pass the current cartId (or null to let service generate one)
+      // Pass the current cartId (only if it's a valid UUID from backend)
       const response = await addToCart(cartId, items);
       
       // Update cartId from response if provided
@@ -97,7 +97,7 @@ export const CartProvider = ({ children }) => {
         setCartId(response.cartId);
       }
       
-      // Reload cart to get updated data
+      // Reload cart to get updated data and extract cart ID
       await loadCart(true); // bypass cache right after add
       
       return response;

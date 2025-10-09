@@ -43,9 +43,10 @@ const setCachedCart = (cart) => {
   cartCacheTime = Date.now();
 };
 
-// Generate a unique cart ID
-const generateCartId = () => {
-  return 'cart-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+// Validate if a string is a valid UUID format
+const isValidUUID = (str) => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 };
 
 
@@ -84,13 +85,15 @@ export async function addToCart(cartId, items) {
     // Note: Inventory validation is handled by backend webhook after payment
     // Frontend allows adding to cart, backend will handle stock validation
     
-    // Generate a cart ID if none exists
-    const finalCartId = cartId || generateCartId();
-    
     const payload = {
-      cartId: finalCartId,
       items: items
     };
+    
+    // Only include cartId if it's a valid UUID format (from backend)
+    // For new users, let the backend create the cart ID
+    if (cartId && isValidUUID(cartId)) {
+      payload.cartId = cartId;
+    }
     
     const response = await api.post(API_ENDPOINTS.CART.ADD, payload);
     
