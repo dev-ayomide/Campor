@@ -19,6 +19,8 @@ export default function CartDrawer({ isOpen, onClose }) {
     removeItemFromCart, 
     clearUserCart,
     fixUserCart,
+    initiateUserCheckout,
+    cancelUserCheckout,
     needsFixing,
     getStatusSummary,
     getItemsNeedingFix
@@ -28,7 +30,9 @@ export default function CartDrawer({ isOpen, onClose }) {
   const [updatingItem, setUpdatingItem] = useState(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [fixingCart, setFixingCart] = useState(false);
+  const [validatingCheckout, setValidatingCheckout] = useState(false);
   const [checkoutModal, setCheckoutModal] = useState({ isOpen: false });
+  const [checkoutError, setCheckoutError] = useState(null);
 
   const handleQuantityChange = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -68,7 +72,7 @@ export default function CartDrawer({ isOpen, onClose }) {
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user || !user.email || !cartId) {
         return;
     }
@@ -81,7 +85,26 @@ export default function CartDrawer({ isOpen, onClose }) {
       return;
     }
 
-    setCheckoutModal({ isOpen: true });
+    try {
+      setValidatingCheckout(true);
+      setCheckoutError(null);
+      
+      // First, initiate checkout to reserve products and validate availability
+      await initiateUserCheckout();
+      
+      // If successful, show confirmation modal
+      setCheckoutModal({ isOpen: true });
+    } catch (error) {
+      setCheckoutError(error.message);
+      // If checkout validation fails, try to fix the cart
+      try {
+        await fixUserCart();
+      } catch (fixError) {
+        // If fixing fails, just show the error
+      }
+    } finally {
+      setValidatingCheckout(false);
+    }
   };
 
   const handleConfirmCheckout = async () => {
@@ -118,6 +141,12 @@ export default function CartDrawer({ isOpen, onClose }) {
       }
       
     } catch (error) {
+      // If payment fails, cancel the checkout to release reservations
+      try {
+        await cancelUserCheckout();
+      } catch (cancelError) {
+        // If cancel fails, just log it
+      }
       alert(error.message || 'Failed to process checkout. Please try again.');
     } finally {
       setProcessingPayment(false);
@@ -221,6 +250,26 @@ export default function CartDrawer({ isOpen, onClose }) {
           {error && (
             <div className="p-4 bg-red-50 border-l-4 border-red-400">
               <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Checkout Error Message */}
+          {checkoutError && (
+            <div className="p-4 bg-red-50 border-l-4 border-red-400">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Checkout Validation Failed
+                  </h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    {checkoutError}
+                  </p>
+                  <p className="text-xs text-red-600 mt-2">
+                    Your cart has been updated to reflect current availability.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -425,13 +474,18 @@ export default function CartDrawer({ isOpen, onClose }) {
                 
                 <button
                   onClick={handleCheckout}
-                  disabled={processingPayment || cart.length === 0 || cartNeedsFixing}
+                  disabled={processingPayment || validatingCheckout || cart.length === 0 || cartNeedsFixing}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processingPayment ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                       Processing Payment...
+                    </>
+                  ) : validatingCheckout ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Validating Availability...
                     </>
                   ) : cartNeedsFixing ? (
                     'Fix Cart Issues First'

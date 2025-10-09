@@ -44,7 +44,7 @@ const setCachedCart = (cart) => {
 };
 
 // Validate if a string is a valid UUID format
-const isValidUUID = (str) => {
+export const isValidUUID = (str) => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
 };
@@ -172,6 +172,61 @@ export async function fixCart(cartId) {
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || 'Failed to fix cart.');
+  }
+}
+
+// Initiate checkout process (reserves products for 5 minutes)
+export async function initiateCheckout(cartId) {
+  try {
+    
+    if (!cartId) {
+      throw new Error('Cart ID is required for checkout');
+    }
+    
+    // Debug: Log the request payload
+    console.log('Initiating checkout with cartId:', cartId);
+    
+    const response = await api.post(API_ENDPOINTS.CART.CHECKOUT, {
+      cartId: cartId
+    });
+    
+    // Clear cache to force refresh
+    clearCartCache();
+    
+    return response.data;
+  } catch (error) {
+    // Debug: Log the error details
+    console.error('Checkout error:', error.response?.data || error.message);
+    
+    // Handle specific error cases
+    if (error.response?.status === 400) {
+      throw new Error(error.response?.data?.message || 'Some products are no longer available. Please fix your cart.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Cart not found. Please refresh and try again.');
+    } else if (error.response?.status === 401) {
+      throw new Error('Please log in to continue with checkout.');
+    } else {
+      throw new Error(error.response?.data?.message || 'Failed to initiate checkout. Please try again.');
+    }
+  }
+}
+
+// Cancel checkout process (releases product reservations)
+export async function cancelCheckout(cartId) {
+  try {
+    
+    if (!cartId) {
+      throw new Error('Cart ID is required to cancel checkout');
+    }
+    
+    const response = await api.post(`${API_ENDPOINTS.CART.CANCEL_CHECKOUT}/${cartId}/cancel-checkout`);
+    
+    // Clear cache to force refresh
+    clearCartCache();
+    
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to cancel checkout.');
   }
 }
 

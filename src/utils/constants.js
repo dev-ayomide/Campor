@@ -50,6 +50,8 @@ export const API_ENDPOINTS = {
     REMOVE_ITEM: '/cart/item/remove',
     CLEAR: '/cart/clear',
     FIX: '/cart',
+    CHECKOUT: '/cart/checkout',
+    CANCEL_CHECKOUT: '/cart',
   },
   PAYMENTS: {
     INITIATE: '/payments/initiate',

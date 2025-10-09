@@ -20,6 +20,8 @@ export default function CartPage() {
     removeItemFromCart, 
     clearUserCart, 
     fixUserCart,
+    initiateUserCheckout,
+    cancelUserCheckout,
     getCartTotals, 
     cartId,
     needsFixing,
@@ -28,6 +30,8 @@ export default function CartPage() {
   } = useCart();
   const isSignedIn = !!user;
   const [fixingCart, setFixingCart] = useState(false);
+  const [validatingCheckout, setValidatingCheckout] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
   
   // Modal and notification states
   const [confirmationModal, setConfirmationModal] = useState({
@@ -54,10 +58,14 @@ export default function CartPage() {
   }, [successMessage]);
   
   // Use cart data from context (already grouped by seller)
-  const groupedItems = cart || [];
+  const groupedItems = Array.isArray(cart) ? cart : [];
   const cartNeedsFixing = needsFixing();
   const statusSummary = getStatusSummary();
   const itemsNeedingFix = getItemsNeedingFix();
+  
+  // Debug: Log cart data structure
+  console.log('Cart data:', cart);
+  console.log('Grouped items:', groupedItems);
 
   const updateQuantity = async (itemId, newQuantity, event) => {
     if (event) {
@@ -145,7 +153,7 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckoutAll = () => {
+  const handleCheckoutAll = async () => {
     if (!isSignedIn) {
       alert('Please sign in to continue');
       return;
@@ -154,7 +162,27 @@ export default function CartPage() {
       alert('Please fix cart issues before proceeding to checkout');
       return;
     }
-    setCheckoutModal({ isOpen: true });
+
+    try {
+      setValidatingCheckout(true);
+      setCheckoutError(null);
+      
+      // First, initiate checkout to reserve products and validate availability
+      await initiateUserCheckout();
+      
+      // If successful, show confirmation modal
+      setCheckoutModal({ isOpen: true });
+    } catch (error) {
+      setCheckoutError(error.message);
+      // If checkout validation fails, try to fix the cart
+      try {
+        await fixUserCart();
+      } catch (fixError) {
+        // If fixing fails, just show the error
+      }
+    } finally {
+      setValidatingCheckout(false);
+    }
   };
 
   const handleConfirmCheckout = async () => {
@@ -176,9 +204,15 @@ export default function CartPage() {
       if (url) {
         window.location.href = url;
       } else {
-        alert('Unable to start payment. Please try again.');
+        throw new Error('Unable to start payment. Please try again.');
       }
     } catch (e) {
+      // If payment fails, cancel the checkout to release reservations
+      try {
+        await cancelUserCheckout();
+      } catch (cancelError) {
+        // If cancel fails, just log it
+      }
       alert(e.message || 'Failed to initiate payment');
     } finally {
       setProcessingPayment(false);
@@ -252,6 +286,26 @@ export default function CartPage() {
             </div>
           )}
 
+          {/* Checkout Error Message */}
+          {!loading && !error && checkoutError && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Checkout Validation Failed
+                  </h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    {checkoutError}
+                  </p>
+                  <p className="text-xs text-red-600 mt-2">
+                    Your cart has been updated to reflect current availability.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Cart Status Warning */}
           {!loading && !error && groupedItems.length > 0 && cartNeedsFixing && (
             <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -300,7 +354,7 @@ export default function CartPage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-6">
-              {groupedItems.map((group) => (
+              {groupedItems && groupedItems.length > 0 ? groupedItems.map((group) => (
               <div key={group.sellerId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* Seller Header */}
                 <div className="p-6 border-b border-gray-100">
@@ -361,7 +415,7 @@ export default function CartPage() {
 
                 {/* Seller Items */}
                 <div className="divide-y divide-gray-100">
-                  {group.items.map((item) => {
+                  {group.items && Array.isArray(group.items) ? group.items.map((item) => {
                     const isOutOfStock = item.status === 'out_of_stock';
                     const isStockMismatch = item.status === 'stock_mismatch';
                     const isDeleted = item.status === 'deleted';
@@ -473,10 +527,24 @@ export default function CartPage() {
                         </div>
                       </div>
                     );
-                  })}
+                  }) : (
+                    <div className="p-6 text-center text-gray-500">
+                      No items found for this seller
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m0-6a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">No items in cart</h2>
+                <p className="text-gray-600 mb-8">Add some products to get started</p>
+              </div>
+            )}
 
             {/* Continue Shopping */}
             <div className="text-center py-6">
@@ -523,10 +591,19 @@ export default function CartPage() {
                   e.stopPropagation();
                   handleCheckoutAll();
                 }}
-                disabled={cartNeedsFixing}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={cartNeedsFixing || validatingCheckout}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {cartNeedsFixing ? 'Fix Cart Issues First' : 'Proceed to Checkout'}
+                {validatingCheckout ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Validating Availability...
+                  </>
+                ) : cartNeedsFixing ? (
+                  'Fix Cart Issues First'
+                ) : (
+                  'Proceed to Checkout'
+                )}
               </button>
 
               <button 

@@ -7,13 +7,16 @@ import {
   removeFromCart, 
   clearCart,
   fixCart,
+  initiateCheckout,
+  cancelCheckout,
   calculateCartTotals,
   getCartItemCount,
   isProductInCart,
   getCartItemByProductId,
   cartNeedsFixing,
   getCartStatusSummary,
-  getItemsNeedingFix
+  getItemsNeedingFix,
+  isValidUUID
 } from '../services/cartService';
 
 const CartContext = createContext();
@@ -55,6 +58,9 @@ export const CartProvider = ({ children }) => {
       
       const cartData = await getCart(force);
       
+      // Debug: Log cart data structure
+      console.log('Cart data from API:', cartData);
+      
       // Ensure cart is always an array
       const normalizedCart = Array.isArray(cartData) ? cartData : [];
       setCart(normalizedCart);
@@ -62,13 +68,17 @@ export const CartProvider = ({ children }) => {
       // Extract cart ID from cart data if available
       // The cart ID might be in the response metadata or in the first item
       if (cartData?.cartId) {
+        console.log('Setting cartId from cartData.cartId:', cartData.cartId);
         setCartId(cartData.cartId);
       } else if (normalizedCart.length > 0 && normalizedCart[0].items && normalizedCart[0].items.length > 0) {
         // Fallback: extract from first item
         const firstItem = normalizedCart[0].items[0];
         if (firstItem.cartId) {
+          console.log('Setting cartId from first item:', firstItem.cartId);
           setCartId(firstItem.cartId);
         }
+      } else {
+        console.log('No cartId found in cart data');
       }
       
     } catch (err) {
@@ -217,6 +227,57 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartId, loadCart]);
 
+  // Initiate checkout process (reserves products for 5 minutes)
+  const initiateUserCheckout = useCallback(async () => {
+    if (!cartId) {
+      throw new Error('No cart ID available. Please add items to cart first.');
+    }
+    
+    // Validate cart ID format
+    if (!isValidUUID(cartId)) {
+      throw new Error('Invalid cart ID format. Please refresh and try again.');
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Initiating checkout with cartId:', cartId);
+      const response = await initiateCheckout(cartId);
+      
+      return response;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [cartId]);
+
+  // Cancel checkout process (releases product reservations)
+  const cancelUserCheckout = useCallback(async () => {
+    if (!cartId) {
+      throw new Error('No cart ID available');
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await cancelCheckout(cartId);
+      
+      // Reload cart to get updated data
+      await loadCart(true);
+      
+      return response;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [cartId, loadCart]);
+
   // Add single product to cart with optimistic updates
   const addProductToCart = useCallback(async (productId, quantity = 1) => {
     const items = [{
@@ -341,6 +402,8 @@ export const CartProvider = ({ children }) => {
     removeItemFromCart,
     clearUserCart,
     fixUserCart,
+    initiateUserCheckout,
+    cancelUserCheckout,
     
     // Computed values
     getCartTotals,
