@@ -1434,13 +1434,18 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   className={`flex ${message.isFromCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg shadow-sm ${
+                    className={`px-3 py-2 rounded-lg shadow-sm ${
                       message.isFromCurrentUser
                         ? message.deliveryStatus === 'failed' 
                           ? 'bg-red-500 text-white rounded-br-sm'
                           : 'bg-blue-500 text-white rounded-br-sm'
                         : 'bg-white text-gray-900 rounded-bl-sm border border-gray-100'
                     }`}
+                    style={{
+                      // WhatsApp-like fixed width for message bubbles
+                      maxWidth: message.imageUrl ? '240px' : '280px',
+                      width: 'fit-content'
+                    }}
                   >
                     {/* Image message */}
                     {message.imageUrl && (
@@ -1448,7 +1453,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                         <img 
                           src={message.imageUrl} 
                           alt="Chat image" 
-                          className="w-full max-w-[180px] sm:max-w-[200px] md:max-w-[220px] h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                          className="w-full max-w-[200px] h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
                           onClick={() => openImageModal(message.imageUrl)}
                           loading="lazy"
                           onError={(e) => {
@@ -1466,9 +1471,17 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                       </div>
                     )}
                     
-                    {/* Text content */}
+                    {/* Text content - matches image width when both are present */}
                     {message.content && (
-                    <p className="text-sm leading-relaxed">{message.content}</p>
+                    <p 
+                      className="text-sm leading-relaxed break-words"
+                      style={{
+                        // Match the image width when both image and text are present
+                        maxWidth: message.imageUrl ? '200px' : 'none'
+                      }}
+                    >
+                      {message.content}
+                    </p>
                     )}
                     <div className={`flex items-center justify-end mt-1 space-x-1 ${
                       message.isFromCurrentUser ? 'text-blue-100' : 'text-gray-400'
@@ -1570,7 +1583,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               />
               <div className="flex-1">
                 <div className="text-sm text-gray-600">Image selected</div>
-                <div className="text-xs text-gray-500">Add caption below or send as is</div>
               </div>
           <button
             type="button"
