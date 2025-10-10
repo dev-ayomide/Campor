@@ -418,7 +418,7 @@ export default function ProductDetailPage() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 min-w-0 flex-1 sm:justify-start justify-between">
                     <Link 
                       to={`/seller/${sellerSlug || product.seller.slug || product.seller.id}/catalogue`}
                       className="font-medium text-blue-600 text-base hover:text-blue-700 transition-colors duration-200 cursor-pointer truncate"
@@ -427,7 +427,7 @@ export default function ProductDetailPage() {
                       {product.seller.catalogueName || 'Unknown Seller'}
                     </Link>
                     <button 
-                      className="flex-shrink-0 p-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                      className="flex-shrink-0 flex items-center gap-2 p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors mr-4 sm:mr-0"
                       onClick={async () => {
                         try {
                           // Get seller's user ID for chat with fallback
@@ -442,6 +442,7 @@ export default function ProductDetailPage() {
                       title={`Message ${product.seller.catalogueName || 'Seller'}`}
                     >
                       <ChatIcon className="w-5 h-5 text-white" />
+                      <span className="text-white text-sm font-medium hidden sm:inline">Message</span>
                     </button>
                   </div>
                 </div>

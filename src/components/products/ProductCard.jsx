@@ -54,7 +54,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       {/* Product Image */}
-      <Link to={`/product/${product.slug}`} className="block">
+      <Link to={`/product/${product.slug || product.id}`} className="block">
         <div className="aspect-square bg-gray-100 relative overflow-hidden">
           <img
             src={product.imageUrls?.[0] || '/placeholder-product.png'}
@@ -86,7 +86,7 @@ export default function ProductCard({ product }) {
         )}
 
         {/* Product Name */}
-        <Link to={`/product/${product.slug}`} className="block">
+        <Link to={`/product/${product.slug || product.id}`} className="block">
           <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
             {product.name}
           </h3>

@@ -438,30 +438,52 @@ export default function CartPage() {
                       >
                         <div className="flex gap-4">
                           {/* Product Image */}
-                          <Link 
-                            to={`/product/${item.product?.slug}`}
-                            className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
-                          >
-                            <img 
-                              src={item.product?.imageUrls?.[0] || productImage} 
-                              alt={item.product?.name || 'Product'}
-                              className="w-20 h-20 object-cover rounded-lg bg-gray-100"
-                              onError={(e) => {
-                                e.target.src = productImage;
-                              }}
-                            />
-                          </Link>
+                          {item.product?.slug ? (
+                            <Link 
+                              to={`/product/${item.product.slug}`}
+                              className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
+                            >
+                              <img 
+                                src={item.product?.imageUrls?.[0] || productImage} 
+                                alt={item.product?.name || 'Product'}
+                                className="w-20 h-20 object-cover rounded-lg bg-gray-100"
+                                onError={(e) => {
+                                  e.target.src = productImage;
+                                }}
+                              />
+                            </Link>
+                          ) : (
+                            <div className="flex-shrink-0 opacity-60">
+                              <img 
+                                src={item.product?.imageUrls?.[0] || productImage} 
+                                alt={item.product?.name || 'Product'}
+                                className="w-20 h-20 object-cover rounded-lg bg-gray-100"
+                                onError={(e) => {
+                                  e.target.src = productImage;
+                                }}
+                              />
+                            </div>
+                          )}
 
                           {/* Product Details */}
                           <div className="flex-1 min-w-0">
-                            <Link 
-                              to={`/product/${item.product?.slug}`}
-                              className={`hover:text-blue-600 transition-colors ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
-                            >
-                              <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                                {item.product?.name || 'Product'}
-                              </h3>
-                            </Link>
+                            {item.product?.slug ? (
+                              <Link 
+                                to={`/product/${item.product.slug}`}
+                                className={`hover:text-blue-600 transition-colors ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
+                              >
+                                <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                                  {item.product?.name || 'Product'}
+                                </h3>
+                              </Link>
+                            ) : (
+                              <div className="opacity-60">
+                                <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                                  {item.product?.name || 'Product'}
+                                </h3>
+                                <p className="text-xs text-gray-500">Product details no longer available</p>
+                              </div>
+                            )}
                             <p className="text-lg font-bold text-gray-900 mb-2">
                               {formatPrice(item.product?.price || 0)}
                             </p>

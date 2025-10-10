@@ -558,7 +558,7 @@ export default function SellerCatalogue() {
                 : 'flex flex-col gap-4'
             }`}>
                 {sortedProducts.map((product) => (
-                  <Link key={product.id} to={`/product/${product.slug}`} className={`block bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden min-w-0 ${
+                  <Link key={product.id} to={`/product/${product.slug || product.id}`} className={`block bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden min-w-0 ${
                     viewMode === 'list' ? 'flex flex-row items-center p-4 gap-4' : ''
                   }`}>
                     {/* Product Image with Navigation */}

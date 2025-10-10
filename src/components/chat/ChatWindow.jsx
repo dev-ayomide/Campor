@@ -1203,8 +1203,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             
             {sellerId ? (
               <>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Start a conversation</h3>
-                <p className="text-gray-500 mb-6">Send a message to start chatting with this seller</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Start a conversation with {conversation?.participant?.name || 'this seller'}
+                </h3>
+                <p className="text-gray-500 mb-6">Send a message to start chatting with {conversation?.participant?.name || 'this seller'}</p>
                 
                 {/* Error Message */}
                 {error && (
@@ -1314,7 +1316,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                     setNewMessage(e.target.value);
                     setError(null); // Clear error when typing
                   }}
-                  placeholder="Type a message"
+                  placeholder={`Type a message to ${conversation?.participant?.name || 'this seller'}...`}
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                   disabled={false}
                 />
@@ -1388,6 +1390,12 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   <span className="animate-pulse bg-gray-200 h-6 w-24 rounded"></span>
                 )}
               </h3>
+              {/* Seller Badge for new conversations */}
+              {conversationId && conversationId.startsWith('seller-') && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Seller
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <span className={`text-sm ${
@@ -1397,6 +1405,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               }`}>
                 {conversation?.participant && onlineUsers.has(conversation.participant.id) ? 'Online' : 'Last seen recently'}
               </span>
+              {/* Additional context for new seller conversations */}
+              {conversationId && conversationId.startsWith('seller-') && (
+                <span className="text-xs text-gray-500">• Starting new conversation</span>
+              )}
             </div>
           </div>
         </div>

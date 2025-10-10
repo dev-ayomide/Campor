@@ -929,7 +929,6 @@ export async function searchProducts(query, page = 1, limit = 10) {
 
 export async function getProductBySlug(slug) {
   try {
-    
     const response = await api.get(`${API_ENDPOINTS.PRODUCTS.BY_SLUG}/${slug}`);
     return response.data;
   } catch (error) {

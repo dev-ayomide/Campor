@@ -360,30 +360,52 @@ export default function CartDrawer({ isOpen, onClose }) {
                             }`}
                           >
                             {/* Product Image */}
-                            <Link 
-                              to={`/product/${item.product?.slug}`}
-                              className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
-                            >
-                              <img
-                                src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
-                                alt={item.product?.name}
-                                className="w-16 h-16 object-cover rounded-md"
-                              />
-                            </Link>
+                            {item.product?.slug ? (
+                              <Link 
+                                to={`/product/${item.product.slug}`}
+                                className={`flex-shrink-0 hover:opacity-80 transition-opacity ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
+                              >
+                                <img
+                                  src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
+                                  alt={item.product?.name}
+                                  className="w-16 h-16 object-cover rounded-md"
+                                />
+                              </Link>
+                            ) : (
+                              <div className="flex-shrink-0 opacity-60">
+                                <img
+                                  src={item.product?.imageUrls?.[0] || '/placeholder-product.png'}
+                                  alt={item.product?.name}
+                                  className="w-16 h-16 object-cover rounded-md"
+                                />
+                              </div>
+                            )}
                             
                             {/* Product Details */}
                             <div className="flex-1 min-w-0">
-                              <Link 
-                                to={`/product/${item.product?.slug}`}
-                                className={`hover:text-blue-600 transition-colors ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
-                              >
-                                <h4 className="text-sm font-medium text-gray-900 truncate">
-                                  {item.product?.name}
-                                </h4>
-                                <p className="text-sm text-gray-500">
-                                  {formatPrice(item.product?.price || 0)}
-                                </p>
-                              </Link>
+                              {item.product?.slug ? (
+                                <Link 
+                                  to={`/product/${item.product.slug}`}
+                                  className={`hover:text-blue-600 transition-colors ${isOutOfStock || isDeleted ? 'pointer-events-none' : ''}`}
+                                >
+                                  <h4 className="text-sm font-medium text-gray-900 truncate">
+                                    {item.product?.name}
+                                  </h4>
+                                  <p className="text-sm text-gray-500">
+                                    {formatPrice(item.product?.price || 0)}
+                                  </p>
+                                </Link>
+                              ) : (
+                                <div className="opacity-60">
+                                  <h4 className="text-sm font-medium text-gray-900 truncate">
+                                    {item.product?.name}
+                                  </h4>
+                                  <p className="text-sm text-gray-500">
+                                    {formatPrice(item.product?.price || 0)}
+                                  </p>
+                                  <p className="text-xs text-gray-400">Product details no longer available</p>
+                                </div>
+                              )}
                               
                               {/* Status Indicator */}
                               <div className={`flex items-center space-x-1 mt-1 ${statusInfo.color}`}>
