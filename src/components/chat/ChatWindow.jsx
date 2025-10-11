@@ -821,7 +821,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           deliveryStatus: 'sent'
         };
         
-        setMessages([optimisticMessage]);
+        setMessages(prev => [...prev, optimisticMessage]);
         
         const sentMessage = await sendMessage(null, messageContent, userId, imageUrl);
         
@@ -860,7 +860,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           deliveryStatus: 'sent'
         };
         
-        setMessages([optimisticMessage]);
+        setMessages(prev => [...prev, optimisticMessage]);
         
         const sentMessage = await sendMessage(null, messageContent, sellerId, imageUrl);
         
@@ -951,12 +951,19 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       // Prepare message content - send null if empty, not empty string
       const finalMessageContent = messageContent || null;
       
-      // WhatsApp-like behavior: Use local image URL immediately, upload in background
+      // WhatsApp-like behavior: Clear preview immediately, show loading on message
       let localImageUrl = null;
       let imageFile = null;
       if (selectedImageFile) {
         localImageUrl = selectedImagePreviewUrl; // Use the local preview URL
         imageFile = selectedImageFile; // Store file for background upload
+        
+        // Clear preview immediately (WhatsApp-like behavior)
+        if (selectedImagePreviewUrl) {
+          URL.revokeObjectURL(selectedImagePreviewUrl);
+        }
+        setSelectedImageFile(null);
+        setSelectedImagePreviewUrl(null);
       }
       // Check for self-messaging
       if (conversationId && conversationId.startsWith('seller-')) {
@@ -981,7 +988,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null,
-          imageUrl: localImageUrl || null,
+          imageUrl: imageFile ? 'placeholder' : null, // Use placeholder for immediate display
+          localImageUrl: localImageUrl, // Store local URL for preview
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -990,12 +998,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             name: currentUser.name || 'You'
           },
           isFromCurrentUser: true,
-          deliveryStatus: 'sent' // Start as 'sent' for instant feel
+          deliveryStatus: 'sent', // Start as 'sent' for instant feel
+          isUploading: imageFile ? true : false // Show loading state for image uploads
         };
         
         
         
-        setMessages([optimisticMessage]);
+        setMessages(prev => [...prev, optimisticMessage]);
         
         // Upload image first if present, then send message
         let uploadedImageUrl = null;
@@ -1018,9 +1027,11 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
+                content: msg.content, // Preserve content from optimistic message
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
                 sentAt: msg.sentAt, // Preserve sentAt from optimistic message
-                imageUrl: uploadedImageUrl || localImageUrl || null // Use uploaded URL or fallback to local
+                imageUrl: uploadedImageUrl || msg.imageUrl, // Use uploaded URL if available, otherwise keep current
+                isUploading: false // Upload is complete
               }
             : msg
         ));
@@ -1042,7 +1053,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null,
-          imageUrl: localImageUrl || null,
+          imageUrl: imageFile ? 'placeholder' : null, // Use placeholder for immediate display
+          localImageUrl: localImageUrl, // Store local URL for preview
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1051,10 +1063,11 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             name: currentUser.name || 'You'
           },
           isFromCurrentUser: true,
-          deliveryStatus: 'sent' // Start as 'sent' for instant feel
+          deliveryStatus: 'sent', // Start as 'sent' for instant feel
+          isUploading: imageFile ? true : false // Show loading state for image uploads
         };
         
-        setMessages([optimisticMessage]);
+        setMessages(prev => [...prev, optimisticMessage]);
         
         // Upload image first if present, then send message
         let uploadedImageUrl = null;
@@ -1077,7 +1090,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
-                imageUrl: uploadedImageUrl || localImageUrl || null, // Use uploaded URL or fallback to local
+                content: msg.content, // Preserve content from optimistic message
+                imageUrl: uploadedImageUrl || msg.imageUrl, // Use uploaded URL if available, otherwise keep current
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
                 sentAt: msg.sentAt, // Preserve sentAt from optimistic message
                 isUploading: false // Upload is complete
@@ -1101,7 +1115,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null, // Only set content if there's actual text
-          imageUrl: localImageUrl || null,
+          imageUrl: imageFile ? 'placeholder' : null, // Use placeholder for immediate display
+          localImageUrl: localImageUrl, // Store local URL for preview
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1110,7 +1125,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
             name: currentUser.name || 'You'
           },
           isFromCurrentUser: true,
-          deliveryStatus: 'sent' // Start as 'sent' for instant feel
+          deliveryStatus: 'sent', // Start as 'sent' for instant feel
+          isUploading: imageFile ? true : false // Show loading state for image uploads
         };
         
         // Add message immediately for smooth UX
@@ -1139,7 +1155,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
-                imageUrl: uploadedImageUrl || localImageUrl || null, // Use uploaded URL or fallback to local
+                content: msg.content, // Preserve content from optimistic message
+                imageUrl: uploadedImageUrl || msg.imageUrl, // Use uploaded URL if available, otherwise keep current
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
                 sentAt: msg.sentAt, // Preserve sentAt from optimistic message
                 isUploading: false // Upload is complete
@@ -1148,13 +1165,14 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         ));
         
         stopTyping(receiverId);
+        
+        // Trigger conversation list reload for regular conversations
+        setTimeout(() => {
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('conversationCreated'));
+          }
+        }, 100);
       }
-      // Clear selected image state after successful send
-      if (selectedImagePreviewUrl) {
-        URL.revokeObjectURL(selectedImagePreviewUrl);
-      }
-      setSelectedImageFile(null);
-      setSelectedImagePreviewUrl(null);
 
     } catch (error) {
       // Restore input state if there was an error
@@ -1402,16 +1420,12 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 
                 <button
                   type="submit"
-                  disabled={(!newMessage.trim() && !selectedImageFile) || uploadingImage}
+                  disabled={(!newMessage.trim() && !selectedImageFile)}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {uploadingImage ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                   </svg>
-                  )}
                 </button>
               </div>
             </form>
@@ -1529,18 +1543,35 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                     {/* Image message */}
                     {message.imageUrl && (
                       <div className="mb-2 relative">
-                        <img 
-                          src={message.imageUrl} 
-                          alt="Chat image" 
-                          className="w-full max-w-[200px] h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
-                          onClick={() => openImageModal(message.imageUrl)}
-                          loading="lazy"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        
+                        {message.imageUrl === 'placeholder' ? (
+                          // Show placeholder with local preview
+                          <div className="w-full max-w-[200px] h-48 bg-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden">
+                            <img 
+                              src={message.localImageUrl} 
+                              alt="Image preview" 
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                            {/* Loading overlay for image uploads */}
+                            {message.isUploading && (
+                              <div className="absolute top-2 right-2 bg-black bg-opacity-70 rounded-full p-1.5">
+                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          // Show actual uploaded image
+                          <img 
+                            src={message.imageUrl} 
+                            alt="Chat image" 
+                            className="w-full max-w-[200px] h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                            onClick={() => openImageModal(message.imageUrl)}
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        )}
                         
                         {/* Fallback for failed image loads */}
                         <div className="hidden items-center justify-center bg-gray-100 rounded-lg p-4 text-gray-500 text-sm">
@@ -1761,12 +1792,9 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           
           <button
             type="submit"
-                  disabled={(!newMessage.trim() && !selectedImageFile) || uploadingImage}
+                  disabled={(!newMessage.trim() && !selectedImageFile)}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
           >
-                  {uploadingImage ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
                     <>
             {!isConnected && (
               <div className="w-1 h-1 bg-yellow-400 rounded-full animate-pulse"></div>
@@ -1775,7 +1803,6 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
             </svg>
                     </>
-                  )}
           </button>
           </div>
         </form>
