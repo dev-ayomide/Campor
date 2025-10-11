@@ -343,6 +343,18 @@ class ChatApiService {
       return 'Seller';
     }
   }
+
+  // Update message with uploaded image URL (for background upload)
+  async updateMessageImage(messageId, imageUrl) {
+    try {
+      const response = await api.put(`/chat/messages/${messageId}/image`, {
+        imageUrl: imageUrl
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export const chatApiService = new ChatApiService();

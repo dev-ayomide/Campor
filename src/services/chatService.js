@@ -156,6 +156,16 @@ export const chatService = {
     } catch (error) {
       return false;
     }
+  },
+
+  // Update message with uploaded image URL (for background upload)
+  updateMessageImage: async (messageId, imageUrl) => {
+    try {
+      const result = await chatApiService.updateMessageImage(messageId, imageUrl);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

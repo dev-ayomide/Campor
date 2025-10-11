@@ -342,6 +342,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     }
   };
 
+
   // Handle file input change - set local preview and allow caption before sending
   const handleFileInputChange = (event) => {
     const file = event.target.files[0];
@@ -360,6 +361,31 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
     setTimeout(() => {
       scrollToBottom();
     }, 0);
+  };
+
+  // Handle paste image from clipboard
+  const handlePasteImage = (event) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          setError(null);
+          setSelectedImageFile(file);
+          const objectUrl = URL.createObjectURL(file);
+          setSelectedImagePreviewUrl(objectUrl);
+          // Focus input and scroll bottom so user sees the preview
+          setTimeout(() => {
+            scrollToBottom();
+          }, 0);
+        }
+        break;
+      }
+    }
   };
 
   // Trigger file input
@@ -924,10 +950,13 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
       
       // Prepare message content - send null if empty, not empty string
       const finalMessageContent = messageContent || null;
-      let uploadedImageUrl = null;
+      
+      // WhatsApp-like behavior: Use local image URL immediately, upload in background
+      let localImageUrl = null;
+      let imageFile = null;
       if (selectedImageFile) {
-        setUploadingImage(true);
-        uploadedImageUrl = await handleImageUpload(selectedImageFile);
+        localImageUrl = selectedImagePreviewUrl; // Use the local preview URL
+        imageFile = selectedImageFile; // Store file for background upload
       }
       // Check for self-messaging
       if (conversationId && conversationId.startsWith('seller-')) {
@@ -952,7 +981,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null,
-          imageUrl: uploadedImageUrl || null,
+          imageUrl: localImageUrl || null,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -968,6 +997,18 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         setMessages([optimisticMessage]);
         
+        // Upload image first if present, then send message
+        let uploadedImageUrl = null;
+        if (imageFile) {
+          try {
+            uploadedImageUrl = await handleImageUpload(imageFile);
+          } catch (error) {
+            console.error('Image upload failed:', error);
+            // Continue with text message even if image upload fails
+          }
+        }
+        
+        // Send message with uploaded image URL
         const sentMessage = await sendMessage(null, finalMessageContent, userId, uploadedImageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
@@ -979,7 +1020,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 deliveryStatus: 'sent', 
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
                 sentAt: msg.sentAt, // Preserve sentAt from optimistic message
-                imageUrl: uploadedImageUrl || sentMessage.imageUrl || null
+                imageUrl: uploadedImageUrl || localImageUrl || null // Use uploaded URL or fallback to local
               }
             : msg
         ));
@@ -1001,7 +1042,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null,
-          imageUrl: uploadedImageUrl || null,
+          imageUrl: localImageUrl || null,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1015,6 +1056,18 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         
         setMessages([optimisticMessage]);
         
+        // Upload image first if present, then send message
+        let uploadedImageUrl = null;
+        if (imageFile) {
+          try {
+            uploadedImageUrl = await handleImageUpload(imageFile);
+          } catch (error) {
+            console.error('Image upload failed:', error);
+            // Continue with text message even if image upload fails
+          }
+        }
+        
+        // Send message with uploaded image URL
         const sentMessage = await sendMessage(null, finalMessageContent, sellerId, uploadedImageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
@@ -1024,9 +1077,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
-                imageUrl: uploadedImageUrl || sentMessage.imageUrl || null,
+                imageUrl: uploadedImageUrl || localImageUrl || null, // Use uploaded URL or fallback to local
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
-                sentAt: msg.sentAt // Preserve sentAt from optimistic message
+                sentAt: msg.sentAt, // Preserve sentAt from optimistic message
+                isUploading: false // Upload is complete
               }
             : msg
         ));
@@ -1047,7 +1101,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         const optimisticMessage = {
           tempId,
           content: finalMessageContent || null, // Only set content if there's actual text
-          imageUrl: uploadedImageUrl || null,
+          imageUrl: localImageUrl || null,
           senderId: currentUser.id,
           sentAt: new Date().toISOString(),
           timestamp: new Date().toISOString(),
@@ -1063,6 +1117,19 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
         setMessages(prev => [...prev, optimisticMessage]);
         
         const receiverId = conversation.participant.id;
+        
+        // Upload image first if present, then send message
+        let uploadedImageUrl = null;
+        if (imageFile) {
+          try {
+            uploadedImageUrl = await handleImageUpload(imageFile);
+          } catch (error) {
+            console.error('Image upload failed:', error);
+            // Continue with text message even if image upload fails
+          }
+        }
+        
+        // Send message with uploaded image URL
         const sentMessage = await sendMessage(conversationId, finalMessageContent, receiverId, uploadedImageUrl);
         
         // Message already appears as sent, just confirm it silently (like chat-demo)
@@ -1072,9 +1139,10 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                 ...sentMessage, 
                 tempId, 
                 deliveryStatus: 'sent', 
-                imageUrl: uploadedImageUrl || sentMessage.imageUrl || null,
+                imageUrl: uploadedImageUrl || localImageUrl || null, // Use uploaded URL or fallback to local
                 timestamp: msg.timestamp, // Preserve timestamp from optimistic message
-                sentAt: msg.sentAt // Preserve sentAt from optimistic message
+                sentAt: msg.sentAt, // Preserve sentAt from optimistic message
+                isUploading: false // Upload is complete
               }
             : msg
         ));
@@ -1309,16 +1377,27 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                     </button>
                   </div>
                 )}
-                <input
-                  type="text"
+                <textarea
                   value={newMessage}
                   onChange={(e) => {
                     setNewMessage(e.target.value);
                     setError(null); // Clear error when typing
+                    // Auto-resize textarea (WhatsApp-like behavior)
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onPaste={handlePasteImage}
+                  onKeyDown={(e) => {
+                    // Send message on Enter (but allow Shift+Enter for new line)
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
                   }}
                   placeholder={`Type a message to ${conversation?.participant?.name || 'this seller'}...`}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 resize-none overflow-hidden min-h-[48px] max-h-[120px]"
                   disabled={false}
+                  rows={1}
                 />
                 
                 <button
@@ -1449,7 +1528,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   >
                     {/* Image message */}
                     {message.imageUrl && (
-                      <div className="mb-2">
+                      <div className="mb-2 relative">
                         <img 
                           src={message.imageUrl} 
                           alt="Chat image" 
@@ -1461,6 +1540,8 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                             e.target.nextSibling.style.display = 'flex';
                           }}
                         />
+                        
+                        
                         {/* Fallback for failed image loads */}
                         <div className="hidden items-center justify-center bg-gray-100 rounded-lg p-4 text-gray-500 text-sm">
                           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1643,8 +1724,7 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
           </div>
           
           <div className="flex-1 relative">
-          <input
-            type="text"
+          <textarea
             value={newMessage}
             onChange={(e) => {
               setNewMessage(e.target.value);
@@ -1656,15 +1736,27 @@ const ChatWindow = ({ conversationId, currentUser, onBackToList }) => {
                   stopTyping(receiverId);
                 }
               }
+              // Auto-resize textarea (WhatsApp-like behavior)
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
             }}
+            onPaste={handlePasteImage}
             onBlur={() => {
               if (conversation) {
                 stopTyping(conversation.participant.id);
               }
             }}
-              placeholder="Type a message"
-              className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+            onKeyDown={(e) => {
+              // Send message on Enter (but allow Shift+Enter for new line)
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage(e);
+              }
+            }}
+            placeholder="Type a message"
+            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 resize-none overflow-hidden min-h-[48px] max-h-[120px]"
             disabled={false}
+            rows={1}
           />
           
           <button
